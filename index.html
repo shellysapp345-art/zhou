@@ -1225,7 +1225,6 @@ function renderGrid(){
   const label=folder?folder.name:(acc?acc.name:'全部账号');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
 
-  const grid=document.getElementById('vgrid');
   grid.className='vgrid'+(S.view==='compact'?' compact':S.view==='list'?' list':'');
 
   if(!vids.length){
