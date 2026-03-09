@@ -318,7 +318,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .login-err.show{display:block;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 </head>
 <body>
 
@@ -1787,39 +1786,8 @@ function renderAllChart(type){
 }
 
 function renderAllTreeChart(accs, vids){
-  const wrap = document.getElementById('chartTreeWrap');
-  wrap.innerHTML='';
-  const treeData = {
-    name:'全部账号',
-    children: accs.map(a=>({
-      name: a.name,
-      children: vids.filter(v=>v.accId===a.id).map(v=>({
-        name: v.title?v.title.slice(0,15):'无标题',
-        value: v.play||v.likes||1
-      }))
-    }))
-  };
-  const W = wrap.clientWidth||800;
-  const H = Math.max(500, accs.length*80);
-  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
-  const g = svg.append('g').attr('transform','translate(40,20)');
-  const root = d3.hierarchy(treeData);
-  const treeLayout = d3.tree().size([H-40, W-200]);
-  treeLayout(root);
-  g.selectAll('.link').data(root.links()).enter().append('path')
-    .attr('fill','none').attr('stroke','#dddad0').attr('stroke-width',1.5)
-    .attr('d', d3.linkHorizontal().x(d=>d.y).y(d=>d.x));
-  const node = g.selectAll('.node').data(root.descendants()).enter().append('g')
-    .attr('transform', d=>`translate(${d.y},${d.x})`);
-  node.append('circle').attr('r',5)
-    .attr('fill', d=>['#c49a6a','#7a9e8e','#9a7a9e'][d.depth]||'#aaa')
-    .attr('stroke','#fff').attr('stroke-width',2);
-  node.append('text')
-    .attr('dx', d=>d.children?-10:10).attr('dy',4)
-    .attr('text-anchor', d=>d.children?'end':'start')
-    .attr('font-size', d=>d.depth===0?13:d.depth===1?11:10)
-    .attr('fill','#2a2520')
-    .text(d=>d.data.name);
+  // 全部账号的爆款雷达（复用 renderTreeChart 逻辑）
+  renderTreeChart(null, accs, vids);
 }
 
 function showFolderCtxMenu(e, folderId, folderName){
@@ -2225,47 +2193,11 @@ function renderMultiBarChart(folderIds){
 }
 
 function renderMultiTreeChart(folderIds){
-  const wrap = document.getElementById('chartTreeWrap');
-  wrap.innerHTML='';
-  const treeData = {
-    name:'对比',
-    children: folderIds.map(fid=>{
-      const folder = S.folders.find(f=>f.id===fid);
-      const accs = S.accounts.filter(a=>a.folderId===fid);
-      return {
-        name: folder?folder.name:'文件夹',
-        children: accs.map(a=>({
-          name: a.name,
-          children: S.videos.filter(v=>v.accId===a.id).map(v=>({
-            name: v.title?v.title.slice(0,15):'无标题',
-            value: v.play||v.likes||1
-          }))
-        }))
-      };
-    })
-  };
-
-  const W = wrap.clientWidth||800;
-  const H = Math.max(500, folderIds.length*200);
-  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
-  const g = svg.append('g').attr('transform','translate(40,20)');
-  const root = d3.hierarchy(treeData);
-  const treeLayout = d3.tree().size([H-40, W-200]);
-  treeLayout(root);
-  g.selectAll('.link').data(root.links()).enter().append('path')
-    .attr('fill','none').attr('stroke','#dddad0').attr('stroke-width',1.5)
-    .attr('d', d3.linkHorizontal().x(d=>d.y).y(d=>d.x));
-  const node = g.selectAll('.node').data(root.descendants()).enter().append('g')
-    .attr('transform', d=>`translate(${d.y},${d.x})`);
-  node.append('circle').attr('r',5)
-    .attr('fill', d=>['#c49a6a','#7a9e8e','#9a7a9e','#6a9e6a'][d.depth]||'#aaa')
-    .attr('stroke','#fff').attr('stroke-width',2);
-  node.append('text')
-    .attr('dx', d=>d.children?-10:10).attr('dy',4)
-    .attr('text-anchor', d=>d.children?'end':'start')
-    .attr('font-size', d=>d.depth===0?13:d.depth===1?11:10)
-    .attr('fill','#2a2520')
-    .text(d=>d.data.name);
+  // 多文件夹爆款雷达：合并所有文件夹账号
+  const accs = folderIds.flatMap(fid => S.accounts.filter(a=>a.folderId===fid));
+  const accIds = accs.map(a=>a.id);
+  const vids = S.videos.filter(v=>accIds.includes(v.accId));
+  renderTreeChart(null, accs, vids);
 }
 
 // Override switchChart to handle both single and multi
@@ -3140,8 +3072,9 @@ function renderUserSearchResults(folderId){
                 <span style="font-size:12px;font-family:var(--mono);color:var(--text3);">⭐ ${fmt(v.coll)}</span>
               </div>
             </div>
-            <div style="display:flex;align-items:center;padding:0 14px;flex-shrink:0;border-left:1px solid var(--border);">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:0 14px;flex-shrink:0;border-left:1px solid var(--border);">
               <span style="font-size:11px;font-weight:700;color:var(--text2);">✏ 编辑</span>
+              <span data-udel="${v.id}" style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer;padding:4px 8px;border-radius:6px;background:var(--s3);" onclick="event.stopPropagation();delV('${v.id}')">🗑 删除</span>
             </div>
           </div>`;
         } else {
@@ -3155,6 +3088,9 @@ function renderUserSearchResults(folderId){
               <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;"
                 onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
                 <div style="background:rgba(255,255,255,.95);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#2a2520;">✏ 点击编辑</div>
+              </div>
+              <div style="position:absolute;top:5px;right:5px;">
+                <span data-udel="${v.id}" onclick="event.stopPropagation();delV('${v.id}')" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(220,50,50,.85)'" onmouseout="this.style.background='rgba(0,0,0,.55)'">🗑</span>
               </div>
               <div style="position:absolute;top:5px;left:5px;display:flex;gap:3px;">${violBadge}${promoBadge}</div>
               ${v.date?`<div style="position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:${isCompact?'9px':'10px'};">${v.date}</div>`:''}
