@@ -264,8 +264,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .toast.ok{border-left:3px solid var(--green);}
 .toast.err{border-left:3px solid var(--red);}
 
+/* ── RESIZER ── */
+.resizer{
+  width:4px;flex-shrink:0;cursor:col-resize;
+  background:transparent;
+  position:relative;z-index:10;
+  transition:background .15s;
+}
+.resizer:hover,.resizer.dragging{background:var(--accent);}
+.resizer::after{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:12px;height:32px;
+  border-radius:4px;
+  background:var(--border2);
+  transition:background .15s;
+}
+.resizer:hover::after,.resizer.dragging::after{background:var(--accent);}
+
 @media(max-width:820px){
   .sidebar{display:none;}
+  .resizer{display:none;}
   .topbar,.grid-wrap{padding-left:14px;padding-right:14px;}
   .modal-split{flex-direction:column;height:95vh;}
   .msplit-left{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:60vh;}
@@ -354,12 +373,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 </aside>
 
 <!-- MAIN -->
+<div class="resizer" id="resizer"></div>
 <div class="main">
   <div class="topbar">
     <div class="tb-title" id="pageTitle">全部账号</div>
     <input id="globalSearch" type="text" placeholder="🔍 搜索视频标题…" oninput="onGlobalSearch(this.value)"
       style="flex:1;max-width:320px;border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;"
       onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"/>
+    <button id="refreshBtn" onclick="doRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
     <div class="tb-right">
       <button class="fchip on" onclick="setFilter('all',this)">全部</button>
       <button class="fchip" onclick="setFilter('violation',this)">⚠ 违规</button>
@@ -1348,6 +1369,12 @@ async function deleteFolder(id,name){
 function setFilter(f,btn){S.filter=f;S.page=0;document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderGrid();}
 
 let _searchTimer;
+function doRefresh(){
+  const btn = document.getElementById('refreshBtn');
+  if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; },500); }
+  loadAll().then(()=>{ render(); toast('✓ 数据已刷新'); });
+}
+
 function onGlobalSearch(val){
   clearTimeout(_searchTimer);
   _searchTimer=setTimeout(()=>{
@@ -2962,6 +2989,50 @@ async function deleteUser(id){
 checkLogin();
 
 load();
+// ── SIDEBAR RESIZER ──
+(function(){
+  const resizer = document.getElementById('resizer');
+  const sidebar = document.querySelector('.sidebar');
+  if(!resizer || !sidebar) return;
+
+  const MIN_W = 140;
+  const MAX_W = 420;
+  const STORAGE_KEY = 'sb_width';
+
+  // 恢复上次宽度
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(saved) applySidebarWidth(parseInt(saved));
+
+  resizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    resizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(e){
+      const w = Math.min(MAX_W, Math.max(MIN_W, e.clientX));
+      applySidebarWidth(w);
+    }
+    function onUp(){
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      localStorage.setItem(STORAGE_KEY, parseInt(sidebar.style.width));
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  function applySidebarWidth(w){
+    sidebar.style.width = w + 'px';
+    // 字体随宽度缩放：220px基准=1，最小0.75，最大1.2
+    const scale = Math.min(1.2, Math.max(0.75, w / 220));
+    sidebar.style.fontSize = (scale * 14) + 'px';
+  }
+})();
+
 </script>
 </body>
 </html>
