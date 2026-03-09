@@ -1308,14 +1308,14 @@ function renderGrid(){
           ${v.promo?'<span class="cc prm">📢 推广中</span>':'<span class="cc ok">无推广</span>'}
         </div>
         <div class="cbtns">
-          <button class="cib" onclick="window.open('${v.url}','_blank')" title="打开">🔗</button>
-          <button class="cib" onclick="editV('${v.id}')" title="编辑">✏</button>
-          <button class="cib del" onclick="delV('${v.id}')" title="删除">🗑</button>
+          <button class="cib" onclick="event.stopPropagation();window.open('${v.url}','_blank')" title="打开">🔗</button>
+          <button class="cib" onclick="event.stopPropagation();editV('${v.id}')" title="编辑">✏</button>
+          <button class="cib del" onclick="event.stopPropagation();delV('${v.id}')" title="删除">🗑</button>
         </div>
       </div>`;
 
     if(S.view==='list'){
-      return`<div class="vcard" style="animation-delay:${i*.04}s;">
+      return`<div class="vcard" style="animation-delay:${i*.04}s;cursor:pointer;" onclick="editV('${v.id}')">
         <div class="cthumb" style="aspect-ratio:auto;height:100%;">
           ${thumbHTML(v)}
           <div class="cthumb-ov"><div class="play-btn">▶</div></div>
@@ -1325,7 +1325,7 @@ function renderGrid(){
         <div style="display:flex;flex-direction:column;">${bodyHTML}</div>
       </div>`;
     }
-    return`<div class="vcard" style="animation-delay:${i*.05}s;">
+    return`<div class="vcard" style="animation-delay:${i*.05}s;cursor:pointer;" onclick="editV('${v.id}')">
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-ov"><div class="play-btn">▶</div></div>
@@ -1608,6 +1608,29 @@ function exportCSV(){
 
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ESC 关闭最顶层弹窗 + 点击背景关闭
+(function(){
+  const MODALS = ['vidModal','accModal','confirmModal','accStatsModal','userMgmtModal','chartModal'];
+  document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    // 从后往前找最上面打开的
+    for(let i = MODALS.length-1; i >= 0; i--){
+      const el = document.getElementById(MODALS[i]);
+      if(el && el.classList.contains('open')){
+        el.classList.remove('open');
+        break;
+      }
+    }
+  });
+  MODALS.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('click', e => {
+      if(e.target === el) el.classList.remove('open');
+    });
+  });
+})();
 function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),2600);}
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
