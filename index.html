@@ -1315,7 +1315,7 @@ function renderGrid(){
       </div>`;
 
     if(S.view==='list'){
-      return`<div class="vcard" style="animation-delay:${i*.04}s;cursor:pointer;" onclick="editV('${v.id}')">
+      return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.04}s;cursor:pointer;">
         <div class="cthumb" style="aspect-ratio:auto;height:100%;">
           ${thumbHTML(v)}
           <div class="cthumb-ov"><div class="play-btn">▶</div></div>
@@ -1325,7 +1325,7 @@ function renderGrid(){
         <div style="display:flex;flex-direction:column;">${bodyHTML}</div>
       </div>`;
     }
-    return`<div class="vcard" style="animation-delay:${i*.05}s;cursor:pointer;" onclick="editV('${v.id}')">
+    return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.05}s;cursor:pointer;">
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-ov"><div class="play-btn">▶</div></div>
@@ -1609,12 +1609,13 @@ function exportCSV(){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ESC 关闭最顶层弹窗 + 点击背景关闭
-(function(){
+// ESC 关闭弹窗 + 点击背景关闭 —— 等 DOM 就绪再绑定
+document.addEventListener('DOMContentLoaded', function(){
   const MODALS = ['vidModal','accModal','confirmModal','accStatsModal','userMgmtModal','chartModal'];
-  document.addEventListener('keydown', e => {
+
+  // ESC key
+  document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
-    // 从后往前找最上面打开的
     for(let i = MODALS.length-1; i >= 0; i--){
       const el = document.getElementById(MODALS[i]);
       if(el && el.classList.contains('open')){
@@ -1623,16 +1624,37 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
       }
     }
   });
-  MODALS.forEach(id => {
+
+  // 点击背景关闭
+  MODALS.forEach(function(id){
     const el = document.getElementById(id);
     if(!el) return;
-    el.addEventListener('click', e => {
+    el.addEventListener('click', function(e){
       if(e.target === el) el.classList.remove('open');
     });
   });
-})();
+
+  // 视频卡片点击事件委托（管理版）
+  const vgrid = document.getElementById('vgrid');
+  if(vgrid){
+    vgrid.addEventListener('click', function(e){
+      if(e.target.closest('button, a')) return;
+      const card = e.target.closest('[data-vid]');
+      if(card) editV(card.getAttribute('data-vid'));
+    });
+  }
+
+  // 视频卡片点击事件委托（员工版）
+  const userResults = document.getElementById('userSearchResults');
+  if(userResults){
+    userResults.addEventListener('click', function(e){
+      if(e.target.closest('button, a')) return;
+      const card = e.target.closest('[data-uvid]');
+      if(card) editV(card.getAttribute('data-uvid'));
+    });
+  }
+});
 function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),2600);}
-document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 function openDM(){
   const ok=window.open('https://www.douyin.com/im','_blank');
@@ -2936,7 +2958,7 @@ function renderUserSearchResults(folderId){
         const bc = v.play>0?'var(--border)':'rgba(196,122,90,.5)';
 
         if(userViewMode === 'list'){
-          html += `<div onclick="openEditModal('${v.id}')"
+          html += `<div data-uvid="${v.id}"
             style="background:var(--s2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;align-items:stretch;"
             onmouseover="this.style.boxShadow='0 4px 16px rgba(42,37,32,.12)';this.style.borderColor='var(--border2)'"
             onmouseout="this.style.boxShadow='';this.style.borderColor='${bc}'">
@@ -2960,7 +2982,7 @@ function renderUserSearchResults(folderId){
           </div>`;
         } else {
           const isCompact = userViewMode==='compact';
-          html += `<div onclick="openEditModal('${v.id}')"
+          html += `<div data-uvid="${v.id}"
             style="background:var(--s2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .22s;position:relative;"
             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(42,37,32,.15)';this.style.borderColor='var(--border2)'"
             onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='${bc}'">
