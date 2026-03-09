@@ -810,9 +810,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
         <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="chartSubtitle"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <button onclick="switchChart('line')" id="btnLine" class="chart-tab on">折线图</button>
-        <button onclick="switchChart('bar')" id="btnBar" class="chart-tab">堆积条形图</button>
-        <button onclick="switchChart('tree')" id="btnTree" class="chart-tab">树状图</button>
+        <button onclick="switchChart('line')" id="btnLine" class="chart-tab on">📊 互动率排行</button>
+        <button onclick="switchChart('bar')" id="btnBar" class="chart-tab">📈 视频互动分布</button>
+        <button onclick="switchChart('tree')" id="btnTree" class="chart-tab">🫧 爆款雷达</button>
         <button onclick="closeModal('chartModal')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;color:var(--text2);">✕ 关闭</button>
       </div>
     </div>
@@ -1764,8 +1764,8 @@ function allCtxChart(type){
 
   ['Line','Bar','Tree'].forEach(t=>document.getElementById('btn'+t).className='chart-tab');
   document.getElementById('btn'+type[0].toUpperCase()+type.slice(1)).className='chart-tab on';
-  ['LineWrap','BarWrap','TreeWrap'].forEach(t=>document.getElementById('chart'+t).style.display='none');
-  document.getElementById('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap').style.display='block';
+  document.getElementById('chartLineWrap').style.display='none'; document.getElementById('chartBarWrap').style.display='none'; document.getElementById('chartTreeWrap').style.display='none';
+  document.getElementById(type==='tree'?'chartLineWrap':('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap')).style.display='block';
 
   openModal('chartModal');
   setTimeout(()=>{
@@ -1783,7 +1783,7 @@ function renderAllChart(type){
   const vids = S.videos;
   if(type==='line') renderLineChart(accs, vids);
   else if(type==='bar') renderBarChart(accs, vids);
-  else if(type==='tree') renderAllTreeChart(accs, vids);
+  else if(type==='tree'){ document.getElementById('chartLineWrap').style.display='block'; renderAllTreeChart(accs, vids); }
 }
 
 function renderAllTreeChart(accs, vids){
@@ -1854,9 +1854,11 @@ function folderCtxChart(type){
 
 // ── CHART ──
 function switchChart(type){
+  // 气泡图(tree)复用 LineWrap canvas，BarWrap 给漏斗图
+  document.getElementById('chartLineWrap').style.display = (type==='line'||type==='tree')?'block':'none';
+  document.getElementById('chartBarWrap').style.display  = type==='bar'?'block':'none';
+  document.getElementById('chartTreeWrap').style.display = 'none';
   ['line','bar','tree'].forEach(t=>{
-    document.getElementById('chart'+t[0].toUpperCase()+t.slice(1)+'Wrap').style.display = t===type?'block':'none';
-    if(t==='tree') document.getElementById('chartTreeWrap').style.display = type==='tree'?'block':'none';
     document.getElementById('btn'+t[0].toUpperCase()+t.slice(1)).className = 'chart-tab'+(t===type?' on':'');
   });
   if(chartFolderId) renderChart(chartFolderId, type);
@@ -1872,8 +1874,8 @@ function openChartModal(folderId, type='line'){
   // Reset tabs
   ['Line','Bar','Tree'].forEach(t=>document.getElementById('btn'+t).className='chart-tab');
   document.getElementById('btn'+type[0].toUpperCase()+type.slice(1)).className='chart-tab on';
-  ['LineWrap','BarWrap','TreeWrap'].forEach(t=>document.getElementById('chart'+t).style.display='none');
-  document.getElementById('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap').style.display='block';
+  document.getElementById('chartLineWrap').style.display='none'; document.getElementById('chartBarWrap').style.display='none'; document.getElementById('chartTreeWrap').style.display='none';
+  document.getElementById(type==='tree'?'chartLineWrap':('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap')).style.display='block';
 
   openModal('chartModal');
   setTimeout(()=>renderChart(folderId, type), 100);
@@ -1886,101 +1888,261 @@ function renderChart(folderId, type){
   
   if(type==='line') renderLineChart(accs, vids);
   else if(type==='bar') renderBarChart(accs, vids);
-  else if(type==='tree') renderTreeChart(folderId, accs, vids);
+  else if(type==='tree'){ document.getElementById('chartLineWrap').style.display='block'; renderTreeChart(folderId, accs, vids); }
 }
 
 const CHART_COLORS = ['#c49a6a','#7a9e8e','#9a7a9e','#c47a5a','#6a9e6a','#7a8e9e','#c4a43c','#9e8a6a'];
 
+// ══════════════════════════════════════════════
+// 图表1：账号互动率排行榜
+// 横向条形 + 每视频散点，直观看谁最能带互动
+// ══════════════════════════════════════════════
 function renderLineChart(accs, vids){
   if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
-  const dates = [...new Set(vids.map(v=>v.date))].sort();
-  const metrics = ['play','likes','comm','coll'];
-  const labels = ['播放','点赞','评论','收藏'];
-  
-  const datasets = metrics.map((m,i)=>({
-    label: labels[i],
-    data: dates.map(d=>vids.filter(v=>v.date===d).reduce((s,v)=>s+(v[m]||0),0)),
-    borderColor: CHART_COLORS[i],
-    backgroundColor: CHART_COLORS[i]+'22',
-    tension: 0.3, fill: false, pointRadius: 4,
-  }));
+
+  const data = accs.map(a=>{
+    const av = vids.filter(v=>v.accId===a.id);
+    const rates = av.map(v=>{
+      const p = v.play||0;
+      const i = (v.likes||0)+(v.comm||0)+(v.coll||0);
+      return p>0 ? +(i/p*100).toFixed(2) : 0;
+    }).filter(r=>r>0);
+    const avgRate = rates.length ? +(rates.reduce((s,r)=>s+r,0)/rates.length).toFixed(2) : 0;
+    const maxRate = rates.length ? +Math.max(...rates).toFixed(2) : 0;
+    const totalPlay  = av.reduce((s,v)=>s+(v.play||0),0);
+    const totalInter = av.reduce((s,v)=>s+(v.likes||0)+(v.comm||0)+(v.coll||0),0);
+    return { name:a.name, avgRate, maxRate, totalPlay, totalInter, vidCnt:av.length, color:a.color||'#c49a6a', rates };
+  }).sort((a,b)=>b.avgRate-a.avgRate);
 
   const ctx = document.getElementById('chartLine').getContext('2d');
   chartInstance = new Chart(ctx, {
-    type:'line',
-    data:{labels:dates, datasets},
-    options:{responsive:true, plugins:{legend:{position:'top'}}, scales:{y:{beginAtZero:true}}}
+    type:'bar',
+    data:{
+      labels: data.map(d=>d.name),
+      datasets:[
+        {
+          label:'平均互动率 %',
+          data: data.map(d=>d.avgRate),
+          backgroundColor: data.map(d=>d.color+'bb'),
+          borderColor: data.map(d=>d.color),
+          borderWidth:2, borderRadius:8,
+          order:2,
+        },
+        {
+          label:'最高单视频互动率 %',
+          data: data.map(d=>d.maxRate),
+          type:'line',
+          borderColor:'#c47a5a',
+          backgroundColor:'transparent',
+          borderWidth:2, borderDash:[4,3],
+          pointBackgroundColor: data.map(d=>d.color),
+          pointRadius:5, pointHoverRadius:7,
+          order:1,
+        }
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      plugins:{
+        legend:{position:'top', labels:{font:{size:11}}},
+        tooltip:{
+          callbacks:{
+            label: ctx=>{
+              const d=data[ctx.dataIndex];
+              if(ctx.datasetIndex===0) return [
+                ` 平均互动率: ${d.avgRate}%`,
+                ` 总播放: ${fmtN(d.totalPlay)}`,
+                ` 总互动: ${fmtN(d.totalInter)}`,
+                ` 视频数: ${d.vidCnt}条`,
+              ];
+              return [` 最高单条互动率: ${d.maxRate}%`];
+            }
+          }
+        },
+        title:{display:true, text:'账号互动率排行（平均 & 最高单条）', font:{size:13,weight:'600'}, color:'#5a5048', padding:{bottom:16}}
+      },
+      scales:{
+        x:{
+          beginAtZero:true,
+          ticks:{callback:v=>v+'%', font:{size:11}},
+          grid:{color:'#f0ece4'},
+          title:{display:true, text:'互动率（点赞+评论+收藏 / 播放量）', font:{size:10}, color:'#9a8878'}
+        },
+        y:{grid:{display:false}, ticks:{font:{size:12}}}
+      }
+    }
   });
 }
 
+// ══════════════════════════════════════════════
+// 图表2：每条视频互动率分布
+// 散点图，X=发布时间，Y=互动率%，颜色=账号
+// 一眼看出哪个账号稳定、哪条是爆款
+// ══════════════════════════════════════════════
 function renderBarChart(accs, vids){
   if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
-  const metrics = ['play','likes','comm','coll','share'];
-  const labels = ['播放','点赞','评论','收藏','转发'];
-  
-  const datasets = accs.map((a,i)=>({
-    label: a.name,
-    data: metrics.map(m=>vids.filter(v=>v.accId===a.id).reduce((s,v)=>s+(v[m]||0),0)),
-    backgroundColor: CHART_COLORS[i%CHART_COLORS.length]+'cc',
-    borderColor: CHART_COLORS[i%CHART_COLORS.length],
-    borderWidth:1,
-  }));
+
+  // 按日期排序
+  const sortedVids = [...vids].filter(v=>v.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const dates = [...new Set(sortedVids.map(v=>v.date))].sort();
+
+  const datasets = accs.map((a,i)=>{
+    const av = sortedVids.filter(v=>v.accId===a.id);
+    return {
+      label: a.name,
+      data: av.map(v=>{
+        const p = v.play||0;
+        const inter = (v.likes||0)+(v.comm||0)+(v.coll||0);
+        const rate = p>0 ? +(inter/p*100).toFixed(2) : 0;
+        return { x:v.date, y:rate, _v:v, _rate:rate };
+      }).filter(d=>d.y>0),
+      backgroundColor: (a.color||CHART_COLORS[i%CHART_COLORS.length])+'cc',
+      borderColor:     (a.color||CHART_COLORS[i%CHART_COLORS.length]),
+      pointRadius:6, pointHoverRadius:9,
+      borderWidth:1.5,
+      showLine:false,
+    };
+  });
+
+  // 加一条平均线
+  if(sortedVids.length){
+    const avgByDate = dates.map(d=>{
+      const dv = sortedVids.filter(v=>v.date===d);
+      const rates = dv.map(v=>{ const p=v.play||0; const i=(v.likes||0)+(v.comm||0)+(v.coll||0); return p>0?i/p*100:0; }).filter(r=>r>0);
+      return { x:d, y:rates.length ? +(rates.reduce((s,r)=>s+r,0)/rates.length).toFixed(2) : null };
+    }).filter(d=>d.y!==null);
+    datasets.push({
+      label:'全部均值',
+      data: avgByDate,
+      borderColor:'#c49a6a',
+      backgroundColor:'transparent',
+      borderWidth:2, borderDash:[6,3],
+      pointRadius:0, showLine:true,
+      tension:0.3, order:0,
+    });
+  }
 
   const ctx = document.getElementById('chartBar').getContext('2d');
   chartInstance = new Chart(ctx, {
-    type:'bar',
-    data:{labels, datasets},
-    options:{responsive:true, plugins:{legend:{position:'top'}}, scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}
+    type:'line',
+    data:{ datasets },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top', labels:{font:{size:11}, usePointStyle:true, pointStyle:'circle'}},
+        tooltip:{
+          callbacks:{
+            title: ctx=>ctx[0].raw.x||'',
+            label: ctx=>{
+              if(!ctx.raw._v) return ` 均值: ${ctx.raw.y}%`;
+              const v=ctx.raw._v;
+              return [
+                ` ${v.title?v.title.slice(0,20):'无标题'}`,
+                ` 互动率: ${ctx.raw._rate}%`,
+                ` 播放: ${fmtN(v.play||0)}  ❤${fmtN(v.likes||0)}  💬${fmtN(v.comm||0)}  ⭐${fmtN(v.coll||0)}`
+              ];
+            }
+          }
+        },
+        title:{display:true, text:'每条视频互动率分布（按发布时间）', font:{size:13,weight:'600'}, color:'#5a5048', padding:{bottom:16}}
+      },
+      scales:{
+        x:{
+          type:'category',
+          grid:{color:'#f0ece4'},
+          ticks:{maxTicksLimit:12, font:{size:10}},
+          title:{display:true, text:'发布日期', font:{size:10}, color:'#9a8878'}
+        },
+        y:{
+          beginAtZero:true,
+          grid:{color:'#f0ece4'},
+          ticks:{callback:v=>v+'%', font:{size:11}},
+          title:{display:true, text:'互动率 %', font:{size:10}, color:'#9a8878'}
+        }
+      }
+    }
   });
 }
 
+// ══════════════════════════════════════════════
+// 图表3：爆款雷达
+// X=视频数量（发布频率），Y=平均互动率
+// 气泡大小=最高单条互动率，找高产出规律
+// ══════════════════════════════════════════════
 function renderTreeChart(folderId, accs, vids){
-  const folder = S.folders.find(f=>f.id===folderId);
-  const wrap = document.getElementById('chartTreeWrap');
-  wrap.innerHTML='';
+  if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
 
-  const treeData = {
-    name: folder?folder.name:'文件夹',
-    children: accs.map(a=>({
-      name: a.name,
-      children: vids.filter(v=>v.accId===a.id).map(v=>({
-        name: v.title?v.title.slice(0,20):'无标题',
-        value: v.play||v.likes||1,
-        play: v.play, likes: v.likes, comm: v.comm
-      }))
-    }))
-  };
+  const accData = accs.map((a,i)=>{
+    const av = vids.filter(v=>v.accId===a.id);
+    const rates = av.map(v=>{ const p=v.play||0; const inter=(v.likes||0)+(v.comm||0)+(v.coll||0); return p>0?inter/p*100:0; }).filter(r=>r>0);
+    const avgRate = rates.length ? +(rates.reduce((s,r)=>s+r,0)/rates.length).toFixed(2) : 0;
+    const maxRate = rates.length ? +Math.max(...rates).toFixed(2) : 0;
+    const totalPlay = av.reduce((s,v)=>s+(v.play||0),0);
+    return {
+      label: a.name,
+      data:[{
+        x: av.length,           // 视频数量
+        y: avgRate,             // 平均互动率
+        r: Math.min(32, Math.max(6, maxRate * 2.5)), // 气泡=最高互动率
+        _name: a.name,
+        _vidCnt: av.length,
+        _avgRate: avgRate,
+        _maxRate: maxRate,
+        _totalPlay: totalPlay,
+      }],
+      backgroundColor: (a.color||CHART_COLORS[i%CHART_COLORS.length])+'99',
+      borderColor:     (a.color||CHART_COLORS[i%CHART_COLORS.length]),
+      borderWidth:2,
+    };
+  }).filter(d=>d.data[0].y>0);
 
-  const W = wrap.clientWidth || 800;
-  const H = Math.max(500, accs.length * 120);
-  
-  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
-  const g = svg.append('g').attr('transform','translate(40,20)');
-  
-  const root = d3.hierarchy(treeData);
-  const treeLayout = d3.tree().size([H-40, W-200]);
-  treeLayout(root);
+  const ctx = document.getElementById('chartLine').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type:'bubble',
+    data:{ datasets: accData },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top', labels:{font:{size:11}, usePointStyle:true, pointStyle:'circle'}},
+        tooltip:{
+          callbacks:{
+            label: ctx=>{
+              const d=ctx.raw;
+              return [
+                ` ${d._name}`,
+                ` 发布视频: ${d._vidCnt}条`,
+                ` 平均互动率: ${d._avgRate}%`,
+                ` 最高单条: ${d._maxRate}%`,
+                ` 总播放: ${fmtN(d._totalPlay)}`,
+              ];
+            }
+          }
+        },
+        title:{display:true, text:'爆款雷达：视频数量 × 平均互动率（气泡=最高单条互动率）', font:{size:13,weight:'600'}, color:'#5a5048', padding:{bottom:16}}
+      },
+      scales:{
+        x:{
+          beginAtZero:true,
+          grid:{color:'#f0ece4'},
+          title:{display:true, text:'发布视频数量（条）', font:{size:11}, color:'#9a8878'},
+          ticks:{stepSize:1, font:{size:11}}
+        },
+        y:{
+          beginAtZero:true,
+          grid:{color:'#f0ece4'},
+          ticks:{callback:v=>v+'%', font:{size:11}},
+          title:{display:true, text:'平均互动率 %', font:{size:11}, color:'#9a8878'}
+        }
+      }
+    }
+  });
+}
 
-  // Links
-  g.selectAll('.link').data(root.links()).enter().append('path')
-    .attr('fill','none').attr('stroke','#dddad0').attr('stroke-width',1.5)
-    .attr('d', d3.linkHorizontal().x(d=>d.y).y(d=>d.x));
-
-  // Nodes
-  const node = g.selectAll('.node').data(root.descendants()).enter().append('g')
-    .attr('transform', d=>`translate(${d.y},${d.x})`);
-
-  node.append('circle').attr('r',5)
-    .attr('fill', d=>d.depth===0?'#c49a6a':d.depth===1?'#7a9e8e':'#9a7a9e')
-    .attr('stroke','#fff').attr('stroke-width',2);
-
-  node.append('text')
-    .attr('dx', d=>d.children?-10:10)
-    .attr('dy', 4)
-    .attr('text-anchor', d=>d.children?'end':'start')
-    .attr('font-size', d=>d.depth===0?13:d.depth===1?11:10)
-    .attr('fill', '#2a2520')
-    .text(d=>d.data.name);
+function fmtN(n){
+  if(n>=10000) return (n/10000).toFixed(1)+'w';
+  if(n>=1000) return (n/1000).toFixed(1)+'k';
+  return String(n);
 }
 
 // ── MULTI FOLDER CHART ──
@@ -1992,8 +2154,8 @@ function openMultiChartModal(folderIds, type='line'){
 
   ['Line','Bar','Tree'].forEach(t=>document.getElementById('btn'+t).className='chart-tab');
   document.getElementById('btn'+type[0].toUpperCase()+type.slice(1)).className='chart-tab on';
-  ['LineWrap','BarWrap','TreeWrap'].forEach(t=>document.getElementById('chart'+t).style.display='none');
-  document.getElementById('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap').style.display='block';
+  document.getElementById('chartLineWrap').style.display='none'; document.getElementById('chartBarWrap').style.display='none'; document.getElementById('chartTreeWrap').style.display='none';
+  document.getElementById(type==='tree'?'chartLineWrap':('chart'+type[0].toUpperCase()+type.slice(1)+'Wrap')).style.display='block';
 
   openModal('chartModal');
   setTimeout(()=>renderMultiChart(folderIds, type), 100);
@@ -2108,8 +2270,10 @@ function renderMultiTreeChart(folderIds){
 
 // Override switchChart to handle both single and multi
 function switchChart(type){
+  document.getElementById('chartLineWrap').style.display = (type==='line'||type==='tree')?'block':'none';
+  document.getElementById('chartBarWrap').style.display  = type==='bar'?'block':'none';
+  document.getElementById('chartTreeWrap').style.display = 'none';
   ['line','bar','tree'].forEach(t=>{
-    document.getElementById('chart'+t[0].toUpperCase()+t.slice(1)+'Wrap').style.display = t===type?'block':'none';
     document.getElementById('btn'+t[0].toUpperCase()+t.slice(1)).className = 'chart-tab'+(t===type?' on':'');
   });
   if(Array.isArray(chartFolderId)){
