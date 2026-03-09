@@ -62,8 +62,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 }
 .aci-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.714em;font-weight:700;flex-shrink:0;}
 .aci-info{flex:1;min-width:0;}
-.aci-name{font-size:0.857em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
-.aci-meta{font-size:0.714em;color:var(--text3);}
+.aci-name{font-size:0.72em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.aci-meta{font-size:0.65em;color:var(--text3);}
 .aci-badge{font-size:0.643em;background:rgba(217,119,87,.1);color:var(--accent);padding:1px 5px;border-radius:5px;flex-shrink:0;}
 .aci-actions{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .12s;}
 .aci:hover .aci-actions{opacity:1;}
@@ -772,6 +772,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
         🎬 医枢云库
       </a>
       <button onclick="openAddModal()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">＋ 添加视频</button>
+      <input id="userGlobalSearch" type="text" placeholder="🔍 搜索视频…" oninput="onUserGlobalSearch(this.value)"
+        style="width:160px;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;background:var(--s1);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      <button id="userRefreshBtn" onclick="doUserRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
       <div style="display:flex;gap:3px;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:3px;">
         <button id="uvb-grid" onclick="setUserView('grid')" title="宫格视图" style="background:var(--gold);color:#fff;border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">⊞</button>
         <button id="uvb-list" onclick="setUserView('list')" title="列表视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">☰</button>
@@ -1067,16 +1071,16 @@ function renderSidebar(){
     // Arrow toggle
     const arrow=document.createElement('span');
     arrow.textContent=isExpanded?'▾':'▸';
-    arrow.style.cssText='font-size:10px;color:var(--text3);width:12px;flex-shrink:0;transition:transform .2s;';
+    arrow.style.cssText='font-size:0.7em;color:var(--text3);width:12px;flex-shrink:0;transition:transform .2s;';
 
     const fIcon=document.createElement('span');
     fIcon.textContent='📁';
-    fIcon.style.fontSize='13px';
+    fIcon.style.fontSize='1em';
 
     const fInfo=document.createElement('div');
     fInfo.style.cssText='flex:1;min-width:0;';
-    fInfo.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
-      <div style="font-size:10px;color:var(--text3);">${folderAccs.length} 个账号 · ${folderVids.length} 条</div>`;
+    fInfo.innerHTML=`<div style="font-size:1.15em;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+      <div style="font-size:0.75em;color:var(--text3);">${folderAccs.length} 个账号 · ${folderVids.length} 条</div>`;
 
     const fActions=document.createElement('div');
     fActions.style.cssText='display:flex;gap:2px;opacity:0;transition:opacity .15s;';
@@ -1084,12 +1088,12 @@ function renderSidebar(){
     fDiv.addEventListener('mouseleave',()=>fActions.style.opacity='0');
 
     const renameBtn=document.createElement('button');
-    renameBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;border-radius:4px;';
+    renameBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--text3);padding:2px 4px;border-radius:4px;';
     renameBtn.textContent='✏';
     renameBtn.addEventListener('click',e=>{e.stopPropagation();renameFolder(f.id,f.name);});
 
     const delFBtn=document.createElement('button');
-    delFBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 4px;border-radius:4px;';
+    delFBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--text3);padding:2px 4px;border-radius:4px;';
     delFBtn.textContent='🗑';
     delFBtn.addEventListener('click',e=>{e.stopPropagation();deleteFolder(f.id,f.name);});
 
@@ -2736,6 +2740,46 @@ function showUserApp(){
   page.style.display='flex';
   document.getElementById('userWelcome').textContent = '你好，' + currentUser.username;
   loadUserData();
+}
+
+function doUserRefresh(){
+  const btn = document.getElementById('userRefreshBtn');
+  if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; },500); }
+  loadUserData().then(()=>{
+    // 刷新后重新渲染当前选中的文件夹
+    if(S.curFolder) renderUserSearchResults(S.curFolder);
+    toast('✓ 数据已刷新');
+  });
+}
+
+let userSearchTimer = null;
+function onUserGlobalSearch(val){
+  clearTimeout(userSearchTimer);
+  userSearchTimer = setTimeout(()=>{
+    const q = val.trim().toLowerCase();
+    if(!S.curFolder){ return; }
+    const results = document.getElementById('userSearchResults');
+    if(!results) return;
+    // 高亮/过滤：对当前渲染内容里的视频标题做过滤
+    const cards = results.querySelectorAll('[data-title]');
+    if(!cards.length){
+      // 没有 data-title，直接重渲染带过滤
+      renderUserSearchResultsFiltered(S.curFolder, q);
+      return;
+    }
+    cards.forEach(card=>{
+      const title = (card.getAttribute('data-title')||'').toLowerCase();
+      card.style.display = (!q || title.includes(q)) ? '' : 'none';
+    });
+  }, 180);
+}
+
+function renderUserSearchResultsFiltered(folderId, q){
+  // 临时把 S.videos 过滤再渲染
+  const allVids = S.videos;
+  if(q) S.videos = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q));
+  renderUserSearchResults(folderId);
+  S.videos = allVids;
 }
 
 async function loadUserData(){
