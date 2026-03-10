@@ -153,6 +153,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .ctag.v{background:rgba(217,83,79,.85);color:#fff;}
 .ctag.p{background:rgba(201,146,26,.85);color:#fff;}
 .ctag.ok{background:rgba(74,158,106,.85);color:#fff;}
+.ctag.u{background:rgba(60,120,200,.82);color:#fff;}
 .cdur{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-family:var(--mono);}
 
 .cbody{padding:10px 11px 0;}
@@ -1285,7 +1286,8 @@ function renderGrid(){
     const a=S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#555'};
     const tags=(v.violation?'<span class="ctag v">⚠ 违规</span>':'')
       +(v.promo?'<span class="ctag p">📢 推广</span>':'')
-      +(!v.violation&&!v.promo?'<span class="ctag ok">✓ 正常</span>':'');
+      +(!v.violation&&!v.promo?'<span class="ctag ok">✓ 正常</span>':'')
+      +(v.uploadedBy?`<span class="ctag u">👤 ${v.uploadedBy}</span>`:'');
 
     const bodyHTML=`
       <div class="cbody">
