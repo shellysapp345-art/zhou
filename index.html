@@ -869,7 +869,8 @@ async function load(){
       S.videos=vids.map(v=>({
         id:v.id,accId:v.acc_id,url:v.url||'',title:v.title||'',
         play:v.play||0,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,share:v.share||0,
-        thumb:v.thumb||'',violation:v.violation||false,promo:v.promo||false,date:v.date||''
+        thumb:v.thumb||'',violation:v.violation||false,promo:v.promo||false,date:v.date||'',
+        uploadedBy:v.uploaded_by||''
       }));
     }
   }catch(e){console.error('load error',e);}
@@ -1533,7 +1534,8 @@ async function saveVideoForm(){
       play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
       thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
       author:data.author||'',
-      douyin_id:data.douyin_id||''
+      douyin_id:data.douyin_id||'',
+      uploaded_by:currentUser?.username||''
     }]);
   }
   render();closeModal('vidModal');
@@ -2935,7 +2937,7 @@ async function loadUserData(){
     if(visits&&Array.isArray(visits)) S.visits=visits.map(v=>({id:v.id,accId:v.acc_id,date:v.date,date_end:v.date_end||'',count:v.count||0,visit_type:v.visit_type||'week'}));
     if(folders&&Array.isArray(folders)) S.folders=folders.map(f=>({id:f.id,name:f.name,sort_order:f.sort_order||0}));
     if(accs&&Array.isArray(accs)) S.accounts=accs.map(a=>({id:a.id,name:a.name,color:a.color||'#b87f5a',note:a.note||'',folderId:a.folder_id||null,dateStart:a.date_start||'',dateEnd:a.date_end||'',visitCount:a.visit_count||0}));
-    if(vids&&Array.isArray(vids)) S.videos=vids.map(v=>({id:v.id,accId:v.acc_id,url:v.url||'',title:v.title||'',play:v.play||0,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,share:v.share||0,thumb:v.thumb||'',violation:v.violation||false,promo:v.promo||false,date:v.date||''}));
+    if(vids&&Array.isArray(vids)) S.videos=vids.map(v=>({id:v.id,accId:v.acc_id,url:v.url||'',title:v.title||'',play:v.play||0,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,share:v.share||0,thumb:v.thumb||'',violation:v.violation||false,promo:v.promo||false,date:v.date||'',uploadedBy:v.uploaded_by||''}));
   }catch(e){console.error('loadUserData error',e);}
   // populate folder search
   renderFolderSuggestions('');
@@ -3065,6 +3067,7 @@ function renderUserSearchResults(folderId){
             </div>
             <div style="flex:1;padding:13px 16px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
               <div style="font-size:13px;line-height:1.6;color:var(--text);font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:8px;">${v.title||'（无标题）'}</div>
+              ${v.uploadedBy?`<div style="margin-bottom:6px;"><span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
               <div style="display:flex;gap:16px;flex-wrap:wrap;">
                 <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:${v.play>0?'var(--purple)':'var(--orange)'};">▶ ${v.play>0?fmt(v.play):'未填写 ⚠'}</span>
                 <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:var(--red);">❤ ${fmt(v.likes)}</span>
@@ -3096,7 +3099,8 @@ function renderUserSearchResults(folderId){
               ${v.date?`<div style="position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:${isCompact?'9px':'10px'};">${v.date}</div>`:''}
             </div>
             <div style="padding:${isCompact?'7px 9px':'10px 12px'};">
-              <div style="font-size:${isCompact?'10px':'12px'};line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:${isCompact?1:2};-webkit-box-orient:vertical;color:var(--text);margin-bottom:6px;font-weight:500;">${v.title||'（无标题）'}</div>
+              <div style="font-size:${isCompact?'10px':'12px'};line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:${isCompact?1:2};-webkit-box-orient:vertical;color:var(--text);margin-bottom:4px;font-weight:500;">${v.title||'（无标题）'}</div>
+              ${v.uploadedBy&&!isCompact?`<div style="margin-bottom:5px;"><span style="display:inline-flex;align-items:center;gap:3px;background:var(--s3);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:9px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;border-top:1px solid var(--border);padding-top:6px;">
                 <div style="text-align:center;">
                   <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${v.play>0?'var(--purple)':'var(--orange)'};">${v.play>0?fmt(v.play):'—⚠'}</div>
