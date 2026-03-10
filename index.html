@@ -520,7 +520,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
         <input type="file" id="thumbFileInput" accept="image/*" style="display:none" onchange="handleThumbFile(this.files[0])"/>
       </div>
 
-      <div id="authorFieldWrap" style="display:none;width:100%;max-width:300px;margin-top:10px;display:none;gap:8px;flex-direction:column;">
+      <div id="authorFieldWrap" style="display:none;width:100%;max-width:300px;margin-top:10px;gap:8px;flex-direction:column;">
         <div>
           <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">👤 视频作者</div>
           <input id="f-author" type="text" placeholder="填入作者名字" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;"/>
@@ -945,6 +945,9 @@ function updatePreview(url){
   openBtn.style.display='flex';
   hint.style.display='none';
   vidIdEl.textContent=vidId?'视频ID: '+vidId:(url.length>42?url.slice(0,42)+'…':url);
+  // FIX: 新增视频时输入链接后也显示作者/抖音号字段（editV里有，updatePreview里漏掉了）
+  const aw=document.getElementById('authorFieldWrap');
+  if(aw) aw.style.display='flex';
 
   // Only reset thumb visual if no image already uploaded
   const img=document.getElementById('prevThumbImg');
@@ -1132,7 +1135,7 @@ function renderSidebar(){
         render();
       } else {
         S.selectedFolders.clear();
-        S.curFolder=f.id; S.curAcc='all'; S.page=0;
+        S.curFolder=f.id; S.curAcc='all'; S.page=0; S.searchQuery='';const gs=document.getElementById('globalSearch');if(gs)gs.value='';
         if(S.expandedFolders.has(f.id)) S.expandedFolders.delete(f.id);
         else S.expandedFolders.add(f.id);
         render();
@@ -1208,7 +1211,7 @@ function renderAccItem(a, container, indented){
     div.appendChild(av);div.appendChild(info);
   }
   div.appendChild(actions);
-  div.addEventListener('click',()=>{S.curAcc=a.id;S.curFolder=null;render();});
+  div.addEventListener('click',()=>{S.curAcc=a.id;S.curFolder=null;S.page=0;S.searchQuery='';const gs=document.getElementById('globalSearch');if(gs)gs.value='';render();});
   div.addEventListener('contextmenu',e=>{
     e.preventDefault();
     e.stopPropagation();
@@ -1310,7 +1313,7 @@ function renderGrid(){
           ${v.promo?'<span class="cc prm">📢 推广中</span>':'<span class="cc ok">无推广</span>'}
         </div>
         <div class="cbtns">
-          <button class="cib" onclick="event.stopPropagation();window.open('${v.url}','_blank')" title="打开">🔗</button>
+          <button class="cib" data-url="${v.url.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();window.open(this.dataset.url,'_blank')" title="打开">🔗</button>
           <button class="cib" onclick="event.stopPropagation();editV('${v.id}')" title="编辑">✏</button>
           <button class="cib del" onclick="event.stopPropagation();delV('${v.id}')" title="删除">🗑</button>
         </div>
@@ -1342,7 +1345,7 @@ function renderGrid(){
 // ══════════════════════
 // ACTIONS
 // ══════════════════════
-function selAcc(id){S.curAcc=id;S.curFolder=null;S.page=0;render();}
+function selAcc(id){S.curAcc=id;S.curFolder=null;S.page=0;S.searchQuery='';const gs=document.getElementById('globalSearch');if(gs)gs.value='';render();}
 
 async function addFolder(){
   const name=prompt('文件夹名称：');
@@ -1370,6 +1373,8 @@ async function deleteFolder(id,name){
     await sbFetch('/rest/v1/folders?id=eq.'+id,'DELETE');
     // Remove folder_id from accounts
     await sbFetch('/rest/v1/accounts?folder_id=eq.'+id,'PATCH',{folder_id:null});
+    // FIX: 同步清空 users 表里绑定该文件夹的员工账号，否则员工登录后看板空白
+    await sbFetch('/rest/v1/users?folder_id=eq.'+id,'PATCH',{folder_id:null});
     toast('✓ 已删除文件夹');
   });
 }
@@ -1398,7 +1403,7 @@ function fmt(n){n=Number(n)||0;if(n>=100000000)return(n/100000000).toFixed(1)+'�
 
 function resetModal(){
   ['url','title','dur','thumb'].forEach(f=>{const e=document.getElementById('f-'+f);if(e)e.value='';});
-  ['play','likes','comm','coll'].forEach(f=>{const e=document.getElementById('f-'+f);if(e)e.value='';});
+  ['play','likes','comm','coll','share'].forEach(f=>{const e=document.getElementById('f-'+f);if(e)e.value='';});
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('f-violation').checked=false;
   document.getElementById('f-promo').checked=false;
@@ -1417,6 +1422,13 @@ function resetModal(){
   if(hint)hint.style.display='block';
   const fi=document.getElementById('thumbFileInput');
   if(fi)fi.value='';
+  // hide author field wrap
+  const aw=document.getElementById('authorFieldWrap');
+  if(aw)aw.style.display='none';
+  const fauth=document.getElementById('f-author');
+  if(fauth)fauth.value='';
+  const fdyid=document.getElementById('f-douyin-id');
+  if(fdyid)fdyid.value='';
   // populate account select
   const sel=document.getElementById('f-acc');
   sel.innerHTML=S.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
@@ -1520,13 +1532,16 @@ async function saveVideoForm(){
   };
   if(id){
     const i=S.videos.findIndex(v=>v.id===id);
-    if(i>=0)S.videos[i]=data;
+    // FIX: 编辑时保留原有的 uploadedBy，data 对象里没有这个字段
+    // 否则 S.videos[i] = data 会把 uploadedBy 覆盖掉，重渲染后标签消失
+    const existingUploadedBy = i>=0 ? (S.videos[i].uploadedBy||'') : '';
+    if(i>=0) S.videos[i]={...data, uploadedBy: existingUploadedBy};
     // Update in Supabase
     await sbFetch('/rest/v1/videos?id=eq.'+id,'PATCH',{
       acc_id:data.accId,url:data.url,title:data.title,
       play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
-      thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
-      author:data.author||''
+      dur:data.dur||'',thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
+      author:data.author||'',douyin_id:data.douyin_id||''
     });
   } else {
     S.videos.unshift(data);
@@ -1543,13 +1558,12 @@ async function saveVideoForm(){
   render();closeModal('vidModal');
   toast(id?'✓ 已更新':'✓ 视频已添加');
   // 员工版搜索页同步刷新
+  // FIX: 用 dataset.folderId 而不是文件夹名匹配，避免名称有差异时刷新失效
   const _sp = document.getElementById('userSearchPage');
   if(_sp && _sp.style.display !== 'none'){
-    const _inp = document.getElementById('folderSearchInput');
-    if(_inp && _inp.value.trim()){
-      const _f = S.folders.find(f=>f.name===_inp.value.trim());
-      if(_f) renderUserSearchResults(_f.id);
-    }
+    const _res = document.getElementById('userSearchResults');
+    const _fid = _res && _res.dataset.folderId ? _res.dataset.folderId : null;
+    if(_fid) renderUserSearchResults(_fid);
   }
 }
 
@@ -1602,7 +1616,8 @@ function exportCSV(){
   const rows=[['视频链接','账号','标题','播放量','点赞','评论','收藏','转发','时长','违规','推广','日期']];
   S.videos.forEach(v=>{
     const a=S.accounts.find(x=>x.id===v.accId);
-    rows.push([v.url,a?a.name:'',`"${(v.title||'').replace(/"/g,'""')}"`,v.play,v.likes,v.comm,v.coll,v.dur,v.violation?'是':'否',v.promo?'是':'否',v.date]);
+    // FIX: 原来漏掉了 v.share（转发），且 v.dur 顺序与表头不符
+    rows.push([v.url,a?a.name:'',`"${(v.title||'').replace(/"/g,'""')}"`,v.play,v.likes,v.comm,v.coll,v.share||0,v.dur||'',v.violation?'是':'否',v.promo?'是':'否',v.date]);
   });
   const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='抖音视频数据.csv';a.click();
@@ -1701,6 +1716,8 @@ function deleteAcc(id){
     S.accounts=S.accounts.filter(a=>a.id!==id);
     S.videos=S.videos.filter(v=>v.accId!==id);
     if(S.curAcc===id)S.curAcc='all';
+    // FIX: 同时删除该账号下所有视频，否则刷新后视频会重新出现成为僵尸数据
+    await sbFetch('/rest/v1/videos?acc_id=eq.'+id,'DELETE');
     await sbFetch('/rest/v1/accounts?id=eq.'+id,'DELETE');
     render();
     toast(cnt>0?`已删除账号及 ${cnt} 条视频`:'已删除账号');
@@ -2658,7 +2675,7 @@ function calcPeriodAnalysis(mode){
       <td style="${td0}">
         <div style="font-weight:600;">${r.label}</div>
         ${!r.hasVisit&&r.play>0?'<div style="font-size:9px;color:var(--orange);">未录入到诊数据</div>':''}
-        ${r.hasVisit&&r.missDays>0?'<div style="font-size:9px;color:var(--text3);">${r.missDays}天无到诊</div>':''}
+        ${r.hasVisit&&r.missDays>0?`<div style="font-size:9px;color:var(--text3);">${r.missDays}天无到诊</div>`:''}
       </td>
       <td style="${td}">${r.vidCount||'—'}</td>
       <td style="${td}">${r.play?fmt(r.play):'—'}</td>
@@ -2890,9 +2907,10 @@ function showUserApp(){
 function doUserRefresh(){
   const btn = document.getElementById('userRefreshBtn');
   if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; },500); }
+  const results = document.getElementById('userSearchResults');
+  const currentFolderId = results && results.dataset.folderId ? results.dataset.folderId : null;
   loadUserData().then(()=>{
-    // 刷新后重新渲染当前选中的文件夹
-    if(S.curFolder) renderUserSearchResults(S.curFolder);
+    if(currentFolderId) renderUserSearchResults(currentFolderId);
     toast('✓ 数据已刷新');
   });
 }
@@ -2902,29 +2920,25 @@ function onUserGlobalSearch(val){
   clearTimeout(userSearchTimer);
   userSearchTimer = setTimeout(()=>{
     const q = val.trim().toLowerCase();
-    if(!S.curFolder){ return; }
+    // FIX: use dataset.folderId instead of S.curFolder (admin state, never set in user view)
     const results = document.getElementById('userSearchResults');
     if(!results) return;
+    const currentFolderId = results.dataset.folderId || null;
+    if(!currentFolderId){ return; }
     // 高亮/过滤：对当前渲染内容里的视频标题做过滤
-    const cards = results.querySelectorAll('[data-title]');
-    if(!cards.length){
-      // 没有 data-title，直接重渲染带过滤
-      renderUserSearchResultsFiltered(S.curFolder, q);
-      return;
-    }
-    cards.forEach(card=>{
-      const title = (card.getAttribute('data-title')||'').toLowerCase();
-      card.style.display = (!q || title.includes(q)) ? '' : 'none';
-    });
+    // FIX: 卡片上没有 data-title 属性，统一走重渲染过滤，删除死代码分支
+    renderUserSearchResultsFiltered(currentFolderId, q);
   }, 180);
 }
 
 function renderUserSearchResultsFiltered(folderId, q){
-  // 临时把 S.videos 过滤再渲染
-  const allVids = S.videos;
-  if(q) S.videos = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q));
-  renderUserSearchResults(folderId);
-  S.videos = allVids;
+  // FIX: 不再临时修改 S.videos 全局状态（若中途出错会导致状态永久损坏）
+  // 改为直接过滤后传入渲染，renderUserSearchResults 内部用局部变量
+  if(!q){ renderUserSearchResults(folderId); return; }
+  const filtered = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q));
+  const origVids = S.videos;
+  S.videos = filtered;
+  try { renderUserSearchResults(folderId); } finally { S.videos = origVids; }
 }
 
 async function loadUserData(){
@@ -3177,7 +3191,21 @@ async function createUser(){
 }
 
 async function deleteUser(id){
+  // FIX: 删除用户前先取出用户名，删除后把该用户上传的视频的 uploaded_by 清空
+  // 视频本身保留，只去掉人名标签
+  const userRes = await sbFetch('/rest/v1/users?id=eq.'+id+'&select=username');
+  const username = userRes && userRes[0] ? userRes[0].username : null;
+
   await sbFetch('/rest/v1/users?id=eq.'+id,'DELETE');
+
+  if(username){
+    // 数据库：把该用户上传的视频 uploaded_by 清空
+    await sbFetch('/rest/v1/videos?uploaded_by=eq.'+encodeURIComponent(username),'PATCH',{uploaded_by:''});
+    // 本地状态同步，避免需要刷新才生效
+    S.videos.forEach(v=>{ if(v.uploadedBy===username) v.uploadedBy=''; });
+    render();
+  }
+
   toast('✓ 已删除');
   loadUserList();
 }
