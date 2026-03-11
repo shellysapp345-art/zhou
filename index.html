@@ -838,6 +838,7 @@ body.dark-mode {
         <button id="uvb-list" onclick="setUserView('list')" title="列表视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">☰</button>
         <button id="uvb-compact" onclick="setUserView('compact')" title="紧凑视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">⊡</button>
       </div>
+      <button onclick="openUserManual()" title="使用教程" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">📖</button>
       <button onclick="doLogout()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
     </div>
   </div>
@@ -3552,6 +3553,97 @@ function switchManualTab(section, el){
   document.getElementById('manual-'+section).classList.add('active');
   el.classList.add('active');
 }
+</script>
+
+<!-- 员工版使用教程弹窗 -->
+<div id="userManualModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center;" onclick="closeUserManual()">
+  <div style="background:var(--bg);border:1px solid var(--border2);border-radius:18px;width:660px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">📖 员工使用教程</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">抖音看板员工版 · 快速上手指南</div>
+      </div>
+      <button onclick="closeUserManual()" style="width:30px;height:30px;border:none;background:var(--s3);border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🏠 员工版界面说明</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          员工登录后进入专属视图，只能查看<b>所属文件夹</b>内的账号和视频数据。<br>
+          <b>顶部导航栏</b> — 医枢云库、Chatbox文案助手、添加视频、搜索、视图切换、刷新、教程、退出<br>
+          <b>主内容区</b> — 视频卡片展示，支持宫格 ⊞ / 列表 ☰ / 紧凑 ⊡ 三种视图
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🎬 如何添加视频</div>
+        <div style="display:flex;gap:10px;margin-bottom:7px;align-items:flex-start;">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.6;">点击顶部「<b>＋ 添加视频</b>」按钮，粘贴抖音视频链接。</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:7px;align-items:flex-start;">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.6;">填写播放量、点赞、评论、收藏、转发数，选择发布日期，勾选是否违规或推广。</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.6;">点击「保存」，视频数据自动同步至云端，所有人可见。</div>
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">✏️ 编辑 / 删除视频</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          点击视频卡片右上角 <b>✏</b> 按钮可修改数据，保存后实时更新云端。<br>
+          点击 <b>🗑</b> 按钮删除视频，<b style="color:var(--red)">操作不可逆</b>，请谨慎确认。
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🔍 搜索视频</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          顶部搜索框输入关键词，实时过滤当前账号下的视频标题。<br>
+          点击 <b>↺</b> 刷新按钮，手动拉取最新数据（多人协作时建议刷新）。
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">📊 查看数据分析</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          在账号列表页点击账号名称旁的「<b>📊 数据分析</b>」按钮，可查看该账号的播放趋势、点赞分布、到诊转化等图表。
+        </div>
+      </div>
+
+      <div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.4);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:4px;">💬 Chatbox 文案助手使用方法</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          点击顶部「<b style="color:#a78bfa;">💬 Chatbox 文案助手</b>」按钮，新标签页打开 AI 文案工具。<br>
+          <b>首次使用需配置 API：</b><br>
+          ① 点击右上角设置 → 模型提供商 → 添加自定义<br>
+          ② API Mode 选 <b>OpenAI API Compatible</b><br>
+          ③ 填入团队提供的 <b>API Key</b> 和 <b>API Host</b><br>
+          ④ 点击 <b>Fetch</b> 获取模型列表，选择模型后即可使用<br>
+          适用：视频文案撰写、标题优化、评论回复、推广话术生成等。
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">💡 注意事项</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          · 员工只能查看所属文件夹内的内容，无法查看其他文件夹数据<br>
+          · 不支持账号管理、文件夹管理、CSV 导出、用户管理<br>
+          · 登录信息保存在浏览器 sessionStorage，关闭标签页后需重新登录<br>
+          · 如遇数据异常，请点击 ↺ 刷新或联系管理员
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+function openUserManual(){ document.getElementById('userManualModal').style.display='flex'; }
+function closeUserManual(){ document.getElementById('userManualModal').style.display='none'; }
 </script>
 
 </body>
