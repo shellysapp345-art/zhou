@@ -3511,6 +3511,32 @@ load();
           <div class="manual-card-title">🚪 多设备使用</div>
           <div class="manual-card-desc">系统支持多设备同时在线，数据云端同步。登录信息保存在浏览器 sessionStorage，关闭标签页后需重新登录。</div>
         </div>
+        <div class="manual-card" style="border-color:rgba(74,158,173,.4);background:rgba(74,158,173,.06);">
+          <div class="manual-card-title" style="color:var(--cyan);">🧩 浏览器插件 · 一键导入抖音数据</div>
+          <div class="manual-card-desc">
+            配合团队专属浏览器插件，可直接从抖音页面抓取视频数据并导入看板，无需手动填写。<br><br>
+            <b>使用步骤：</b><br>
+            <span class="manual-badge cyan">1</span> 在浏览器中打开抖音，正常搜索话题或刷视频，进入目标视频页面<br>
+            <span class="manual-badge cyan">2</span> 点击浏览器右上角的<b>插件图标</b>，插件自动读取当前页面的视频数据<br>
+            <span class="manual-badge cyan">3</span> 插件同时<b>截图当前画面</b>作为视频封面<br>
+            <span class="manual-badge cyan">4</span> 点赞、收藏、评论、转发数据<b>自动填入</b>，确认后一键导入数据库<br>
+            <span class="manual-badge cyan">5</span> 回到看板，数据即刻在视频卡片上显示<br><br>
+            <b>适用场景：</b>批量录入竞品视频数据、快速追踪热门话题下的视频表现。
+          </div>
+        </div>
+        <div class="manual-card" style="border-color:rgba(201,146,26,.4);background:rgba(201,146,26,.06);">
+          <div class="manual-card-title" style="color:var(--gold);">🔄 批量更新功能</div>
+          <div class="manual-card-desc">
+            对已录入看板的视频，可使用批量更新功能一次性刷新所有数据指标，无需逐条手动编辑。<br><br>
+            <b>使用步骤：</b><br>
+            <span class="manual-badge gold">1</span> 在看板中选择需要更新的账号或文件夹<br>
+            <span class="manual-badge gold">2</span> 打开插件，插件会识别看板中已有的视频列表<br>
+            <span class="manual-badge gold">3</span> 点击插件中的<b>「批量更新」</b>按钮<br>
+            <span class="manual-badge gold">4</span> 插件自动逐条访问各视频页面，抓取最新的点赞、收藏、评论、转发数<br>
+            <span class="manual-badge gold">5</span> 全部抓取完成后，数据<b>同步写入数据库</b>，看板数据自动更新<br><br>
+            <b>注意：</b>批量更新期间请勿关闭浏览器或插件窗口，等待完成提示后再操作。
+          </div>
+        </div>
         <div class="manual-card" style="border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.06);">
           <div class="manual-card-title" style="color:#a78bfa;">💬 Chatbox 文案助手</div>
           <div class="manual-card-desc">
@@ -3625,6 +3651,33 @@ function switchManualTab(section, el){
           ③ 填入团队提供的 <b>API Key</b> 和 <b>API Host</b><br>
           ④ 点击 <b>Fetch</b> 获取模型列表，选择模型后即可使用<br>
           适用：视频文案撰写、标题优化、评论回复、推广话术生成等。
+        </div>
+      </div>
+
+      <div style="background:rgba(74,158,173,.06);border:1px solid rgba(74,158,173,.4);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:8px;">🧩 浏览器插件 · 一键导入抖音数据</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          配合浏览器插件，可直接从抖音页面抓取视频数据导入看板，无需手动填写数据。<br><br>
+          <b>使用步骤：</b><br>
+          <b>① </b>在浏览器打开抖音，搜索话题或刷视频，进入目标视频页面<br>
+          <b>② </b>点击浏览器右上角的<b>插件图标</b>，插件自动读取当前页面数据<br>
+          <b>③ </b>插件同时<b>截图当前画面</b>作为视频封面<br>
+          <b>④ </b>点赞、收藏、评论、转发数<b>自动填入</b>，确认后一键导入数据库<br>
+          <b>⑤ </b>回到看板，数据即刻在视频卡片上显示
+        </div>
+      </div>
+
+      <div style="background:rgba(201,146,26,.06);border:1px solid rgba(201,146,26,.4);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">🔄 批量更新功能</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">
+          对已录入看板的视频，可使用插件批量刷新所有数据，无需逐条手动编辑。<br><br>
+          <b>使用步骤：</b><br>
+          <b>① </b>在看板中选择需要更新的账号或文件夹<br>
+          <b>② </b>打开插件，插件识别看板中已有视频列表<br>
+          <b>③ </b>点击插件中的<b>「批量更新」</b>按钮<br>
+          <b>④ </b>插件自动逐条抓取最新点赞、收藏、评论、转发数<br>
+          <b>⑤ </b>抓取完成后数据<b>同步写入数据库</b>，看板自动更新<br><br>
+          <b style="color:var(--red)">注意：</b>批量更新期间请勿关闭浏览器或插件窗口，等完成提示后再操作。
         </div>
       </div>
 
