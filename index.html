@@ -435,7 +435,7 @@ body.dark-mode {
 <div class="main">
   <div class="topbar">
     <div class="tb-title" id="pageTitle">全部账号</div>
-    <input id="globalSearch" type="text" placeholder="🔍 搜索视频标题…" oninput="onGlobalSearch(this.value)"
+    <input id="globalSearch" type="text" placeholder="🔍 搜索标题 / 上传人…" oninput="onGlobalSearch(this.value)"
       style="flex:1;max-width:320px;border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;"
       onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"/>
     <button id="refreshBtn" onclick="doRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
@@ -829,7 +829,7 @@ body.dark-mode {
         💬 Chatbox 文案助手
       </a>
       <button onclick="openAddModal()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">＋ 添加视频</button>
-      <input id="userGlobalSearch" type="text" placeholder="🔍 搜索视频…" oninput="onUserGlobalSearch(this.value)"
+      <input id="userGlobalSearch" type="text" placeholder="🔍 搜索标题 / 上传人…" oninput="onUserGlobalSearch(this.value)"
         style="width:160px;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;background:var(--s1);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
       <button id="userRefreshBtn" onclick="doUserRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
@@ -1308,7 +1308,7 @@ function renderGrid(){
   // 搜索过滤
   if(S.searchQuery){
     const q=S.searchQuery.toLowerCase();
-    vids=vids.filter(v=>(v.title||'').toLowerCase().includes(q)||(v.url||'').toLowerCase().includes(q));
+    vids=vids.filter(v=>(v.title||'').toLowerCase().includes(q)||(v.url||'').toLowerCase().includes(q)||(v.uploadedBy||'').toLowerCase().includes(q));
   }
   const label=folder?folder.name:(acc?acc.name:'全部账号');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
@@ -3002,7 +3002,7 @@ function renderUserSearchResultsFiltered(folderId, q){
   // FIX: 不再临时修改 S.videos 全局状态（若中途出错会导致状态永久损坏）
   // 改为直接过滤后传入渲染，renderUserSearchResults 内部用局部变量
   if(!q){ renderUserSearchResults(folderId); return; }
-  const filtered = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q));
+  const filtered = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q)||(v.uploadedBy||'').toLowerCase().includes(q));
   const origVids = S.videos;
   S.videos = filtered;
   try { renderUserSearchResults(folderId); } finally { S.videos = origVids; }
