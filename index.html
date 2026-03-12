@@ -3916,9 +3916,16 @@ function renderOverviewPane(){
     </table>`;
 
   } else {
-    // ── 大卡片视图（每行3个，数字超大）──
+    // ── 大卡片视图（每行3个，数字超大，多彩主题）──
+    const _cardThemes = [
+      { grad:'linear-gradient(135deg,#c47c3a,#e8a95a)', border:'#c47c3a', div:'#f0dfc8', shadow:'rgba(196,124,58,.18)', emoji:'🌟', visitColor:'#b8872a', vidColor:'#c47c3a' },
+      { grad:'linear-gradient(135deg,#4a7c9e,#6aadd4)', border:'#4a7c9e', div:'#d0e8f4', shadow:'rgba(74,124,158,.18)', emoji:'🎯', visitColor:'#2a6a8e', vidColor:'#4a7c9e' },
+      { grad:'linear-gradient(135deg,#7a5c9e,#a882cc)', border:'#7a5c9e', div:'#e4d8f4', shadow:'rgba(122,92,158,.18)', emoji:'✨', visitColor:'#5a3c8e', vidColor:'#7a5c9e' },
+      { grad:'linear-gradient(135deg,#2e8b6e,#4abf96)', border:'#2e8b6e', div:'#ceeee4', shadow:'rgba(46,139,110,.18)', emoji:'🌿', visitColor:'#1e7a5e', vidColor:'#2e8b6e' },
+      { grad:'linear-gradient(135deg,#b85a6a,#e0849a)', border:'#b85a6a', div:'#f4d4dc', shadow:'rgba(184,90,106,.18)', emoji:'🌸', visitColor:'#9a3a52', vidColor:'#b85a6a' },
+    ];
     contentHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;">
-      ${accs.map(acc=>{
+      ${accs.map((acc,ci)=>{
         const av    = S.videos.filter(v=>v.accId===acc.id);
         const likes = av.reduce((s,v)=>s+v.likes,0);
         const coll  = av.reduce((s,v)=>s+v.coll,0);
@@ -3926,37 +3933,41 @@ function renderOverviewPane(){
         const share = av.reduce((s,v)=>s+v.share,0);
         const abn   = av.filter(v=>v.violation||v.promo).length;
         const visit = getVisitCount(acc.id);
-        return `<div style="background:#fff;border:2px solid #c47c3a;border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(196,124,58,.10);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 32px rgba(196,124,58,.20)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(196,124,58,.10)'">
-          <!-- 焦糖渐变头 -->
-          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="background:linear-gradient(135deg,#c47c3a,#e8a95a);padding:20px 22px 16px;cursor:pointer;">
-            <div style="font-size:18px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em;">${acc.name}</div>
-            ${acc.note?`<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.note}</div>`:'<div style="height:16px;"></div>'}
+        const th    = _cardThemes[(_ovPage * _OV_PAGE_SIZE + ci) % _cardThemes.length];
+        return `<div style="background:#fff;border:2px solid ${th.border};border-radius:18px;overflow:hidden;box-shadow:0 2px 14px ${th.shadow};transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 14px 36px ${th.shadow}'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 14px ${th.shadow}'">
+          <!-- 彩色渐变头 -->
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="background:${th.grad};padding:20px 22px 16px;cursor:pointer;position:relative;overflow:hidden;">
+            <!-- 装饰大表情 -->
+            <div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:42px;opacity:.18;pointer-events:none;user-select:none;">${th.emoji}</div>
+            <div style="position:absolute;right:48px;bottom:-8px;font-size:22px;opacity:.12;pointer-events:none;user-select:none;">${th.emoji}</div>
+            <div style="font-size:18px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em;position:relative;">${acc.name}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:4px;position:relative;">${acc.note||'&nbsp;'}</div>
           </div>
-          <!-- 到诊 + 视频 大数字 -->
-          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr;cursor:pointer;border-bottom:1.5px solid #f0e0cc;">
-            <div style="padding:18px 20px;border-right:1px solid #f0e0cc;">
-              <div style="font-size:36px;font-weight:900;color:#b8872a;font-family:var(--mono);line-height:1;">${visit||0}</div>
+          <!-- 到诊 + 视频 -->
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr;cursor:pointer;border-bottom:1.5px solid ${th.div};">
+            <div style="padding:18px 20px;border-right:1px solid ${th.div};">
+              <div style="font-size:36px;font-weight:900;color:${th.visitColor};font-family:var(--mono);line-height:1;">${visit||0}</div>
               <div style="font-size:11px;color:#b0a090;margin-top:6px;font-weight:600;letter-spacing:.04em;">🏥 到诊人数</div>
             </div>
             <div style="padding:18px 20px;">
-              <div style="font-size:36px;font-weight:900;color:#c47c3a;font-family:var(--mono);line-height:1;">${av.length}</div>
+              <div style="font-size:36px;font-weight:900;color:${th.vidColor};font-family:var(--mono);line-height:1;">${av.length}</div>
               <div style="font-size:11px;color:#b0a090;margin-top:6px;font-weight:600;letter-spacing:.04em;">🎬 视频数量</div>
             </div>
           </div>
           <!-- 4项指标 -->
-          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;cursor:pointer;border-bottom:1.5px solid #f0e0cc;">
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;cursor:pointer;border-bottom:1.5px solid ${th.div};">
             ${[{icon:'❤',label:'点赞',val:fmt(likes)},{icon:'⭐',label:'收藏',val:fmt(coll)},{icon:'💬',label:'评论',val:fmt(comm)},{icon:'↗',label:'转发',val:fmt(share)}].map((d,i)=>`
-            <div style="padding:14px 10px;text-align:center;${i<3?'border-right:1px solid #f0e0cc;':''}">
-              <div style="font-size:22px;font-weight:800;color:#1c1814;font-family:var(--mono);line-height:1;">${d.val}</div>
+            <div style="padding:14px 8px;text-align:center;${i<3?'border-right:1px solid '+th.div+';':''}">
+              <div style="font-size:20px;font-weight:800;color:#1c1814;font-family:var(--mono);line-height:1;">${d.val}</div>
               <div style="font-size:10px;color:#b0a090;margin-top:5px;">${d.icon} ${d.label}</div>
             </div>`).join('')}
           </div>
-          <!-- 异常区 -->
-          <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;min-height:54px;">
-            <span style="font-size:12px;color:#b0a090;font-weight:600;letter-spacing:.03em;">⚠ 异常视频</span>
+          <!-- 异常 -->
+          <div style="padding:13px 18px;display:flex;align-items:center;justify-content:space-between;min-height:52px;">
+            <span style="font-size:12px;color:#b0a090;font-weight:600;">⚠ 异常视频</span>
             ${abn>0
-              ?`<span onclick="event.stopPropagation();window._ovGoAbnormal('${acc.id}')" style="background:#fff0ee;border:1.5px solid #f5c0bb;border-radius:10px;padding:6px 20px;font-weight:900;color:#c44a3a;font-family:var(--mono);font-size:22px;cursor:pointer;transition:background .15s;letter-spacing:-.5px;" onmouseover="this.style.background='#ffd8d4'" onmouseout="this.style.background='#fff0ee'">${abn} <span style="font-size:13px;font-weight:600;">条 →</span></span>`
-              :`<span style="color:#3a8c5a;font-weight:700;font-size:15px;letter-spacing:.02em;">✓ 无异常</span>`}
+              ?`<span onclick="event.stopPropagation();window._ovGoAbnormal('${acc.id}')" style="background:#fff0ee;border:1.5px solid #f5c0bb;border-radius:10px;padding:5px 18px;font-weight:900;color:#c44a3a;font-family:var(--mono);font-size:20px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#ffd8d4'" onmouseout="this.style.background='#fff0ee'">${abn} <span style="font-size:12px;font-weight:600;">条 →</span></span>`
+              :`<span style="color:#3a8c5a;font-weight:700;font-size:14px;">✓ 无异常</span>`}
           </div>
         </div>`;
       }).join('')}
