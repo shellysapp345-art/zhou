@@ -9,372 +9,692 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>抖音看板</title>
 <style>
-:root{
-  --font:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
-  --mono:'DM Mono','SF Mono',monospace;
+:root {
+  --font: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'DM Mono', 'SF Mono', monospace;
 
-  --bg:#f7f5f2;
-  --s1:#f2ede8;--s2:#e8e1d8;--s3:#ddd4c8;--s4:#d0c6b8;
-  --border:#ddd5c8;--border2:#ccc0b0;
+  /* Claude.ai 风格：极简暖白 */
+  --bg: #f9f7f4;
+  --surface: #f2ede8;
+  --surface2: #e8e2db;
+  --surface3: #ddd6ce;
+  --border: rgba(0,0,0,.07);
+  --border-med: rgba(0,0,0,.11);
 
-  --text:#1a1614;--text2:#6b5f54;--text3:#a8998a;
+  --text: #1a1714;
+  --text2: #7a6f65;
+  --text3: #b0a497;
 
-  --accent:#b8732e;
-  --accent2:#d4944a;
+  --accent: #c07038;
+  --accent-bg: rgba(192,112,56,.1);
 
-  --red:#b8432e;
-  --cyan:#2e7f8e;
-  --gold:#a87828;
-  --green:#3d7a4e;
-  --orange:#b85820;
-  --purple:#6e4f8e;
+  --red: #c44040;
+  --red-bg: rgba(196,64,64,.08);
+  --gold: #b08030;
+  --green: #3d7a50;
+  --green-bg: rgba(61,122,80,.08);
+  --cyan: #2d7d8e;
+  --purple: #6d4fa0;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;}
 
-.wrap{display:flex;min-height:100vh;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── SIDEBAR ── */
-.sidebar{
-  width:220px;flex-shrink:0;
-  background:var(--s1);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;overflow-y:auto;
-  font-size:15px;
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
-.sb-brand{padding:16px 14px;border-bottom:1px solid var(--border);}
-.sb-logo{display:flex;align-items:center;gap:9px;}
-.sb-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden;}
-.sb-icon img{width:100%;height:100%;object-fit:cover;}
-.sb-name{font-size:0.929em;font-weight:600;color:var(--text);}
-.sb-sub{font-size:0.714em;color:var(--text3);margin-top:1px;}
 
-/* stats — compact one-liner */
-.sb-stats-bar{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:14px;font-size:0.786em;color:var(--text3);}
-.sb-stats-bar b{color:var(--text);font-weight:600;}
-.sb-stats,.sbs,.sbs-n,.sbs-v{display:none;}
-.c-red{color:var(--red);}.c-cyan{color:var(--cyan);}.c-gold{color:var(--gold);}.c-green{color:var(--green);}
+.wrap { display: flex; min-height: 100vh; }
 
-.sb-lbl{padding:14px 14px 5px;font-size:0.786em;color:var(--text3);font-weight:500;}
-.acc-list{padding:0 8px;flex:1;}
-.aci{
-  display:flex;align-items:center;gap:8px;
-  padding:6px 8px;border-radius:7px;
-  cursor:pointer;transition:background .12s;
-  position:relative;margin-bottom:1px;
+/* ─── SIDEBAR ─────────────────────────────── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
 }
-.aci:hover{background:var(--s3);}
-.aci.on{background:var(--s2);}
-.aci.on::before{
-  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
-  width:3px;height:14px;background:var(--accent);border-radius:0 2px 2px 0;
+
+/* Brand */
+.sb-brand {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
-.aci-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.714em;font-weight:700;flex-shrink:0;}
-.aci-info{flex:1;min-width:0;}
-.aci-name{font-size:0.72em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
-.aci-meta{font-size:0.65em;color:var(--text3);}
-.aci-badge{font-size:0.643em;background:rgba(217,119,87,.1);color:var(--accent);padding:1px 5px;border-radius:5px;flex-shrink:0;}
-.aci-actions{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .12s;}
-.aci:hover .aci-actions{opacity:1;}
-.aci-dm,.aci-del{
-  width:20px;height:20px;border-radius:5px;border:none;background:transparent;
-  color:var(--text3);font-size:0.75em;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:all .12s;text-decoration:none;
+.sb-logo { display: flex; align-items: center; gap: 9px; }
+.sb-icon {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0; overflow: hidden;
 }
-.aci-dm:hover{color:var(--cyan);background:var(--s3);}
-.aci-del:hover{color:var(--red);background:rgba(217,83,79,.06);}
+.sb-icon img { width: 100%; height: 100%; object-fit: cover; }
+.sb-name { font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.sb-sub { font-size: 9.5px; color: var(--text3); margin-top: 1px; letter-spacing: .04em; }
 
-.sb-add{
-  margin:3px 8px;display:flex;align-items:center;gap:7px;
-  padding:6px 8px;border-radius:7px;border:none;
-  color:var(--text3);font-size:0.8em;cursor:pointer;
-  transition:all .12s;background:transparent;
-  width:calc(100% - 16px);font-family:var(--font);
+/* Stats bar */
+.sb-stats-bar {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 10px;
+  font-size: 10.5px; color: var(--text3);
+  flex-shrink: 0;
 }
-.sb-add:hover{background:var(--s3);color:var(--text2);}
+.sb-stats-bar b { color: var(--text); font-weight: 600; }
+.sb-stats, .sbs, .sbs-n, .sbs-v { display: none; }
 
-.sb-foot{padding:10px 12px;border-top:1px solid var(--border);}
-.sb-exp{
-  width:100%;background:transparent;border:1px solid var(--border);
-  border-radius:7px;padding:7px 10px;color:var(--text2);
-  font-size:0.75em;cursor:pointer;font-family:var(--font);
-  transition:all .12s;margin-bottom:5px;text-align:left;display:block;
+/* Overview button */
+.sb-overview-btn {
+  margin: 8px 10px 4px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border-med);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s;
+  text-align: left;
+  font-family: var(--font);
+  flex-shrink: 0;
 }
-.sb-exp:hover{background:var(--s2);color:var(--text);}
-.sb-live{display:flex;align-items:center;gap:5px;font-size:0.714em;color:var(--text3);margin-top:6px;}
-.sb-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.sb-overview-btn:hover { background: var(--surface3); }
 
-/* ── MAIN ── */
-.main{flex:1;min-width:0;display:flex;flex-direction:column;}
-.topbar{
-  background:var(--bg);border-bottom:1px solid var(--border);
-  padding:10px 20px;display:flex;align-items:center;gap:10px;
-  position:sticky;top:0;z-index:50;
+/* Section label */
+.sb-lbl {
+  padding: 10px 14px 3px;
+  font-size: 9.5px;
+  color: var(--text3);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
-.tb-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;min-width:0;}
-.tb-title em{font-style:normal;color:var(--text3);font-size:12px;font-weight:400;margin-left:6px;}
-.tb-right{display:flex;gap:6px;align-items:center;flex-shrink:0;}
 
-.btn{border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:500;cursor:pointer;transition:all .12s;font-family:var(--font);white-space:nowrap;}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover{opacity:.88;}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
-.btn-ghost:hover{background:var(--s2);color:var(--text);}
-
-.fchip{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all .12s;font-family:var(--font);}
-.fchip.on{background:var(--text);border-color:var(--text);color:#fff;}
-.fchip:hover:not(.on){background:var(--s2);}
-
-.vbtn{width:27px;height:27px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s;}
-.vbtn.on{background:var(--s2);border-color:var(--border2);color:var(--text);}
-
-/* ── GRID ── */
-.grid-wrap{padding:18px 20px 48px;flex:1;display:flex;flex-direction:column;}
-#overviewPane{flex:1;min-height:0;overflow:hidden;padding:0;margin:-18px -20px -48px;}
-.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
-.vgrid.compact{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
-.vgrid.list{grid-template-columns:1fr;}
-
-/* ── CARD ── */
-.vcard{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:10px;overflow:hidden;
-  transition:box-shadow .18s,border-color .18s;
-  animation:cardIn .22s ease both;
+/* Account list */
+.acc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 8px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface3) transparent;
 }
-.vcard:hover{box-shadow:0 2px 12px rgba(0,0,0,.07);border-color:var(--border2);}
-@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.acc-list::-webkit-scrollbar { width: 4px; }
+.acc-list::-webkit-scrollbar-track { background: transparent; }
+.acc-list::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
 
-.cthumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--s2);}
-.cthumb-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s;}
-.vcard:hover .cthumb-img{transform:scale(1.03);}
-.cthumb-fallback{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:4px;background:var(--s2);
+/* Account item */
+.aci {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s;
+  position: relative;
+  margin-bottom: 1px;
+  user-select: none;
 }
-.cthumb-fallback-url{font-size:9px;color:var(--text3);max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cthumb-ov{position:absolute;inset:0;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s;}
-.vcard:hover .cthumb-ov{opacity:1;}
-.play-btn{width:36px;height:36px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;}
-.ctags{position:absolute;top:6px;left:6px;display:flex;gap:3px;}
-.ctag{padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;}
-.ctag.v{background:rgba(217,83,79,.85);color:#fff;}
-.ctag.p{background:rgba(201,146,26,.85);color:#fff;}
-.ctag.ok{background:rgba(74,158,106,.85);color:#fff;}
-.ctag.u{background:rgba(60,120,200,.82);color:#fff;}
-.cdur{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-family:var(--mono);}
+.aci:hover { background: var(--surface2); }
+.aci.on { background: var(--surface2); }
+.aci.on::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 2.5px; height: 16px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.aci-av {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.aci-info { flex: 1; min-width: 0; }
+.aci-name {
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text);
+}
+.aci-meta { font-size: 10px; color: var(--text3); }
+.aci-badge {
+  font-size: 10px;
+  background: var(--red-bg); color: var(--red);
+  padding: 1px 5px; border-radius: 4px; flex-shrink: 0; font-weight: 600;
+}
+.aci-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .12s; }
+.aci:hover .aci-actions { opacity: 1; }
+.aci-dm, .aci-del {
+  width: 20px; height: 20px; border-radius: 5px; border: none;
+  background: transparent; color: var(--text3); font-size: 11px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .12s; text-decoration: none;
+}
+.aci-dm:hover { color: var(--cyan); background: var(--surface3); }
+.aci-del:hover { color: var(--red); background: var(--red-bg); }
 
-.cbody{padding:10px 11px 0;}
-.cmeta{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
-.cdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.cacc{font-size:10px;color:var(--text2);}
-.cdt{margin-left:auto;font-size:10px;color:var(--text3);}
-.ctitle{font-size:12px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:9px;color:var(--text);}
+/* Folder item */
+.folder-item { border-radius: 8px; }
 
-.cstats{display:flex;border-top:1px solid var(--border);margin:0 -11px;padding:7px 11px 9px;}
-.cs{flex:1;text-align:center;}
-.cs+.cs{border-left:1px solid var(--border);}
-.cs-v{font-size:12px;font-weight:600;font-family:var(--mono);line-height:1.3;color:var(--text);}
-.cs-v.lk{color:var(--red);}.cs-v.cm{color:var(--cyan);}.cs-v.cl{color:var(--gold);}.cs-v.pl{color:var(--purple);}
-.cs-l{font-size:9px;color:var(--text3);}
+/* Add buttons */
+.sb-add {
+  margin: 1px 8px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: 7px; border: none;
+  color: var(--text3); font-size: 11.5px; cursor: pointer;
+  transition: all .12s; background: transparent;
+  width: calc(100% - 16px); font-family: var(--font);
+}
+.sb-add:hover { background: var(--surface2); color: var(--text2); }
 
-.cfoot{padding:7px 11px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.cchips{display:flex;gap:3px;flex-wrap:wrap;}
-.cc{padding:1px 6px;border-radius:5px;font-size:9px;font-weight:500;}
-.cc.ok{background:rgba(74,158,106,.08);color:var(--green);border:1px solid rgba(74,158,106,.15);}
-.cc.err{background:rgba(217,83,79,.08);color:var(--red);border:1px solid rgba(217,83,79,.15);}
-.cc.prm{background:rgba(201,146,26,.08);color:var(--gold);border:1px solid rgba(201,146,26,.15);}
-.cbtns{display:flex;gap:3px;}
-.cib{width:22px;height:22px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--text3);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
-.cib:hover{border-color:var(--border);color:var(--text2);}
-.cib.del:hover{color:var(--red);}
+/* Footer */
+.sb-foot {
+  border-top: 1px solid var(--border);
+  padding: 10px 10px 12px;
+  flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sb-exp {
+  width: 100%; background: transparent; border: 1px solid var(--border-med);
+  border-radius: 7px; padding: 6px 10px; color: var(--text2);
+  font-size: 11px; cursor: pointer; font-family: var(--font);
+  transition: all .12s; text-align: left; display: block;
+}
+.sb-exp:hover { background: var(--surface2); color: var(--text); }
+.sb-live {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--text3); margin-top: 3px;
+  padding-left: 2px;
+}
+.sb-live::before {
+  content: ''; width: 5px; height: 5px;
+  background: var(--green); border-radius: 50%;
+  animation: blink 2.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+/* ─── RESIZER ──────────────────────────────── */
+.resizer {
+  width: 1px; flex-shrink: 0; cursor: col-resize;
+  background: var(--border); position: relative; z-index: 10;
+  transition: background .15s;
+}
+.resizer:hover, .resizer.dragging { background: var(--accent); width: 2px; }
+.resizer::after { display: none; }
+
+/* ─── MAIN ─────────────────────────────────── */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
+
+/* Topbar */
+.topbar {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 50px;
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 50;
+  flex-shrink: 0;
+}
+.tb-title {
+  font-size: 13.5px; font-weight: 700; color: var(--text);
+  white-space: nowrap; min-width: 0;
+}
+.tb-title em {
+  font-style: normal; color: var(--text3);
+  font-size: 11px; font-weight: 400; margin-left: 5px;
+}
+.tb-right { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+
+/* Buttons */
+.btn {
+  border: none; border-radius: 8px; padding: 6px 14px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all .12s; font-family: var(--font); white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; border: 1px solid var(--border-med); color: var(--text2); }
+.btn-ghost:hover { background: var(--surface); color: var(--text); }
+
+/* Filter chips */
+.fchip {
+  padding: 4px 11px; border-radius: 20px;
+  border: 1px solid var(--border-med); background: transparent;
+  color: var(--text2); font-size: 11px; cursor: pointer;
+  transition: all .12s; font-family: var(--font);
+}
+.fchip.on { background: var(--text); border-color: var(--text); color: #fff; }
+.fchip:hover:not(.on) { background: var(--surface); }
+
+/* View buttons */
+.vbtn {
+  width: 28px; height: 28px; border-radius: 7px;
+  border: 1px solid var(--border-med); background: transparent;
+  color: var(--text2); cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.vbtn.on { background: var(--surface); border-color: var(--border-med); color: var(--text); }
+.vbtn:hover { background: var(--surface); }
+
+/* ─── GRID ──────────────────────────────────── */
+.grid-wrap {
+  padding: 20px 22px 60px;
+  flex: 1;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+#overviewPane {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 0; margin: -20px -22px -60px;
+}
+.vgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+.vgrid.compact { grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 9px; }
+.vgrid.list { grid-template-columns: 1fr; }
+
+/* ─── CARD ──────────────────────────────────── */
+.vcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  transition: box-shadow .18s, border-color .18s;
+  animation: cardIn .2s ease both;
+  display: flex; flex-direction: column;
+}
+.vcard:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,.07);
+  border-color: var(--border-med);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cthumb {
+  position: relative; aspect-ratio: 16/9;
+  overflow: hidden; background: var(--surface2); flex-shrink: 0;
+}
+.cthumb-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
+.vcard:hover .cthumb-img { transform: scale(1.03); }
+.cthumb-fallback {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; background: var(--surface2);
+}
+.cthumb-fallback-url { font-size: 9px; color: var(--text3); max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cthumb-ov {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.24);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .18s;
+}
+.vcard:hover .cthumb-ov { opacity: 1; }
+.play-btn {
+  width: 34px; height: 34px; background: rgba(255,255,255,.92);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.ctags { position: absolute; top: 6px; left: 6px; display: flex; gap: 3px; }
+.ctag { padding: 2px 6px; border-radius: 5px; font-size: 9px; font-weight: 600; }
+.ctag.v { background: rgba(196,64,64,.82); color: #fff; }
+.ctag.p { background: rgba(176,128,48,.85); color: #fff; }
+.ctag.ok { background: rgba(61,122,80,.82); color: #fff; }
+.ctag.u { background: rgba(60,110,200,.82); color: #fff; }
+.cdur {
+  position: absolute; bottom: 6px; right: 6px;
+  background: rgba(0,0,0,.58); color: #fff;
+  padding: 1px 5px; border-radius: 3px; font-size: 9px; font-family: var(--mono);
+}
+
+.cbody { padding: 10px 12px 0; flex: 1; display: flex; flex-direction: column; }
+.cmeta { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.cdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.cacc { font-size: 10.5px; color: var(--text2); }
+.cdt { margin-left: auto; font-size: 10px; color: var(--text3); }
+.ctitle {
+  font-size: 12.5px; line-height: 1.5; font-weight: 500;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 10px; color: var(--text); flex: 1;
+}
+
+.cstats {
+  display: flex; border-top: 1px solid var(--border);
+  margin: 0 -12px; padding: 7px 12px 10px;
+}
+.cs { flex: 1; text-align: center; }
+.cs + .cs { border-left: 1px solid var(--border); }
+.cs-v {
+  font-size: 12.5px; font-weight: 700;
+  font-family: var(--mono); line-height: 1.3; color: var(--text);
+}
+.cs-v.lk { color: var(--red); }
+.cs-v.cm { color: var(--cyan); }
+.cs-v.cl { color: var(--gold); }
+.cs-v.pl { color: var(--purple); }
+.cs-l { font-size: 9px; color: var(--text3); margin-top: 1px; }
+
+.cfoot {
+  padding: 7px 12px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cchips { display: flex; gap: 3px; flex-wrap: wrap; }
+.cc { padding: 1px 6px; border-radius: 5px; font-size: 9px; font-weight: 500; }
+.cc.ok  { background: var(--green-bg); color: var(--green); border: 1px solid rgba(61,122,80,.15); }
+.cc.err { background: var(--red-bg);   color: var(--red);   border: 1px solid rgba(196,64,64,.15); }
+.cc.prm { background: rgba(176,128,48,.08); color: var(--gold); border: 1px solid rgba(176,128,48,.18); }
+.cbtns { display: flex; gap: 3px; }
+.cib {
+  width: 22px; height: 22px; border-radius: 5px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--text3); font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.cib:hover { border-color: var(--border-med); color: var(--text2); }
+.cib.del:hover { color: var(--red); background: var(--red-bg); }
 
 /* list view */
-.vgrid.list .vcard{display:grid;grid-template-columns:170px 1fr;}
-.vgrid.list .cthumb{aspect-ratio:auto;height:100%;}
+.vgrid.list .vcard { display: grid; grid-template-columns: 160px 1fr; }
+.vgrid.list .cthumb { aspect-ratio: auto; height: 100%; }
 
-.empty{grid-column:1/-1;text-align:center;padding:80px 20px;}
-.empty-icon{font-size:36px;opacity:.2;margin-bottom:12px;}
-.empty-t{font-size:14px;color:var(--text2);margin-bottom:5px;}
-.empty-s{font-size:12px;color:var(--text3);}
+/* empty state */
+.empty { grid-column: 1/-1; text-align: center; padding: 80px 20px; }
+.empty-icon { font-size: 32px; opacity: .18; margin-bottom: 12px; }
+.empty-t { font-size: 14px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+.empty-s { font-size: 12px; color: var(--text3); }
 
-/* ── MODAL ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-.modal-bg.open{display:flex;}
-.modal-split{
-  display:flex;background:var(--s1);
-  border:1px solid var(--border);border-radius:14px;
-  width:min(92vw,900px);height:min(88vh,660px);
-  overflow:hidden;animation:mIn .18s ease;
-  box-shadow:0 8px 40px rgba(0,0,0,.1);
+/* ─── MODAL ─────────────────────────────────── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.22); z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
 }
-@keyframes mIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
-.msplit-left{width:350px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
-.msplit-right{flex:1;position:relative;background:var(--s1);display:flex;align-items:stretch;justify-content:center;min-width:0;overflow:hidden;border-radius:0 14px 14px 0;}
-.prev-card{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:24px;gap:12px;}
-.prev-thumb-wrap{width:100%;max-width:260px;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:var(--s2);position:relative;box-shadow:0 4px 20px rgba(0,0,0,.1);}
-.prev-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
-.prev-thumb-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--s2);}
-.prev-thumb-placeholder span{font-size:32px;opacity:.2;}
-
-.mhead{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);}
-.mhead-t{font-size:15px;font-weight:600;}
-.mclose{background:none;border:none;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:15px;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all .12s;}
-.mclose:hover{background:var(--s2);color:var(--text);}
-.mform{padding:16px 20px;display:flex;flex-direction:column;gap:12px;flex:1;}
-.fg{display:flex;flex-direction:column;gap:4px;}
-.fg label{font-size:11px;font-weight:500;color:var(--text2);}
-.fg input,.fg select,.fg textarea{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:7px;padding:8px 11px;color:var(--text);
-  font-size:13px;font-family:var(--font);outline:none;transition:border-color .12s;
+.modal-bg.open { display: flex; }
+.modal-split {
+  display: flex; background: var(--surface);
+  border: 1px solid var(--border-med); border-radius: 16px;
+  width: min(92vw, 900px); height: min(88vh, 660px);
+  overflow: hidden; animation: mIn .18s ease;
+  box-shadow: 0 12px 48px rgba(0,0,0,.12);
 }
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);}
-.fg select option{background:var(--s1);color:var(--text);}
-.fg textarea{resize:vertical;height:80px;font-size:13px;line-height:1.6;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-.url-row{display:flex;gap:6px;}
-.url-row input{flex:1;}
-.btn-preview{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:0 11px;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .12s;}
-.btn-preview:hover{background:var(--s3);color:var(--text);}
-
-.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.dg-item{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:6px;transition:border-color .12s;}
-.dg-item:focus-within{border-color:var(--accent);}
-.dg-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center;}
-.dg-icon.lk{color:var(--red);}.dg-icon.ct{color:var(--cyan);}.dg-icon.cl{color:var(--gold);}.dg-icon.pl{color:var(--purple);}
-.dg-input{background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-weight:600;font-family:var(--mono);width:100%;min-width:0;}
-.dg-input::placeholder{color:var(--text3);font-size:11px;font-weight:400;}
-.dg-label{font-size:9px;color:var(--text3);}
-.dg-hint{font-size:10px;color:var(--text3);text-align:center;padding:2px 0;}
-
-.stogs{display:flex;gap:6px;}
-.stog{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px;border-radius:7px;border:1px solid var(--border);cursor:pointer;font-size:12px;transition:all .12s;user-select:none;}
-.stog.on-v{border-color:rgba(217,83,79,.3);background:rgba(217,83,79,.06);color:var(--red);}
-.stog.on-p{border-color:rgba(201,146,26,.3);background:rgba(201,146,26,.06);color:var(--gold);}
-
-.div-line{height:1px;background:var(--border);}
-.mfoot{display:flex;gap:7px;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--border);}
-
-.preview-ph{text-align:center;padding:28px 16px;color:var(--text3);}
-.preview-ph-icon{font-size:36px;opacity:.2;margin-bottom:10px;}
-.preview-ph-t{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:5px;}
-.preview-ph-s{font-size:11px;line-height:1.7;}
-.preview-open-btn{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 10px;color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .12s;text-decoration:none;display:none;}
-.preview-open-btn:hover{background:rgba(0,0,0,.7);}
-
-.modal-sm{background:var(--s1);border:1px solid var(--border);border-radius:12px;width:min(92vw,360px);animation:mIn .18s ease;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);}
-.cpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
-.cpick-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s;}
-.cpick-dot.on{border-color:var(--text);transform:scale(1.15);}
-
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--s1);border:1px solid var(--border2);border-radius:9px;padding:9px 14px;font-size:12px;z-index:500;transform:translateY(30px);opacity:0;transition:all .22s;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.07);}
-.toast.show{transform:translateY(0);opacity:1;}
-.toast.ok{border-left:3px solid var(--green);}
-.toast.err{border-left:3px solid var(--red);}
-
-/* ── RESIZER ── */
-.resizer{
-  width:4px;flex-shrink:0;cursor:col-resize;
-  background:transparent;
-  position:relative;z-index:10;
-  transition:background .15s;
+@keyframes mIn { from { opacity:0; transform: scale(.97); } to { opacity:1; transform: scale(1); } }
+.msplit-left {
+  width: 340px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto;
 }
-.resizer:hover,.resizer.dragging{background:var(--accent);}
-.resizer::after{
-  content:'';position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:12px;height:32px;
-  border-radius:4px;
-  background:var(--border2);
-  transition:background .15s;
+.msplit-right {
+  flex: 1; position: relative; background: var(--surface);
+  display: flex; align-items: stretch; justify-content: center;
+  min-width: 0; overflow: hidden; border-radius: 0 16px 16px 0;
 }
-.resizer:hover::after,.resizer.dragging::after{background:var(--accent);}
+.prev-card {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; width: 100%; padding: 24px; gap: 12px;
+}
+.prev-thumb-wrap {
+  width: 100%; max-width: 250px; aspect-ratio: 3/4;
+  border-radius: 12px; overflow: hidden; background: var(--surface2);
+  position: relative; box-shadow: 0 6px 24px rgba(0,0,0,.1);
+}
+.prev-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.prev-thumb-placeholder {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; background: var(--surface2);
+}
+.prev-thumb-placeholder span { font-size: 30px; opacity: .18; }
 
-@media(max-width:820px){
-  .sidebar{display:none;}
-  .resizer{display:none;}
-  .topbar,.grid-wrap{padding-left:14px;padding-right:14px;}
-  .modal-split{flex-direction:column;height:95vh;}
-  .msplit-left{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:60vh;}
-  .msplit-right{min-height:200px;}
+.mhead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
+}
+.mhead-t { font-size: 14px; font-weight: 700; }
+.mclose {
+  background: none; border: none; width: 26px; height: 26px;
+  border-radius: 7px; cursor: pointer; font-size: 15px; color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.mclose:hover { background: var(--surface2); color: var(--text); }
+.mform { padding: 14px 20px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+.fg { display: flex; flex-direction: column; gap: 4px; }
+.fg label { font-size: 11px; font-weight: 600; color: var(--text2); }
+.fg input, .fg select, .fg textarea {
+  background: var(--bg); border: 1px solid var(--border-med);
+  border-radius: 8px; padding: 8px 11px; color: var(--text);
+  font-size: 13px; font-family: var(--font); outline: none;
+  transition: border-color .12s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--accent); }
+.fg select option { background: var(--surface); color: var(--text); }
+.fg textarea { resize: vertical; height: 78px; font-size: 13px; line-height: 1.6; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.url-row { display: flex; gap: 6px; }
+.url-row input { flex: 1; }
+.btn-preview {
+  background: var(--surface2); border: 1px solid var(--border-med);
+  border-radius: 8px; padding: 0 11px; color: var(--text2);
+  font-size: 12px; cursor: pointer; font-family: var(--font);
+  white-space: nowrap; transition: all .12s;
+}
+.btn-preview:hover { background: var(--surface3); color: var(--text); }
+
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.dg-item {
+  background: var(--bg); border: 1px solid var(--border-med);
+  border-radius: 9px; padding: 8px 10px;
+  display: flex; align-items: center; gap: 6px; transition: border-color .12s;
+}
+.dg-item:focus-within { border-color: var(--accent); }
+.dg-icon { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
+.dg-icon.lk { color: var(--red); }
+.dg-icon.ct { color: var(--cyan); }
+.dg-icon.cl { color: var(--gold); }
+.dg-icon.pl { color: var(--purple); }
+.dg-input {
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-size: 15px; font-weight: 700;
+  font-family: var(--mono); width: 100%; min-width: 0;
+}
+.dg-input::placeholder { color: var(--text3); font-size: 11px; font-weight: 400; }
+.dg-label { font-size: 9px; color: var(--text3); }
+.dg-hint { font-size: 10px; color: var(--text3); text-align: center; padding: 2px 0; }
+
+.stogs { display: flex; gap: 6px; }
+.stog {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 5px; padding: 7px; border-radius: 8px; border: 1px solid var(--border-med);
+  cursor: pointer; font-size: 12px; transition: all .12s; user-select: none;
+}
+.stog.on-v { border-color: rgba(196,64,64,.3); background: var(--red-bg); color: var(--red); }
+.stog.on-p { border-color: rgba(176,128,48,.3); background: rgba(176,128,48,.08); color: var(--gold); }
+
+.div-line { height: 1px; background: var(--border); }
+.mfoot {
+  display: flex; gap: 7px; justify-content: flex-end;
+  padding: 11px 20px; border-top: 1px solid var(--border);
 }
 
-/* ── CONTEXT MENU ── */
-.ctx-menu{position:fixed;z-index:999;background:var(--s1);border:1px solid var(--border2);border-radius:9px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:140px;display:none;animation:ctxIn .12s ease;}
-@keyframes ctxIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
-@keyframes spin{to{transform:rotate(360deg);}}
-.ctx-menu.show{display:block;}
-.ctx-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:background .1s;color:var(--text);}
-.ctx-item:hover{background:var(--s2);}
-.ctx-item.danger{color:var(--red);}
-.ctx-item.danger:hover{background:rgba(217,83,79,.06);}
-.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+.preview-ph { text-align: center; padding: 28px 16px; color: var(--text3); }
+.preview-ph-icon { font-size: 32px; opacity: .18; margin-bottom: 10px; }
+.preview-ph-t { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+.preview-ph-s { font-size: 11px; line-height: 1.7; }
+.preview-open-btn {
+  position: absolute; bottom: 12px; right: 12px;
+  background: rgba(0,0,0,.48); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 7px; padding: 5px 10px;
+  color: rgba(255,255,255,.75); font-size: 11px; cursor: pointer;
+  font-family: var(--font); transition: all .12s; text-decoration: none; display: none;
+}
+.preview-open-btn:hover { background: rgba(0,0,0,.68); }
 
-/* ── LOGIN ── */
-.login-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
-.login-box{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:min(92vw,320px);display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,.06);}
-.login-logo{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--s2);}
-.login-logo img{width:100%;height:100%;object-fit:cover;}
-.login-title{font-size:16px;font-weight:600;color:var(--text);}
-.login-sub{font-size:11px;color:var(--text3);}
-.login-fields{width:100%;display:flex;flex-direction:column;gap:8px;}
-.login-input{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color .12s;}
-.login-input:focus{border-color:var(--accent);}
-.login-btn{width:100%;background:var(--accent);border:none;border-radius:8px;padding:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity .12s;}
-.login-btn:hover{opacity:.88;}
-.login-err{font-size:12px;color:var(--red);background:rgba(217,83,79,.06);border:1px solid rgba(217,83,79,.15);border-radius:7px;padding:7px 12px;width:100%;text-align:center;display:none;}
-.login-err.show{display:block;}
+.modal-sm {
+  background: var(--surface); border: 1px solid var(--border-med);
+  border-radius: 14px; width: min(92vw, 360px);
+  animation: mIn .18s ease; overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.1);
+}
+.cpick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.cpick-dot {
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: all .12s;
+}
+.cpick-dot.on { border-color: var(--text); transform: scale(1.15); }
 
-/* ── DARK MODE ── */
+/* ─── TOAST ─────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--surface); border: 1px solid var(--border-med);
+  border-radius: 10px; padding: 9px 14px;
+  font-size: 12px; z-index: 500;
+  transform: translateY(24px); opacity: 0;
+  transition: all .2s; pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok  { border-left: 3px solid var(--green); }
+.toast.err { border-left: 3px solid var(--red); }
+
+/* ─── CONTEXT MENU ───────────────────────────── */
+.ctx-menu {
+  position: fixed; z-index: 999;
+  background: var(--surface); border: 1px solid var(--border-med);
+  border-radius: 10px; padding: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.1);
+  min-width: 140px; display: none;
+  animation: ctxIn .12s ease;
+}
+@keyframes ctxIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ctx-menu.show { display: block; }
+.ctx-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 7px;
+  font-size: 12px; cursor: pointer;
+  transition: background .1s; color: var(--text);
+}
+.ctx-item:hover { background: var(--surface2); }
+.ctx-item.danger { color: var(--red); }
+.ctx-item.danger:hover { background: var(--red-bg); }
+.ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
+
+/* ─── LOGIN ─────────────────────────────────── */
+.login-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border-med);
+  border-radius: 16px; padding: 32px 28px;
+  width: min(92vw, 320px);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.07);
+}
+.login-logo { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: var(--surface2); }
+.login-logo img { width: 100%; height: 100%; object-fit: cover; }
+.login-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.login-sub { font-size: 11px; color: var(--text3); }
+.login-fields { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.login-input {
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border-med); border-radius: 9px;
+  padding: 9px 12px; color: var(--text);
+  font-size: 13px; font-family: var(--font); outline: none;
+  transition: border-color .12s;
+}
+.login-input:focus { border-color: var(--accent); }
+.login-btn {
+  width: 100%; background: var(--accent); border: none;
+  border-radius: 9px; padding: 10px; color: #fff;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  font-family: var(--font); transition: opacity .12s;
+}
+.login-btn:hover { opacity: .88; }
+.login-err {
+  font-size: 12px; color: var(--red);
+  background: var(--red-bg); border: 1px solid rgba(196,64,64,.18);
+  border-radius: 8px; padding: 7px 12px;
+  width: 100%; text-align: center; display: none;
+}
+.login-err.show { display: block; }
+
+/* ─── DARK MODE ─────────────────────────────── */
 body.dark-mode {
-  --bg:#181410;
-  --s1:#201c18;--s2:#282320;--s3:#302924;--s4:#3a332c;
-  --border:#382f28;--border2:#4a4038;
-  --text:#e8e0d8;--text2:#907f70;--text3:#564e46;
-  --accent:#c8884a;--accent2:#dea060;
-  --red:#c85040;--cyan:#3a8c9c;--gold:#b88830;
-  --green:#3a8c58;--orange:#c8683a;--purple:#7a5a9e;
+  --bg: #1a1714;
+  --surface: #201d19; --surface2: #272320; --surface3: #302c28;
+  --border: rgba(255,255,255,.06); --border-med: rgba(255,255,255,.1);
+  --text: #e8e2d8; --text2: #9a8e82; --text3: #5e544c;
+  --accent: #d4884a;
+  --accent-bg: rgba(212,136,74,.1);
+  --red: #d46060; --red-bg: rgba(212,96,96,.08);
+  --gold: #c09040; --green: #4a9060; --green-bg: rgba(74,144,96,.08);
+  --cyan: #3a9aac; --purple: #8060b8;
 }
 
-/* ── MANUAL MODAL ── */
-#manualModal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center;}
-#manualModal.open{display:flex;}
-.manual-box{background:var(--bg);border:1px solid var(--border2);border-radius:18px;width:680px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden;}
-.manual-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.manual-head-title{font-size:16px;font-weight:700;color:var(--text);}
-.manual-head-sub{font-size:11px;color:var(--text3);margin-top:2px;}
-.manual-close{width:30px;height:30px;border:none;background:var(--s3);border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
-.manual-close:hover{background:var(--s4);}
-.manual-body{overflow-y:auto;flex:1;padding:0;}
-.manual-nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--s1);flex-shrink:0;overflow-x:auto;}
-.manual-tab{padding:10px 18px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;}
-.manual-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.manual-tab:hover{color:var(--text);}
-.manual-section{display:none;padding:20px 24px;}
-.manual-section.active{display:block;}
-.manual-section h3{font-size:13px;font-weight:700;color:var(--text);margin:0 0 10px;display:flex;align-items:center;gap:6px;}
-.manual-section h3 span{font-size:16px;}
-.manual-section p,.manual-item-desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;}
-.manual-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
-.manual-card-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
-.manual-card-desc{font-size:11px;color:var(--text2);line-height:1.6;}
-.manual-badge{display:inline-block;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-right:4px;}
-.manual-badge.green{background:var(--green);}
-.manual-badge.cyan{background:var(--cyan);}
-.manual-badge.purple{background:var(--purple);}
-.manual-badge.gold{background:var(--gold);}
-.manual-step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
-.manual-step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.manual-step-content{font-size:12px;color:var(--text2);line-height:1.6;}
-.manual-step-content b{color:var(--text);}
-.manual-shortcut{display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--mono);color:var(--text);}
+/* ─── MANUAL MODAL ──────────────────────────── */
+#manualModal { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9999; display: none; align-items: center; justify-content: center; }
+#manualModal.open { display: flex; }
+.manual-box { background: var(--bg); border: 1px solid var(--border-med); border-radius: 18px; width: 680px; max-width: 96vw; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.18); overflow: hidden; }
+.manual-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.manual-head-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.manual-head-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.manual-close { width: 28px; height: 28px; border: none; background: var(--surface2); border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--text2); display: flex; align-items: center; justify-content: center; }
+.manual-close:hover { background: var(--surface3); }
+.manual-body { overflow-y: auto; flex: 1; padding: 0; }
+.manual-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; overflow-x: auto; }
+.manual-tab { padding: 10px 18px; font-size: 12px; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s; }
+.manual-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.manual-tab:hover { color: var(--text); }
+.manual-section { display: none; padding: 20px 24px; }
+.manual-section.active { display: block; }
+.manual-section h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+.manual-section h3 span { font-size: 15px; }
+.manual-section p, .manual-item-desc { font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+.manual-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.manual-card-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.manual-card-desc { font-size: 11px; color: var(--text2); line-height: 1.6; }
+.manual-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 4px; }
+.manual-badge.green { background: var(--green); }
+.manual-badge.cyan { background: var(--cyan); }
+.manual-badge.purple { background: var(--purple); }
+.manual-badge.gold { background: var(--gold); }
+.manual-step { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+.manual-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.manual-step-content { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.manual-step-content b { color: var(--text); }
+.manual-shortcut { display: inline-flex; align-items: center; gap: 4px; background: var(--surface2); border: 1px solid var(--border-med); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-family: var(--mono); color: var(--text); }
 
+/* ─── RESPONSIVE ────────────────────────────── */
+@media (max-width: 820px) {
+  .sidebar { display: none; }
+  .resizer { display: none; }
+  .topbar, .grid-wrap { padding-left: 14px; padding-right: 14px; }
+  .modal-split { flex-direction: column; height: 95vh; }
+  .msplit-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 60vh; }
+  .msplit-right { min-height: 200px; }
+}
+
+.c-red{color:var(--red);}.c-cyan{color:var(--cyan);}.c-gold{color:var(--gold);}.c-green{color:var(--green);}
 </style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
@@ -412,43 +732,34 @@ body.dark-mode {
         <div class="sb-name">抖音看板【管理版】</div>
         <div class="sb-sub">MULTI-ACCOUNT PRO</div>
       </div>
-      <div style="display:flex;gap:5px;flex-shrink:0;">
+      <div style="display:flex;gap:4px;flex-shrink:0;">
         <button id="btnManual" onclick="openManual()" title="使用手册"
-          style="width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
-          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">📖</button>
+          style="width:26px;height:26px;border:1px solid var(--border-med);border-radius:7px;background:transparent;color:var(--text3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
+          onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">📖</button>
         <button id="btnDark" onclick="toggleDark()" title="切换深色/浅色模式"
-          style="width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
-          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">🌙</button>
+          style="width:26px;height:26px;border:1px solid var(--border-med);border-radius:7px;background:transparent;color:var(--text3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
+          onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">🌙</button>
       </div>
     </div>
   </div>
-  <div style="padding:8px 14px;display:flex;gap:12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);flex-wrap:wrap;">
-    <span>📹 <b id="sb-total" style="color:var(--text);">0</b></span>
+  <div class="sb-stats-bar">
+    <span>📹 <b id="sb-total">0</b></span>
     <span>⚠ <b id="sb-viol" style="color:var(--gold);">0</b></span>
     <span>❤ <b id="sb-likes" style="color:var(--cyan);">0</b></span>
     <span>📢 <b id="sb-promo" style="color:var(--green);">0</b></span>
   </div>
-  <div style="padding:6px 10px 4px;">
-    <button onclick="openOverview()" id="btnOverview" style="width:100%;display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;transition:all .15s;text-align:left;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <span style="font-size:15px;">📊</span> 数据总览
-    </button>
-  </div>
+  <button onclick="openOverview()" id="btnOverview" class="sb-overview-btn">
+    <span>📊</span> 数据总览
+  </button>
   <div class="sb-lbl">项目</div>
   <div class="acc-list" id="accList"></div>
   <button class="sb-add" onclick="openAccModal()">＋ 添加项目</button>
   <button class="sb-add" onclick="addFolder()" >＋ 添加文件夹</button>
   <div class="sb-foot">
-    <button class="sb-exp" onclick="exportCSV()">📥 导出全部数据 CSV</button>
-    <button class="sb-exp" id="btnUserMgmt" onclick="openUserMgmt()" style="display:none;margin-top:6px;border-color:var(--cyan);color:var(--cyan);">👥 用户管理</button>
-    <div style="height:1px;background:var(--border);margin:6px 0;"></div>
-    <a href="https://zero-4gcvfi3gaae67ce1-1408067111.tcloudbaseapp.com/" id="linkVideo" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border2);border-radius:9px;padding:8px 10px;font-size:11px;color:var(--cyan);text-decoration:none;margin-bottom:5px;transition:all .18s;" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border2)'">
-      🎬 <span style="font-weight:600;">医枢云库</span>
-    </a>
-    <a href="https://web.chatboxai.app" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border2);border-radius:9px;padding:8px 10px;font-size:11px;color:#a78bfa;text-decoration:none;margin-bottom:5px;transition:all .18s;" onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='var(--border2)'">
-      💬 <span style="font-weight:600;">Chatbox 文案助手</span>
-    </a>
-    <button class="sb-exp" onclick="doLogout()" style="border-color:var(--orange);color:var(--orange);">🚪 退出登录</button>
-    <div class="sb-live" style="margin-top:8px;">云端实时同步</div>
+    <button class="sb-exp" onclick="exportCSV()">📥 导出数据 CSV</button>
+    <button class="sb-exp" id="btnUserMgmt" onclick="openUserMgmt()" style="display:none;border-color:var(--cyan);color:var(--cyan);">👥 用户管理</button>
+    <button class="sb-exp" onclick="doLogout()" style="border-color:var(--red);color:var(--red);">🚪 退出登录</button>
+    <div class="sb-live">云端实时同步</div>
   </div>
 </aside>
 
@@ -457,20 +768,26 @@ body.dark-mode {
 <div class="main">
   <div class="topbar">
     <div class="tb-title" id="pageTitle">全部项目</div>
-    <input id="globalSearch" type="text" placeholder="🔍 搜索标题 / 上传人…" oninput="onGlobalSearch(this.value)"
-      style="flex:1;max-width:320px;border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;"
-      onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"/>
-    <button id="refreshBtn" onclick="doRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
+    <input id="globalSearch" type="text" placeholder="搜索标题 / 上传人…" oninput="onGlobalSearch(this.value)"
+      style="flex:1;max-width:300px;border:1px solid var(--border-med);border-radius:9px;padding:6px 13px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color .12s;"
+      onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor=''"/>
+    <button id="refreshBtn" onclick="doRefresh()" title="刷新数据"
+      style="width:30px;height:30px;border:1px solid var(--border-med);border-radius:8px;background:transparent;color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;"
+      onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">↺</button>
     <div class="tb-right">
       <button class="fchip on" onclick="setFilter('all',this)">全部</button>
       <button class="fchip" onclick="setFilter('violation',this)">⚠ 违规</button>
       <button class="fchip" onclick="setFilter('promo',this)">📢 推广</button>
       <button class="fchip" onclick="setFilter('normal',this)">✓ 正常</button>
+      <div style="width:1px;height:18px;background:var(--border-med);margin:0 2px;"></div>
+      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="宫格">⊞</button>
+      <button class="vbtn" id="vb-compact" onclick="setView('compact')" title="缩略">⊡</button>
+      <button class="vbtn" id="vb-list" onclick="setView('list')" title="列表">☰</button>
       <button class="btn btn-primary" onclick="openAddModal()">＋ 添加视频</button>
     </div>
   </div>
   <div class="grid-wrap">
-    <div id="overviewPane" style="display:none;padding:4px 0;"></div>
+    <div id="overviewPane" style="display:none;"></div>
     <div class="vgrid" id="vgrid"></div>
   </div>
 </div>
@@ -600,11 +917,11 @@ body.dark-mode {
       <div id="authorFieldWrap" style="display:none;width:100%;max-width:300px;margin-top:10px;gap:8px;flex-direction:column;">
         <div>
           <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">👤 视频作者</div>
-          <input id="f-author" type="text" placeholder="填入作者名字" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;"/>
+          <input id="f-author" type="text" placeholder="填入作者名字" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;"/>
         </div>
         <div>
           <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">📱 抖音号</div>
-          <input id="f-douyin-id" type="text" placeholder="填入抖音号" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;"/>
+          <input id="f-douyin-id" type="text" placeholder="填入抖音号" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;"/>
         </div>
       </div>
 
@@ -635,7 +952,7 @@ body.dark-mode {
     <div class="fg"><label>颜色标识</label><div class="cpick" id="cpick"></div></div>
     <div class="fg"><label>备注（选填）</label><input id="a-note" type="text" placeholder="例：主号、@xxx"/></div>
     <div class="fg"><label>归入文件夹（选填）</label>
-      <select id="a-folder" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;">
+      <select id="a-folder" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;">
         <option value="">不归入文件夹</option>
       </select>
     </div>
@@ -710,7 +1027,7 @@ body.dark-mode {
     <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:14px;">
 
       <!-- Tab 切换 -->
-      <div style="display:flex;background:var(--s3);border-radius:10px;padding:3px;gap:2px;">
+      <div style="display:flex;background:var(--surface3);border-radius:10px;padding:3px;gap:2px;">
         <button id="tab-week" onclick="switchVisitTab('week')"
           style="flex:1;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:#fff;transition:all .18s;">
           📅 按周录入 & 分析
@@ -724,19 +1041,19 @@ body.dark-mode {
       <!-- 按周面板 -->
       <div id="panel-week" style="display:flex;flex-direction:column;gap:12px;">
         <!-- 录入 -->
-        <div style="background:var(--s2);border-radius:12px;padding:16px;">
+        <div style="background:var(--surface2);border-radius:12px;padding:16px;">
           <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;">➕ 录入本周到诊人数</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
-            <div class="fg"><label>周开始（周一）</label><input id="wv-start" type="date" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
-            <div class="fg"><label>周结束（周日）</label><input id="wv-end" type="date" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
-            <div class="fg"><label>到诊总人数</label><input id="wv-count" type="number" min="0" placeholder="人次" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+            <div class="fg"><label>周开始（周一）</label><input id="wv-start" type="date" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+            <div class="fg"><label>周结束（周日）</label><input id="wv-end" type="date" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+            <div class="fg"><label>到诊总人数</label><input id="wv-count" type="number" min="0" placeholder="人次" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
             <button onclick="addWeekVisit()" style="background:var(--gold);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-bottom:1px;">＋ 添加</button>
           </div>
         </div>
         <!-- 已录入列表 -->
         <div id="weekVisitList" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;"></div>
         <!-- 分析 -->
-        <div style="background:var(--s2);border-radius:12px;padding:16px;">
+        <div style="background:var(--surface2);border-radius:12px;padding:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <div style="font-size:12px;font-weight:700;color:var(--text2);">📊 周数据分析</div>
             <button onclick="calcWeekAnalysis()" style="background:var(--cyan);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">开始分析</button>
@@ -748,28 +1065,28 @@ body.dark-mode {
       <!-- 按月面板 -->
       <div id="panel-month" style="display:none;flex-direction:column;gap:12px;">
         <!-- 录入 -->
-        <div style="background:var(--s2);border-radius:12px;padding:16px;">
+        <div style="background:var(--surface2);border-radius:12px;padding:16px;">
           <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;">➕ 录入本月到诊人数</div>
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
             <div class="fg"><label>年份</label>
-              <select id="mv-year" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"></select>
+              <select id="mv-year" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"></select>
             </div>
             <div class="fg"><label>月份</label>
-              <select id="mv-month" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;">
+              <select id="mv-month" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;">
                 <option value="01">1月</option><option value="02">2月</option><option value="03">3月</option>
                 <option value="04">4月</option><option value="05">5月</option><option value="06">6月</option>
                 <option value="07">7月</option><option value="08">8月</option><option value="09">9月</option>
                 <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
               </select>
             </div>
-            <div class="fg"><label>到诊总人数</label><input id="mv-count" type="number" min="0" placeholder="人次" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+            <div class="fg"><label>到诊总人数</label><input id="mv-count" type="number" min="0" placeholder="人次" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
           </div>
           <button onclick="addMonthVisit()" style="margin-top:10px;width:100%;background:var(--purple);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 添加本月到诊记录</button>
         </div>
         <!-- 已录入列表 -->
         <div id="monthVisitList" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;"></div>
         <!-- 分析 -->
-        <div style="background:var(--s2);border-radius:12px;padding:16px;">
+        <div style="background:var(--surface2);border-radius:12px;padding:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <div style="font-size:12px;font-weight:700;color:var(--text2);">📊 月数据分析</div>
             <button onclick="calcMonthAnalysis()" style="background:var(--purple);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">开始分析</button>
@@ -792,7 +1109,7 @@ body.dark-mode {
           <div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;letter-spacing:.8px;">表2 · 每1个到诊需要的指标</div><div id="deepTable2"></div></div>
           <div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;letter-spacing:.8px;">表3 · 关键转化率</div><div id="deepTable3"></div></div>
           <div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;letter-spacing:.8px;">表4 · 运营目标推算</div><div id="deepTable4"></div></div>
-          <div id="deepConclusion" style="background:var(--s3);border-radius:10px;padding:12px;"></div>
+          <div id="deepConclusion" style="background:var(--surface3);border-radius:10px;padding:12px;"></div>
         </div>
       </div>
 
@@ -808,20 +1125,20 @@ body.dark-mode {
       <button class="mclose" onclick="closeModal('userMgmtModal')">✕</button>
     </div>
     <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:12px;">
-      <div style="background:var(--s2);border-radius:12px;padding:14px;">
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;">
         <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;">➕ 新建用户</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div class="fg"><label>用户名</label><input id="nu-name" type="text" placeholder="登录账号" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
-          <div class="fg"><label>密码</label><input id="nu-pass" type="text" placeholder="登录密码" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+          <div class="fg"><label>用户名</label><input id="nu-name" type="text" placeholder="登录账号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
+          <div class="fg"><label>密码</label><input id="nu-pass" type="text" placeholder="登录密码" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
           <div class="fg"><label>绑定文件夹</label>
-            <select id="nu-folder" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;">
+            <select id="nu-folder" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;">
               <option value="">请选择文件夹</option>
             </select>
           </div>
           <button onclick="createUser()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">创建用户</button>
         </div>
       </div>
-      <div style="background:var(--s2);border-radius:12px;padding:14px;">
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;">
         <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;">现有普通用户</div>
         <div id="userList" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
       </div>
@@ -833,7 +1150,7 @@ body.dark-mode {
 <div id="userSearchPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:100;overflow-y:auto;">
   <div style="background:var(--bg);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--s2);flex-shrink:0;border:2px solid var(--border2);">
+      <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--surface2);flex-shrink:0;border:2px solid var(--border-med);">
         <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:cover;display:block;"/>
       </div>
       <div>
@@ -850,16 +1167,16 @@ body.dark-mode {
       </a>
       <button onclick="openAddModal()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">＋ 添加视频</button>
       <input id="userGlobalSearch" type="text" placeholder="🔍 搜索标题 / 上传人…" oninput="onUserGlobalSearch(this.value)"
-        style="width:160px;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;background:var(--s1);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
+        style="width:160px;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
-      <button id="userRefreshBtn" onclick="doUserRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">↺</button>
-      <div style="display:flex;gap:3px;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:3px;">
+      <button id="userRefreshBtn" onclick="doUserRefresh()" title="刷新数据" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">↺</button>
+      <div style="display:flex;gap:3px;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:3px;">
         <button id="uvb-grid" onclick="setUserView('grid')" title="宫格视图" style="background:var(--gold);color:#fff;border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">⊞</button>
         <button id="uvb-list" onclick="setUserView('list')" title="列表视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">☰</button>
         <button id="uvb-compact" onclick="setUserView('compact')" title="紧凑视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;">⊡</button>
       </div>
-      <button onclick="openUserManual()" title="使用教程" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">📖</button>
-      <button onclick="doLogout()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
+      <button onclick="openUserManual()" title="使用教程" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">📖</button>
+      <button onclick="doLogout()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
     </div>
   </div>
   <div style="max-width:760px;margin:40px auto 0;padding:0 20px 60px;width:100%;">
@@ -869,11 +1186,11 @@ body.dark-mode {
     </div>
     <div style="position:relative;margin-bottom:4px;">
       <input id="folderSearchInput" type="text" placeholder="🔍  输入文件夹名称…"
-        style="width:100%;background:var(--s1);border:2px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .18s;"
+        style="width:100%;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .18s;"
         oninput="onFolderSearch(this.value)"
         onfocus="this.style.borderColor='var(--accent)'"
         onblur="this.style.borderColor='var(--border)'"/>
-      <div id="folderSuggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:none;margin-top:4px;box-shadow:0 4px 16px rgba(42,37,32,.1);z-index:20;"></div>
+      <div id="folderSuggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:none;margin-top:4px;box-shadow:0 4px 16px rgba(42,37,32,.1);z-index:20;"></div>
     </div>
     <div id="userSearchResults" style="margin-top:16px;"></div>
   </div>
@@ -881,7 +1198,7 @@ body.dark-mode {
 
 <!-- CHART MODAL -->
 <div class="modal-bg" id="chartModal" style="align-items:stretch;padding:0;">
-  <div style="background:var(--s1);width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;" onclick="event.stopPropagation()">
+  <div style="background:var(--surface);width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0;">
       <div>
         <div style="font-size:15px;font-weight:700;" id="chartTitle">数据图表</div>
@@ -911,7 +1228,7 @@ body.dark-mode {
 // STATE
 // ══════════════════════
 const COLORS=['#b87f5a','#7a9e8e','#6a9e6a','#9a7a9e','#c49a3c','#c47a5a','#7a8e9e','#9e8a6a'];
-let S={accounts:[],videos:[],visits:[],folders:[],expandedFolders:new Set(),selectedFolders:new Set(),curAcc:null,curFolder:null,filter:'all',view:'grid',selColor:COLORS[0],page:0,pageSize:50,searchQuery:'',allExpanded:true};
+let S={accounts:[],videos:[],visits:[],folders:[],expandedFolders:new Set(),selectedFolders:new Set(),curAcc:null,curFolder:null,filter:'all',view:'grid',selColor:COLORS[0],page:0,pageSize:50,searchQuery:''};
 
 const SB_URL='https://ogyoxfkohvoeryagkdkm.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9neW94ZmtvaHZvZXJ5YWdrZGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MDAxMDcsImV4cCI6MjA4Nzk3NjEwN30.Tg86SbDRIfoUy0duGeJSEGI8RKIXcNKOMwo9TDlG9gk';
@@ -1117,24 +1434,12 @@ function renderSidebar(){
   const accList=document.getElementById('accList');
   accList.innerHTML='';
 
-  // "All" item — with collapse toggle
-  const allExpanded = S.allExpanded !== false; // default expanded
+  // "All" item
   const allDiv=document.createElement('div');
   allDiv.className='aci'+(S.curAcc==='all'?' on':'');
-  allDiv.innerHTML=`
-    <span style="font-size:0.7em;color:var(--text3);width:12px;flex-shrink:0;">${allExpanded?'▾':'▸'}</span>
-    <div class="aci-av" style="background:var(--s4);font-size:13px;">🏠</div>
+  allDiv.innerHTML=`<div class="aci-av" style="background:var(--surface3);font-size:15px;">🏠</div>
     <div class="aci-info"><div class="aci-name">全部项目</div><div class="aci-meta">${all.length} 条视频</div></div>`;
-  allDiv.addEventListener('click',(e)=>{
-    // click on arrow area → toggle collapse; click elsewhere → select all
-    const arrowSpan = allDiv.querySelector('span');
-    if(e.target === arrowSpan){
-      S.allExpanded = !allExpanded;
-      renderSidebar();
-    } else {
-      selAcc('all');
-    }
-  });
+  allDiv.addEventListener('click',()=>selAcc('all'));
   allDiv.addEventListener('dragover',e=>{
     e.preventDefault();
     e.dataTransfer.dropEffect='move';
@@ -1171,7 +1476,7 @@ function renderSidebar(){
     const fDiv=document.createElement('div');
     fDiv.className='folder-item';
     const isSelected = S.selectedFolders.has(f.id);
-    fDiv.style.cssText=`display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;border-radius:10px;margin:2px 0;transition:background .15s;${isActive?'background:var(--s3);':isSelected?'background:var(--gold)22;outline:2px solid var(--gold);':''}`;
+    fDiv.style.cssText=`display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;border-radius:10px;margin:2px 0;transition:background .15s;${isActive?'background:var(--surface3);':isSelected?'background:var(--gold)22;outline:2px solid var(--gold);':''}`;
 
     // Arrow toggle
     const arrow=document.createElement('span');
@@ -1256,10 +1561,8 @@ function renderSidebar(){
     }
   });
 
-  // Accounts without folder — only show when allExpanded
-  if(allExpanded){
-    S.accounts.filter(a=>!a.folderId).forEach(a=>renderAccItem(a, accList, false));
-  }
+  // Accounts without folder
+  S.accounts.filter(a=>!a.folderId).forEach(a=>renderAccItem(a, accList, false));
 
 }
 
@@ -1359,7 +1662,7 @@ function renderGrid(){
   const label=folder?folder.name:(acc?acc.name:'全部项目');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
 
-  grid.className='vgrid';
+  grid.className='vgrid'+(S.view==='compact'?' compact':S.view==='list'?' list':'');
 
   if(!vids.length){
     grid.innerHTML=`<div class="empty"><div class="empty-icon">🎬</div><div class="empty-t">暂无视频</div><div class="empty-s">点右上角「＋ 添加视频」</div></div>`;
@@ -1381,9 +1684,9 @@ function renderGrid(){
   if (totalPages > 1) {
     paginationEl.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:20px 0;';
     paginationEl.innerHTML = `
-      <button onclick="goPage(${S.page-1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${S.page===0?'opacity:.4;pointer-events:none;':''}">← 上一页</button>
+      <button onclick="goPage(${S.page-1})" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${S.page===0?'opacity:.4;pointer-events:none;':''}">← 上一页</button>
       <span style="font-size:12px;color:var(--text3);">第 ${S.page+1} / ${totalPages} 页 · 共 ${vids.length} 条</span>
-      <button onclick="goPage(${S.page+1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${S.page>=totalPages-1?'opacity:.4;pointer-events:none;':''}">下一页 →</button>
+      <button onclick="goPage(${S.page+1})" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${S.page>=totalPages-1?'opacity:.4;pointer-events:none;':''}">下一页 →</button>
     `;
   } else {
     paginationEl.innerHTML = '';
@@ -2462,7 +2765,7 @@ function renderWeekVisitList(){
     return;
   }
   el.innerHTML = records.map(r=>`
-    <div style="display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:8px;padding:9px 12px;">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:9px 12px;">
       <div style="flex:1;">
         <div style="font-size:11px;color:var(--text3);">${r.date} ~ ${r.date_end||r.date}</div>
         <div style="font-size:13px;font-weight:700;color:var(--gold);font-family:var(--mono);">${r.count} 人到诊</div>
@@ -2483,7 +2786,7 @@ function renderMonthVisitList(){
     return;
   }
   el.innerHTML = records.map(r=>`
-    <div style="display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:8px;padding:9px 12px;">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:9px 12px;">
       <div style="flex:1;">
         <div style="font-size:11px;color:var(--text3);">${r.date.slice(0,7).replace('-','年')}月</div>
         <div style="font-size:13px;font-weight:700;color:var(--purple);font-family:var(--mono);">${r.count} 人到诊</div>
@@ -2571,8 +2874,8 @@ function calcWeekAnalysis(){
   }
 
   const ts='width:100%;border-collapse:collapse;font-size:12px;';
-  const th='background:var(--s3);padding:8px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:11px;white-space:nowrap;';
-  const thr='background:var(--s3);padding:8px 10px;text-align:right;color:var(--text3);font-weight:600;font-size:11px;';
+  const th='background:var(--surface3);padding:8px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:11px;white-space:nowrap;';
+  const thr='background:var(--surface3);padding:8px 10px;text-align:right;color:var(--text3);font-weight:600;font-size:11px;';
   const td='padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);';
   const tdv='padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-weight:700;font-size:12px;';
 
@@ -2614,7 +2917,7 @@ function calcWeekAnalysis(){
   tableHtml+='</tbody></table>';
 
   const avgConv = totPlay>0&&totVisit>0?(totVisit/totPlay*10000).toFixed(2):'—';
-  const summary=`<div style="margin-top:10px;background:var(--s3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;">
+  const summary=`<div style="margin-top:10px;background:var(--surface3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;">
     <span>共 <b style="font-family:var(--mono)">${weekVisits.length}</b> 周数据</span>
     <span>累计视频：<b style="color:var(--text);font-family:var(--mono)">${totVid}条</b></span>
     <span>累计播放：<b style="color:var(--purple);font-family:var(--mono)">${fmt(totPlay)}</b></span>
@@ -2639,8 +2942,8 @@ function calcMonthAnalysis(){
   }
 
   const ts='width:100%;border-collapse:collapse;font-size:12px;';
-  const th='background:var(--s3);padding:8px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:11px;';
-  const thr='background:var(--s3);padding:8px 10px;text-align:right;color:var(--text3);font-weight:600;font-size:11px;';
+  const th='background:var(--surface3);padding:8px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:11px;';
+  const thr='background:var(--surface3);padding:8px 10px;text-align:right;color:var(--text3);font-weight:600;font-size:11px;';
   const td='padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);';
   const tdv='padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-weight:700;font-size:12px;';
 
@@ -2678,7 +2981,7 @@ function calcMonthAnalysis(){
   tableHtml+='</tbody></table>';
 
   const avgConv=totPlay>0&&totVisit>0?(totVisit/totPlay*10000).toFixed(2):'—';
-  const summary=`<div style="margin-top:10px;background:var(--s3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;">
+  const summary=`<div style="margin-top:10px;background:var(--surface3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;">
     <span>共 <b style="font-family:var(--mono)">${monthVisits.length}</b> 个月数据</span>
     <span>累计视频：<b style="color:var(--text);font-family:var(--mono)">${totVid}条</b></span>
     <span>累计播放：<b style="color:var(--purple);font-family:var(--mono)">${fmt(totPlay)}</b></span>
@@ -2766,8 +3069,8 @@ function calcPeriodAnalysis(mode){
   });
 
   const ts='width:100%;border-collapse:collapse;font-size:11px;';
-  const th='background:var(--s3);padding:6px 8px;text-align:right;color:var(--text3);font-weight:600;font-size:10px;white-space:nowrap;';
-  const th0='background:var(--s3);padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;';
+  const th='background:var(--surface3);padding:6px 8px;text-align:right;color:var(--text3);font-weight:600;font-size:10px;white-space:nowrap;';
+  const th0='background:var(--surface3);padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;';
   const td='padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);font-size:11px;font-weight:600;';
   const td0='padding:6px 8px;border-bottom:1px solid var(--border);font-size:11px;';
 
@@ -2816,7 +3119,7 @@ function calcPeriodAnalysis(mode){
   const missCount=rows.filter(r=>r.play>0&&!r.hasVisit).length;
   const convOverall=totPlay>0&&totVisit>0?(totVisit/totPlay*10000).toFixed(2):'—';
 
-  const summaryHtml = `<div style="margin-top:10px;background:var(--s3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:10px;font-size:11px;">
+  const summaryHtml = `<div style="margin-top:10px;background:var(--surface3);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:10px;font-size:11px;">
     <span>合计：<b style="font-family:var(--mono)">${groups.length}</b> 个${mode==='week'?'周':'月'}</span>
     <span>视频：<b style="font-family:var(--mono);color:var(--text)">${totVid}条</b></span>
     <span>播放：<b style="font-family:var(--mono);color:var(--purple)">${fmt(totPlay)}</b></span>
@@ -2919,8 +3222,8 @@ function calcDeepAnalysis(){
   else if(bottleneck!=='播放量') priority='优先提升互动质量（'+bottleneck+'），增强内容吸引力';
 
   const ts='width:100%;border-collapse:collapse;font-size:11px;';
-  const th='background:var(--s3);padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;';
-  const thr='background:var(--s3);padding:6px 8px;text-align:right;color:var(--text3);font-weight:600;font-size:10px;';
+  const th='background:var(--surface3);padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;';
+  const thr='background:var(--surface3);padding:6px 8px;text-align:right;color:var(--text3);font-weight:600;font-size:10px;';
   const td='padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);font-size:11px;';
   const tdv='padding:6px 8px;border-bottom:1px solid var(--border);font-weight:700;font-family:var(--mono);text-align:right;font-size:11px;';
 
@@ -3129,7 +3432,7 @@ function renderFolderSuggestions(val){
   box.style.display='block';
   box.innerHTML = filtered.map(f=>`
     <div onclick="selectFolder('${f.id}')" style="padding:10px 16px;cursor:pointer;font-size:13px;transition:background .14s;"
-      onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       📁 ${f.name}
     </div>
   `).join('');
@@ -3162,10 +3465,10 @@ function renderUserSearchResults(folderId){
     const totalLikes = accVids.reduce((s,v)=>s+v.likes,0);
     const totalComm  = accVids.reduce((s,v)=>s+v.comm,0);
 
-    html += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px;box-shadow:0 2px 10px rgba(42,37,32,.06);">
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px;box-shadow:0 2px 10px rgba(42,37,32,.06);">
 
       <!-- 账号头部 -->
-      <div style="padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--s2);">
+      <div style="padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--surface2);">
         <div style="width:40px;height:40px;border-radius:50%;background:${acc.color};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 8px ${acc.color}55;">${acc.name.slice(0,1)}</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;margin-bottom:3px;">${acc.name}</div>
@@ -3202,17 +3505,17 @@ function renderUserSearchResults(folderId){
 
         if(userViewMode === 'list'){
           html += `<div data-uvid="${v.id}"
-            style="background:var(--s2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;align-items:stretch;"
-            onmouseover="this.style.boxShadow='0 4px 16px rgba(42,37,32,.12)';this.style.borderColor='var(--border2)'"
+            style="background:var(--surface2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;display:flex;align-items:stretch;"
+            onmouseover="this.style.boxShadow='0 4px 16px rgba(42,37,32,.12)';this.style.borderColor='var(--border-med)'"
             onmouseout="this.style.boxShadow='';this.style.borderColor='${bc}'">
-            <div style="width:150px;flex-shrink:0;position:relative;background:var(--s3);overflow:hidden;">
+            <div style="width:150px;flex-shrink:0;position:relative;background:var(--surface3);overflow:hidden;">
               ${thumbHtml}
               <div style="position:absolute;top:5px;left:5px;display:flex;gap:3px;">${violBadge}${promoBadge}</div>
               ${v.date?`<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.65);color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;">${v.date}</div>`:''}
             </div>
             <div style="flex:1;padding:13px 16px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
               <div style="font-size:13px;line-height:1.6;color:var(--text);font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:8px;">${v.title||'（无标题）'}</div>
-              ${v.uploadedBy?`<div style="margin-bottom:6px;"><span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
+              ${v.uploadedBy?`<div style="margin-bottom:6px;"><span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
               <div style="display:flex;gap:16px;flex-wrap:wrap;">
                 <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:${v.play>0?'var(--purple)':'var(--orange)'};">▶ ${v.play>0?fmt(v.play):'未填写 ⚠'}</span>
                 <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:var(--red);">❤ ${fmt(v.likes)}</span>
@@ -3222,16 +3525,16 @@ function renderUserSearchResults(folderId){
             </div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:0 14px;flex-shrink:0;border-left:1px solid var(--border);">
               <span style="font-size:11px;font-weight:700;color:var(--text2);">✏ 编辑</span>
-              <span data-udel="${v.id}" style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer;padding:4px 8px;border-radius:6px;background:var(--s3);" onclick="event.stopPropagation();delV('${v.id}')">🗑 删除</span>
+              <span data-udel="${v.id}" style="font-size:11px;font-weight:700;color:var(--red);cursor:pointer;padding:4px 8px;border-radius:6px;background:var(--surface3);" onclick="event.stopPropagation();delV('${v.id}')">🗑 删除</span>
             </div>
           </div>`;
         } else {
           const isCompact = userViewMode==='compact';
           html += `<div data-uvid="${v.id}"
-            style="background:var(--s2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .22s;position:relative;"
-            onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(42,37,32,.15)';this.style.borderColor='var(--border2)'"
+            style="background:var(--surface2);border:1px solid ${bc};border-radius:12px;overflow:hidden;cursor:pointer;transition:all .22s;position:relative;"
+            onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(42,37,32,.15)';this.style.borderColor='var(--border-med)'"
             onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='${bc}'">
-            <div style="aspect-ratio:16/9;overflow:hidden;background:var(--s3);position:relative;">
+            <div style="aspect-ratio:16/9;overflow:hidden;background:var(--surface3);position:relative;">
               ${thumbHtml}
               <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;"
                 onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
@@ -3245,7 +3548,7 @@ function renderUserSearchResults(folderId){
             </div>
             <div style="padding:${isCompact?'7px 9px':'10px 12px'};">
               <div style="font-size:${isCompact?'10px':'12px'};line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:${isCompact?1:2};-webkit-box-orient:vertical;color:var(--text);margin-bottom:4px;font-weight:500;">${v.title||'（无标题）'}</div>
-              ${v.uploadedBy&&!isCompact?`<div style="margin-bottom:5px;"><span style="display:inline-flex;align-items:center;gap:3px;background:var(--s3);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:9px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
+              ${v.uploadedBy&&!isCompact?`<div style="margin-bottom:5px;"><span style="display:inline-flex;align-items:center;gap:3px;background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:9px;font-weight:600;color:var(--text2);">👤 ${v.uploadedBy}</span></div>`:''}
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;border-top:1px solid var(--border);padding-top:6px;">
                 <div style="text-align:center;">
                   <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${v.play>0?'var(--purple)':'var(--orange)'};">${v.play>0?fmt(v.play):'—⚠'}</div>
@@ -3295,7 +3598,7 @@ async function loadUserList(){
   }
   list.innerHTML = res.map(u=>{
     const folder = S.folders.find(f=>f.id===u.folder_id);
-    return `<div style="display:flex;align-items:center;gap:10px;background:var(--s1);border-radius:8px;padding:8px 12px;">
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:8px;padding:8px 12px;">
       <div style="flex:1;">
         <div style="font-size:12px;font-weight:600;">${u.username}</div>
         <div style="font-size:10px;color:var(--text3);">📁 ${folder?folder.name:'未绑定文件夹'} · 密码: ${u.password}</div>
@@ -3635,17 +3938,17 @@ function switchManualTab(section, el){
 
 <!-- 员工版使用教程弹窗 -->
 <div id="userManualModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center;" onclick="closeUserManual()">
-  <div style="background:var(--bg);border:1px solid var(--border2);border-radius:18px;width:660px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden;" onclick="event.stopPropagation()">
+  <div style="background:var(--bg);border:1px solid var(--border-med);border-radius:18px;width:660px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden;" onclick="event.stopPropagation()">
     <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div>
         <div style="font-size:16px;font-weight:700;color:var(--text);">📖 员工使用教程</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px;">抖音看板员工版 · 快速上手指南</div>
       </div>
-      <button onclick="closeUserManual()" style="width:30px;height:30px;border:none;background:var(--s3);border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;">✕</button>
+      <button onclick="closeUserManual()" style="width:30px;height:30px;border:none;background:var(--surface3);border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
     <div style="overflow-y:auto;flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🏠 员工版界面说明</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.7;">
           员工登录后进入专属视图，只能查看<b>所属文件夹</b>内的项目和视频数据。<br>
@@ -3654,7 +3957,7 @@ function switchManualTab(section, el){
         </div>
       </div>
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🎬 如何添加视频</div>
         <div style="display:flex;gap:10px;margin-bottom:7px;align-items:flex-start;">
           <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
@@ -3670,7 +3973,7 @@ function switchManualTab(section, el){
         </div>
       </div>
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">✏️ 编辑 / 删除视频</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.7;">
           点击视频卡片右上角 <b>✏</b> 按钮可修改数据，保存后实时更新云端。<br>
@@ -3678,7 +3981,7 @@ function switchManualTab(section, el){
         </div>
       </div>
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🔍 搜索视频</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.7;">
           顶部搜索框输入关键词，实时过滤当前项目下的视频标题。<br>
@@ -3686,7 +3989,7 @@ function switchManualTab(section, el){
         </div>
       </div>
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">📊 查看数据分析</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.7;">
           在项目列表页点击项目名称旁的「<b>📊 数据分析</b>」按钮，可查看该项目的播放趋势、点赞分布、到诊转化等图表。
@@ -3733,7 +4036,7 @@ function switchManualTab(section, el){
         </div>
       </div>
 
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">💡 注意事项</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.7;">
           · 员工只能查看所属文件夹内的内容，无法查看其他文件夹数据<br>
@@ -3751,14 +4054,12 @@ function openUserManual(){ document.getElementById('userManualModal').style.disp
 function closeUserManual(){ document.getElementById('userManualModal').style.display='none'; }
 
 let _ovFolderIdx = 0;
-window._ovPage = 0;
 
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
-  window._ovPage = 0;
   renderOverviewPane();
 }
 function hideOverviewPane(){
@@ -3786,12 +4087,6 @@ function _ovRows(){
 
 function ovSelectFolder(idx){
   _ovFolderIdx = idx;
-  window._ovPage = 0;
-  renderOverviewPane();
-}
-
-function ovGoPage(p){
-  window._ovPage = p;
   renderOverviewPane();
 }
 
@@ -3801,15 +4096,35 @@ function renderOverviewPane(){
   const rows = _ovRows();
   const cur = rows[_ovFolderIdx] || rows[0];
 
-  // 暖色渐变色板（6色循环）
+  // 暖色渐变色板（12色，循环使用）
   const warmGrads = [
-    ['#b8732e','#d4944a','#703010'],
-    ['#8c4a20','#aa6a3a','#502010'],
-    ['#a86820','#c48438','#644010'],
-    ['#7a3a18','#9c5a2e','#461408'],
-    ['#9c7820','#b89430','#5c4410'],
-    ['#c04828','#dc6e46','#702010'],
+    ['#c47c3a','#e8a95a','#7a4a20'],
+    ['#a05c2a','#c47c3a','#602c10'],
+    ['#8c4a2a','#b86a3a','#541e0a'],
+    ['#b46c1a','#d4922a','#704010'],
+    ['#7a3a1a','#a05a2a','#481208'],
+    ['#b88c3a','#d4a85a','#704c18'],
+    ['#c4562a','#e07a4a','#782010'],
+    ['#8c3a2a','#b05a3a','#501808'],
+    ['#a08c2a','#c4aa3a','#605014'],
+    ['#9c6a2a','#b8882a','#5c3c10'],
+    ['#6a4a1a','#8c6a2a','#3c2408'],
+    ['#b46a2a','#d08a3a','#6c3810'],
   ];
+
+  // 左侧文件夹导航
+  const navHtml = rows.map((r,i)=>{
+    const viol = r.vids.filter(v=>v.violation).length;
+    const isOn = i===_ovFolderIdx;
+    return `<div onclick="ovSelectFolder(${i})" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px;transition:all .18s;${isOn?'background:var(--accent);':'background:transparent;'}">
+      <span style="font-size:12px;opacity:${isOn?'1':'.6'};">${r.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11.5px;font-weight:${isOn?'700':'500'};color:${isOn?'#fff':'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;">${r.folder}</div>
+        <div style="font-size:9.5px;color:${isOn?'rgba(255,255,255,.65)':'var(--text3)'};">${r.vids.length} 条 · ${r.accs.length} 项目</div>
+      </div>
+      ${viol?`<span style="font-size:9px;background:${isOn?'rgba(255,255,255,.2)':'rgba(196,75,58,.15)'};color:${isOn?'#fff':'var(--red)'};border-radius:20px;padding:1px 6px;flex-shrink:0;">⚠${viol}</span>`:''}
+    </div>`;
+  }).join('');
 
   // 顶部汇总数字
   const vids = cur.vids;
@@ -3819,115 +4134,116 @@ function renderOverviewPane(){
   const share = vids.reduce((s,v)=>s+v.share,0);
 
   const statItems = [
-    {val:vids.length,sub:'VIDEOS'},
-    {val:fmt(likes),sub:'LIKES'},
-    {val:fmt(coll),sub:'FAVORITES'},
-    {val:fmt(comm),sub:'COMMENTS'},
-    {val:fmt(share),sub:'SHARES'},
-    {val:cur.accs.length,sub:'PROJECTS'},
+    {label:'视频数',val:vids.length,sub:'VIDEOS'},
+    {label:'总点赞',val:fmt(likes),sub:'LIKES'},
+    {label:'总收藏',val:fmt(coll),sub:'FAVORITES'},
+    {label:'总评论',val:fmt(comm),sub:'COMMENTS'},
+    {label:'总转发',val:fmt(share),sub:'SHARES'},
+    {label:'项目数',val:cur.accs.length,sub:'PROJECTS'},
   ];
 
-  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
+  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:22px;">
     ${statItems.map((s,i)=>`
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:${i===0?'1':'.35'};"></div>
-      <div style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);">${s.val}</div>
-      <div style="font-size:8px;color:var(--text3);margin-top:3px;letter-spacing:.1em;font-weight:600;">${s.sub}</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:${i===0?'1':'.4'};"></div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);">${s.val}</div>
+      <div style="font-size:8.5px;color:var(--text3);margin-top:4px;letter-spacing:.08em;font-weight:600;">${s.sub}</div>
     </div>`).join('')}
   </div>`;
 
-  // 分页：每次显示5个项目
-  const OV_PAGE_SIZE = 5;
-  const ovPage = (typeof _ovPage !== 'undefined') ? _ovPage : 0;
-  window._ovPage = window._ovPage || 0;
-  const totalAccs = cur.accs.length;
-  const totalOvPages = Math.ceil(totalAccs / OV_PAGE_SIZE);
-  const startIdx = window._ovPage * OV_PAGE_SIZE;
-  const pageAccs = cur.accs.slice(startIdx, startIdx + OV_PAGE_SIZE);
-
-  // 项目卡片（5个一排）
-  const cardsHtml = totalAccs ? `
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;">
-    ${pageAccs.map((acc,cardIdx)=>{
+  // 项目卡片
+  const cardsHtml = cur.accs.length ? `
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">
+    ${cur.accs.map((acc,cardIdx)=>{
       const av = S.videos.filter(v=>v.accId===acc.id);
       const aLikes = av.reduce((s,v)=>s+v.likes,0);
       const aColl  = av.reduce((s,v)=>s+v.coll,0);
       const aComm  = av.reduce((s,v)=>s+v.comm,0);
       const aShare = av.reduce((s,v)=>s+v.share,0);
-      const violCount = av.filter(v=>v.violation).length;
-      const promoCount = av.filter(v=>v.promo).length;
-      const [c1,c2,c3] = warmGrads[(startIdx+cardIdx) % warmGrads.length];
-      const rgb = c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',');
+      const violVids  = av.filter(v=>v.violation);
+      const promoVids = av.filter(v=>v.promo);
+      const [c1,c2,c3] = warmGrads[cardIdx % warmGrads.length];
 
-      // 角标：只显示数量，不显示文案
-      const badgesHtml = [
-        violCount  ? `<span style="font-size:9px;background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:2px 7px;font-weight:700;">⚠ ${violCount}</span>` : '',
-        promoCount ? `<span style="font-size:9px;background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:2px 7px;font-weight:700;">📢 ${promoCount}</span>` : '',
-      ].filter(Boolean).join('');
+      const violListHtml = violVids.map(v=>`
+        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
+          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
+          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
+          <span style="font-size:9px;color:rgba(255,220,180,.9);flex-shrink:0;">⚠ 违规</span>
+          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
+          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
+        </div>`).join('');
+
+      const promoListHtml = promoVids.map(v=>`
+        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
+          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
+          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
+          <span style="font-size:9px;color:rgba(255,240,180,.9);flex-shrink:0;">📢 推广</span>
+          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
+          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
+        </div>`).join('');
 
       return `
-      <div style="border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(${rgb},.15);transition:transform .18s,box-shadow .18s;cursor:pointer;"
-        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 22px rgba(${rgb},.28)'"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(${rgb},.15)'">
+      <div style="border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18);transition:transform .2s,box-shadow .2s;cursor:pointer;"
+        onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .28)'"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18)'">
+        <!-- 渐变头部，点击跳到项目 -->
         <div onclick="hideOverviewPane();selAcc('${acc.id}')"
-          style="background:linear-gradient(135deg,${c1},${c2});padding:14px 14px 12px;position:relative;overflow:hidden;">
-          <div style="position:absolute;right:-14px;top:-14px;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none;"></div>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12.5px;font-weight:700;color:#fff;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:6px;">${acc.name}</div>
-              <div style="font-size:9px;color:rgba(255,255,255,.58);margin-top:2px;">${av.length} 条视频${acc.note?' · '+acc.note:''}</div>
+          style="background:linear-gradient(135deg,${c1},${c2});padding:16px 16px 14px;position:relative;overflow:hidden;">
+          <!-- 装饰圆 -->
+          <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none;"></div>
+          <div style="position:absolute;right:10px;bottom:-30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;"></div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em;line-height:1.3;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</div>
+              <div style="font-size:9.5px;color:rgba(255,255,255,.6);margin-top:2px;">${av.length} 条视频${acc.note?' · '+acc.note:''}</div>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">
-              <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;">${acc.name[0]}</div>
-              ${badgesHtml ? `<div style="display:flex;gap:3px;">${badgesHtml}</div>` : ''}
-            </div>
+            <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(4px);">${acc.name[0]}</div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
-            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
-              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aLikes)}</div>
-              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">❤ 点赞</div>
+          <!-- 数据 2×2 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
+              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aLikes)}</div>
+              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">❤ 点赞</div>
             </div>
-            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
-              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aColl)}</div>
-              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">⭐ 收藏</div>
+            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
+              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aColl)}</div>
+              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">⭐ 收藏</div>
             </div>
-            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
-              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aComm)}</div>
-              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">💬 评论</div>
+            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
+              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aComm)}</div>
+              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">💬 评论</div>
             </div>
-            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
-              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aShare)}</div>
-              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">↗ 转发</div>
+            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
+              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aShare)}</div>
+              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">↗ 转发</div>
             </div>
           </div>
         </div>
-        <div style="background:var(--s1);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;padding:7px 12px;">
-          ${!violCount&&!promoCount
-            ? `<div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;">✓ 无异常</div>`
-            : `<div style="font-size:10px;color:var(--text3);">
-                ${violCount?`<span style="color:var(--red);margin-right:8px;">⚠ 违规 ${violCount} 条</span>`:''}
-                ${promoCount?`<span style="color:var(--gold);">📢 推广 ${promoCount} 条</span>`:''}
-               </div>`
-          }
+        <!-- 底部：异常视频列表 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;padding:10px 12px;">
+          ${violListHtml}${promoListHtml}
+          ${!violVids.length&&!promoVids.length
+            ?`<div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px;"><span>✓</span><span>无异常视频</span></div>`
+            :''}
         </div>
       </div>`;
     }).join('')}
-  </div>` : `<div style="text-align:center;padding:60px;color:var(--text3);font-size:13px;">该文件夹暂无项目</div>`;
+  </div>` : `<div style="text-align:center;padding:80px;color:var(--text3);font-size:13px;">该文件夹暂无项目</div>`;
 
-  // 分页控件
-  const paginationHtml = totalOvPages > 1 ? `
-  <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 4px;">
-    <button onclick="ovGoPage(${window._ovPage-1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${window._ovPage===0?'opacity:.4;pointer-events:none;':''}">← 上一页</button>
-    <span style="font-size:12px;color:var(--text3);">第 ${window._ovPage+1} / ${totalOvPages} 页 · 共 ${totalAccs} 个项目</span>
-    <button onclick="ovGoPage(${window._ovPage+1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${window._ovPage>=totalOvPages-1?'opacity:.4;pointer-events:none;':''}">下一页 →</button>
-  </div>` : '';
-
-  pane.innerHTML = `<div style="width:100%;padding:20px 24px;overflow-y:auto;background:var(--bg);">
-    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:18px;">
-      <span style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px;">${cur.folder}</span>
-      <span style="font-size:11px;color:var(--text3);">${cur.vids.length} 条视频 · ${cur.accs.length} 个项目</span>
+  pane.innerHTML = `<div style="display:flex;width:100%;height:100%;min-height:0;">
+    <!-- 左侧导航 -->
+    <div style="width:196px;flex-shrink:0;border-right:1px solid var(--border);padding:14px 10px;overflow-y:auto;background:var(--surface);">
+      <div style="font-size:9px;font-weight:700;color:var(--text3);padding:0 10px 10px;letter-spacing:.12em;text-transform:uppercase;">文件夹</div>
+      ${navHtml}
     </div>
-    ${statsHtml}${cardsHtml}${paginationHtml}
+    <!-- 右侧内容 -->
+    <div style="flex:1;padding:20px 24px;overflow-y:auto;min-width:0;background:var(--bg);">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:18px;">
+        <span style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px;">${cur.folder}</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:400;">${cur.vids.length} 条视频 · ${cur.accs.length} 个项目</span>
+      </div>
+      ${statsHtml}${cardsHtml}
+    </div>
   </div>`;
 }
 
