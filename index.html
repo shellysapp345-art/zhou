@@ -297,6 +297,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 /* ── CONTEXT MENU ── */
 .ctx-menu{position:fixed;z-index:999;background:var(--s1);border:1px solid var(--border2);border-radius:9px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:140px;display:none;animation:ctxIn .12s ease;}
 @keyframes ctxIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 .ctx-menu.show{display:block;}
 .ctx-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:background .1s;color:var(--text);}
 .ctx-item:hover{background:var(--s2);}
@@ -382,6 +383,12 @@ body.dark-mode {
     <div class="login-err" id="loginErr">账号或密码错误</div>
     <button class="login-btn" id="loginBtn">登 录</button>
   </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;"></div>
+  <div style="font-size:13px;color:var(--text2);">正在加载数据…</div>
 </div>
 
 <div class="wrap" id="mainApp" style="display:none;">
@@ -908,6 +915,8 @@ async function sbFetch(path,method='GET',body=null){
 }
 
 async function load(){
+  const overlay=document.getElementById('loadingOverlay');
+  if(overlay){overlay.style.display='flex';}
   try{
     const [accs,vids,folders,visits]=await Promise.all([
       sbFetch('/rest/v1/accounts?select=*&order=id'),
@@ -933,6 +942,7 @@ async function load(){
       }));
     }
   }catch(e){console.error('load error',e);}
+  if(overlay){overlay.style.display='none';}
   render();
 }
 
@@ -1411,8 +1421,14 @@ async function addFolder(){
   const f={id:'f'+Date.now(),name:name.trim(),sort_order:S.folders.length};
   S.folders.push(f);
   render();
-  await sbFetch('/rest/v1/folders','POST',[f]);
-  toast('✓ 文件夹已创建');
+  try{
+    await sbFetch('/rest/v1/folders','POST',[f]);
+    toast('✓ 文件夹已创建');
+  }catch(e){
+    S.folders=S.folders.filter(x=>x.id!==f.id);
+    render();
+    toast('创建失败，请重试','err');
+  }
 }
 
 async function renameFolder(id,oldName){
@@ -1442,7 +1458,7 @@ let _searchTimer;
 function doRefresh(){
   const btn = document.getElementById('refreshBtn');
   if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; },500); }
-  load().then(()=>{ render(); toast('✓ 数据已刷新'); });
+  load().then(()=>{ toast('✓ 数据已刷新'); });
 }
 
 function onGlobalSearch(val){
@@ -1588,31 +1604,29 @@ async function saveVideoForm(){
     author:document.getElementById('f-author')?.value.trim()||'',
     douyin_id:document.getElementById('f-douyin-id')?.value.trim()||'',
   };
-  if(id){
-    const i=S.videos.findIndex(v=>v.id===id);
-    // FIX: 编辑时保留原有的 uploadedBy，data 对象里没有这个字段
-    // 否则 S.videos[i] = data 会把 uploadedBy 覆盖掉，重渲染后标签消失
-    const existingUploadedBy = i>=0 ? (S.videos[i].uploadedBy||'') : '';
-    if(i>=0) S.videos[i]={...data, uploadedBy: existingUploadedBy};
-    // Update in Supabase
-    await sbFetch('/rest/v1/videos?id=eq.'+id,'PATCH',{
-      acc_id:data.accId,url:data.url,title:data.title,
-      play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
-      dur:data.dur||'',thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
-      author:data.author||'',douyin_id:data.douyin_id||''
-    });
-  } else {
-    S.videos.unshift(data);
-    // Insert into Supabase
-    await sbFetch('/rest/v1/videos','POST',[{
-      id:data.id,acc_id:data.accId,url:data.url,title:data.title,
-      play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
-      thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
-      author:data.author||'',
-      douyin_id:data.douyin_id||'',
-      uploaded_by:currentUser?.username||''
-    }]);
-  }
+  try{
+    if(id){
+      const i=S.videos.findIndex(v=>v.id===id);
+      const existingUploadedBy = i>=0 ? (S.videos[i].uploadedBy||'') : '';
+      if(i>=0) S.videos[i]={...data, uploadedBy: existingUploadedBy};
+      await sbFetch('/rest/v1/videos?id=eq.'+id,'PATCH',{
+        acc_id:data.accId,url:data.url,title:data.title,
+        play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
+        dur:data.dur||'',thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
+        author:data.author||'',douyin_id:data.douyin_id||''
+      });
+    } else {
+      S.videos.unshift(data);
+      await sbFetch('/rest/v1/videos','POST',[{
+        id:data.id,acc_id:data.accId,url:data.url,title:data.title,
+        play:data.play,likes:data.likes,comm:data.comm,coll:data.coll,share:data.share||0,
+        thumb:data.thumb||'',violation:data.violation,promo:data.promo,date:data.date,
+        author:data.author||'',
+        douyin_id:data.douyin_id||'',
+        uploaded_by:currentUser?.username||''
+      }]);
+    }
+  }catch(e){toast('保存到云端失败，请重试','err');console.error(e);return;}
   render();closeModal('vidModal');
   toast(id?'✓ 已更新':'✓ 视频已添加');
   // 员工版搜索页同步刷新
@@ -3009,6 +3023,8 @@ function renderUserSearchResultsFiltered(folderId, q){
 }
 
 async function loadUserData(){
+  const overlay=document.getElementById('loadingOverlay');
+  if(overlay){overlay.style.display='flex';}
   // Load all data but filter to user's folder
   try{
     const [accs,vids,folders,visits]=await Promise.all([
@@ -3022,6 +3038,7 @@ async function loadUserData(){
     if(accs&&Array.isArray(accs)) S.accounts=accs.map(a=>({id:a.id,name:a.name,color:a.color||'#b87f5a',note:a.note||'',folderId:a.folder_id||null,dateStart:a.date_start||'',dateEnd:a.date_end||'',visitCount:a.visit_count||0}));
     if(vids&&Array.isArray(vids)) S.videos=vids.map(v=>({id:v.id,accId:v.acc_id,url:v.url||'',title:v.title||'',play:v.play||0,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,share:v.share||0,dur:v.dur||'',thumb:v.thumb||'',violation:v.violation||false,promo:v.promo||false,date:v.date||'',author:v.author||'',douyin_id:v.douyin_id||'',uploadedBy:v.uploaded_by||''}));
   }catch(e){console.error('loadUserData error',e);}
+  if(overlay){overlay.style.display='none';}
   // populate folder search
   renderFolderSuggestions('');
   // FIX: 员工有绑定文件夹时，自动填入搜索框并渲染，不用每次手动选择
@@ -3288,7 +3305,6 @@ async function deleteUser(id){
 
 checkLogin();
 
-load();
 // ── SIDEBAR RESIZER ──
 (function(){
   const resizer = document.getElementById('resizer');
