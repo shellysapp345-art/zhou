@@ -448,12 +448,6 @@ body.dark-mode {
     <span>❤ <b id="sb-likes" style="color:var(--cyan);">0</b></span>
     <span>📢 <b id="sb-promo" style="color:var(--green);">0</b></span>
   </div>
-  <div style="padding:6px 10px 4px;">
-    <button onclick="openOverview()" id="btnOverview" style="width:100%;display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;transition:all .15s;text-align:left;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-      <span style="font-size:15px;">📊</span> 数据总览
-    </button>
-  </div>
-  <div class="sb-lbl">项目</div>
   <div class="acc-list" id="accList"></div>
   <button class="sb-add" onclick="openAccModal()">＋ 添加项目</button>
   <button class="sb-add" onclick="addFolder()" >＋ 添加文件夹</button>
@@ -1136,140 +1130,142 @@ function renderSidebar(){
   _s('sb-likes',fmt(all.reduce((a,v)=>a+v.likes,0)));
   _s('sb-promo',all.filter(v=>v.promo).length);
 
-  // Build account list using DOM API — no innerHTML onclick injection issues
   const accList=document.getElementById('accList');
   accList.innerHTML='';
 
-  // "All" item
-  const allDiv=document.createElement('div');
-  allDiv.className='aci'+(S.curAcc==='all'?' on':'');
-  allDiv.innerHTML=`<div class="aci-av" style="background:var(--s4);font-size:15px;">🏠</div>
-    <div class="aci-info"><div class="aci-name">全部项目</div><div class="aci-meta">${all.length} 条视频</div></div>`;
-  allDiv.addEventListener('click',()=>selAcc('all'));
-  allDiv.addEventListener('dragover',e=>{
-    e.preventDefault();
-    e.dataTransfer.dropEffect='move';
-    allDiv.style.outline='2px solid var(--gold)';
-  });
-  allDiv.addEventListener('dragleave',()=>{ allDiv.style.outline=''; });
-  allDiv.addEventListener('drop',async e=>{
-    e.preventDefault();
-    allDiv.style.outline='';
-    const accId = e.dataTransfer.getData('accId');
-    if(!accId) return;
-    const acc = S.accounts.find(a=>a.id===accId);
-    if(!acc) return;
-    acc.folderId = null;
+  // ── 全部项目：单一折叠入口 ──
+  const isAllExpanded = S.expandedFolders.has('__ALL__');
+  const allWrap = document.createElement('div');
+
+  // 顶行
+  const allRow = document.createElement('div');
+  allRow.style.cssText = `display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:10px;cursor:pointer;margin:2px 0;transition:background .15s;background:${isAllExpanded?'var(--s3)':'transparent'};`;
+
+  const allArrow = document.createElement('span');
+  allArrow.textContent = isAllExpanded ? '▾' : '▸';
+  allArrow.style.cssText = 'font-size:0.65em;color:var(--text3);width:11px;flex-shrink:0;';
+
+  const allIcon = document.createElement('span');
+  allIcon.textContent = '🏠';
+  allIcon.style.fontSize = '0.95em';
+
+  const allInfo = document.createElement('div');
+  allInfo.style.cssText = 'flex:1;min-width:0;';
+  allInfo.innerHTML = `<div style="font-size:0.82em;font-weight:700;color:var(--text);">全部项目</div><div style="font-size:0.69em;color:var(--text3);">${S.accounts.length} 个项目 · ${all.length} 条</div>`;
+
+  allRow.appendChild(allArrow);
+  allRow.appendChild(allIcon);
+  allRow.appendChild(allInfo);
+
+  allRow.addEventListener('click', () => {
+    if(S.expandedFolders.has('__ALL__')) S.expandedFolders.delete('__ALL__');
+    else S.expandedFolders.add('__ALL__');
+    S.curAcc='all'; S.curFolder=null; S.page=0;
+    showOverviewPane();
     render();
+  });
+  allRow.addEventListener('dragover', e => { e.preventDefault(); allRow.style.outline='2px solid var(--accent)'; });
+  allRow.addEventListener('dragleave', () => { allRow.style.outline=''; });
+  allRow.addEventListener('drop', async e => {
+    e.preventDefault(); allRow.style.outline='';
+    const accId=e.dataTransfer.getData('accId'); if(!accId) return;
+    const acc=S.accounts.find(a=>a.id===accId); if(!acc) return;
+    acc.folderId=null; render();
     await sbFetch('/rest/v1/accounts?id=eq.'+accId,'PATCH',{folder_id:null});
     toast('✓ 已移出文件夹');
   });
-  allDiv.addEventListener('contextmenu',e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    showAllCtxMenu(e);
-  });
-  accList.appendChild(allDiv);
+  allRow.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showAllCtxMenu(e); });
+  allWrap.appendChild(allRow);
 
-  // Folders with collapsible accounts
-  (S.folders||[]).forEach(f=>{
-    const folderAccs = S.accounts.filter(a=>a.folderId===f.id);
-    const folderVids = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId));
-    const isExpanded = S.expandedFolders.has(f.id);
-    const isActive = S.curFolder===f.id;
+  if(isAllExpanded){
+    const innerWrap = document.createElement('div');
+    innerWrap.style.cssText = 'padding-left:10px;';
 
-    // Folder header row
-    const fDiv=document.createElement('div');
-    fDiv.className='folder-item';
-    const isSelected = S.selectedFolders.has(f.id);
-    fDiv.style.cssText=`display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;border-radius:10px;margin:2px 0;transition:background .15s;${isActive?'background:var(--s3);':isSelected?'background:var(--gold)22;outline:2px solid var(--gold);':''}`;
+    // 各文件夹
+    (S.folders||[]).forEach(f => {
+      const folderAccs = S.accounts.filter(a=>a.folderId===f.id);
+      const folderVids = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId));
+      const isFExpanded = S.expandedFolders.has(f.id);
+      const isFActive = S.curFolder===f.id;
+      const isSelected = S.selectedFolders.has(f.id);
 
-    // Arrow toggle
-    const arrow=document.createElement('span');
-    arrow.textContent=isExpanded?'▾':'▸';
-    arrow.style.cssText='font-size:0.7em;color:var(--text3);width:12px;flex-shrink:0;transition:transform .2s;';
+      const fDiv = document.createElement('div');
+      fDiv.className = 'folder-item';
+      fDiv.style.cssText = `display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;border-radius:8px;margin:1px 0;transition:background .15s;${isFActive?'background:var(--s3);':isSelected?'background:var(--gold)22;outline:2px solid var(--gold);':''}`;
 
-    const fIcon=document.createElement('span');
-    fIcon.textContent='📁';
-    fIcon.style.fontSize='1em';
+      const fArrow = document.createElement('span');
+      fArrow.textContent = isFExpanded ? '▾' : '▸';
+      fArrow.style.cssText = 'font-size:0.6em;color:var(--text3);width:10px;flex-shrink:0;';
 
-    const fInfo=document.createElement('div');
-    fInfo.style.cssText='flex:1;min-width:0;';
-    fInfo.innerHTML=`<div style="font-size:1.15em;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
-      <div style="font-size:0.75em;color:var(--text3);">${folderAccs.length} 个账号 · ${folderVids.length} 条</div>`;
+      const fIcon = document.createElement('span');
+      fIcon.textContent = '📁';
+      fIcon.style.fontSize = '0.88em';
 
-    const fActions=document.createElement('div');
-    fActions.style.cssText='display:flex;gap:2px;opacity:0;transition:opacity .15s;';
-    fDiv.addEventListener('mouseenter',()=>fActions.style.opacity='1');
-    fDiv.addEventListener('mouseleave',()=>fActions.style.opacity='0');
+      const fInfo = document.createElement('div');
+      fInfo.style.cssText = 'flex:1;min-width:0;';
+      fInfo.innerHTML = `<div style="font-size:0.79em;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div><div style="font-size:0.67em;color:var(--text3);">${folderAccs.length} 个项目 · ${folderVids.length} 条</div>`;
 
-    const renameBtn=document.createElement('button');
-    renameBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--text3);padding:2px 4px;border-radius:4px;';
-    renameBtn.textContent='✏';
-    renameBtn.addEventListener('click',e=>{e.stopPropagation();renameFolder(f.id,f.name);});
+      const fActions = document.createElement('div');
+      fActions.style.cssText = 'display:flex;gap:2px;opacity:0;transition:opacity .15s;';
+      fDiv.addEventListener('mouseenter', () => fActions.style.opacity='1');
+      fDiv.addEventListener('mouseleave', () => fActions.style.opacity='0');
 
-    const delFBtn=document.createElement('button');
-    delFBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--text3);padding:2px 4px;border-radius:4px;';
-    delFBtn.textContent='🗑';
-    delFBtn.addEventListener('click',e=>{e.stopPropagation();deleteFolder(f.id,f.name);});
+      const renameBtn = document.createElement('button');
+      renameBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:0.75em;color:var(--text3);padding:2px 3px;border-radius:3px;';
+      renameBtn.textContent = '✏';
+      renameBtn.addEventListener('click', e => { e.stopPropagation(); renameFolder(f.id, f.name); });
 
-    fActions.appendChild(renameBtn);
-    fActions.appendChild(delFBtn);
-    fDiv.appendChild(arrow);
-    fDiv.appendChild(fIcon);
-    fDiv.appendChild(fInfo);
-    fDiv.appendChild(fActions);
+      const delFBtn = document.createElement('button');
+      delFBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:0.75em;color:var(--text3);padding:2px 3px;border-radius:3px;';
+      delFBtn.textContent = '🗑';
+      delFBtn.addEventListener('click', e => { e.stopPropagation(); deleteFolder(f.id, f.name); });
 
-    // Click: select folder, toggle expand
-    fDiv.addEventListener('dragover',e=>{
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      fDiv.style.outline='2px solid var(--gold)';
+      fActions.appendChild(renameBtn); fActions.appendChild(delFBtn);
+      fDiv.appendChild(fArrow); fDiv.appendChild(fIcon); fDiv.appendChild(fInfo); fDiv.appendChild(fActions);
+
+      fDiv.addEventListener('dragover', e => { e.preventDefault(); fDiv.style.outline='2px solid var(--accent)'; });
+      fDiv.addEventListener('dragleave', () => { fDiv.style.outline=''; });
+      fDiv.addEventListener('drop', async e => {
+        e.preventDefault(); fDiv.style.outline='';
+        const accId=e.dataTransfer.getData('accId'); if(!accId) return;
+        const acc=S.accounts.find(a=>a.id===accId); if(!acc) return;
+        acc.folderId=f.id; render();
+        await sbFetch('/rest/v1/accounts?id=eq.'+accId,'PATCH',{folder_id:f.id});
+        toast('✓ 已移入「'+f.name+'」');
+      });
+      fDiv.addEventListener('click', e => {
+        if(e.ctrlKey||e.metaKey){
+          if(S.selectedFolders.has(f.id)) S.selectedFolders.delete(f.id);
+          else S.selectedFolders.add(f.id);
+          render();
+        } else {
+          S.selectedFolders.clear();
+          S.curFolder=f.id; S.curAcc='all'; S.page=0; S.searchQuery='';
+          const gs=document.getElementById('globalSearch'); if(gs) gs.value='';
+          hideOverviewPane();
+          if(S.expandedFolders.has(f.id)) S.expandedFolders.delete(f.id);
+          else S.expandedFolders.add(f.id);
+          render();
+        }
+      });
+      fDiv.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showFolderCtxMenu(e, f.id, f.name); });
+      innerWrap.appendChild(fDiv);
+
+      if(isFExpanded) folderAccs.forEach(a => renderAccItem(a, innerWrap, true));
     });
-    fDiv.addEventListener('dragleave',()=>{ fDiv.style.outline=''; });
-    fDiv.addEventListener('drop',async e=>{
-      e.preventDefault();
-      fDiv.style.outline='';
-      const accId = e.dataTransfer.getData('accId');
-      if(!accId) return;
-      const acc = S.accounts.find(a=>a.id===accId);
-      if(!acc) return;
-      acc.folderId = f.id;
-      render();
-      await sbFetch('/rest/v1/accounts?id=eq.'+accId,'PATCH',{folder_id:f.id});
-      toast('✓ 已移入「'+f.name+'」');
-    });
-    fDiv.addEventListener('click',(e)=>{
-      if(e.ctrlKey || e.metaKey){
-        // Multi-select mode
-        if(S.selectedFolders.has(f.id)) S.selectedFolders.delete(f.id);
-        else S.selectedFolders.add(f.id);
-        render();
-      } else {
-        S.selectedFolders.clear();
-        S.curFolder=f.id; S.curAcc='all'; S.page=0; S.searchQuery='';const gs=document.getElementById('globalSearch');if(gs)gs.value='';
-        hideOverviewPane();
-        if(S.expandedFolders.has(f.id)) S.expandedFolders.delete(f.id);
-        else S.expandedFolders.add(f.id);
-        render();
-      }
-    });
-    fDiv.addEventListener('contextmenu',e=>{
-      e.preventDefault();
-      e.stopPropagation();
-      showFolderCtxMenu(e, f.id, f.name);
-    });
-    accList.appendChild(fDiv);
 
-    // Accounts under folder (only if expanded)
-    if(isExpanded){
-      folderAccs.forEach(a=>renderAccItem(a, accList, true));
+    // 未分组项目
+    const noFolder = S.accounts.filter(a=>!a.folderId);
+    if(noFolder.length){
+      const nfLabel = document.createElement('div');
+      nfLabel.style.cssText = 'padding:5px 8px 2px;font-size:0.64em;color:var(--text3);font-weight:600;letter-spacing:.05em;';
+      nfLabel.textContent = '未分组';
+      innerWrap.appendChild(nfLabel);
+      noFolder.forEach(a => renderAccItem(a, innerWrap, false));
     }
-  });
-
-  // Accounts without folder
-  S.accounts.filter(a=>!a.folderId).forEach(a=>renderAccItem(a, accList, false));
-
+    allWrap.appendChild(innerWrap);
+  }
+  accList.appendChild(allWrap);
 }
 
 function renderAccItem(a, container, indented){
@@ -1891,12 +1887,12 @@ function allCtxChart(type){
     chartFolderId = allFolderIds;
     document.getElementById('chartTitle').textContent = '全部项目数据图表';
     const totalVids = S.videos.length;
-    document.getElementById('chartSubtitle').textContent = S.accounts.length + ' 个账号 · ' + totalVids + ' 条视频';
+    document.getElementById('chartSubtitle').textContent = S.accounts.length + ' 个项目 · ' + totalVids + ' 条视频';
   } else {
     // No folders, use all accounts directly
     chartFolderId = null;
     document.getElementById('chartTitle').textContent = '全部项目数据图表';
-    document.getElementById('chartSubtitle').textContent = S.accounts.length + ' 个账号 · ' + S.videos.length + ' 条视频';
+    document.getElementById('chartSubtitle').textContent = S.accounts.length + ' 个项目 · ' + S.videos.length + ' 条视频';
   }
 
   ['Line','Bar','Tree'].forEach(t=>document.getElementById('btn'+t).className='chart-tab');
@@ -1964,7 +1960,7 @@ function openChartModal(folderId, type='line'){
   const folder = S.folders.find(f=>f.id===folderId);
   document.getElementById('chartTitle').textContent = (folder?folder.name:'') + ' 数据图表';
   const accs = S.accounts.filter(a=>a.folderId===folderId);
-  document.getElementById('chartSubtitle').textContent = accs.length + ' 个账号 · ' + S.videos.filter(v=>accs.map(a=>a.id).includes(v.accId)).length + ' 条视频';
+  document.getElementById('chartSubtitle').textContent = accs.length + ' 个项目 · ' + S.videos.filter(v=>accs.map(a=>a.id).includes(v.accId)).length + ' 条视频';
   
   // Reset tabs
   ['Line','Bar','Tree'].forEach(t=>document.getElementById('btn'+t).className='chart-tab');
@@ -3801,154 +3797,87 @@ function renderOverviewPane(){
   if(!pane) return;
   const rows = _ovRows();
   const cur = rows[_ovFolderIdx] || rows[0];
+  const accs = cur.accs;
 
-  // 暖色渐变色板（12色，循环使用）
-  const warmGrads = [
-    ['#c47c3a','#e8a95a','#7a4a20'],
-    ['#a05c2a','#c47c3a','#602c10'],
-    ['#8c4a2a','#b86a3a','#541e0a'],
-    ['#b46c1a','#d4922a','#704010'],
-    ['#7a3a1a','#a05a2a','#481208'],
-    ['#b88c3a','#d4a85a','#704c18'],
-    ['#c4562a','#e07a4a','#782010'],
-    ['#8c3a2a','#b05a3a','#501808'],
-    ['#a08c2a','#c4aa3a','#605014'],
-    ['#9c6a2a','#b8882a','#5c3c10'],
-    ['#6a4a1a','#8c6a2a','#3c2408'],
-    ['#b46a2a','#d08a3a','#6c3810'],
-  ];
+  function getVisitCount(accId){
+    return (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0);
+  }
 
-  // 左侧文件夹导航
-  const navHtml = rows.map((r,i)=>{
-    const viol = r.vids.filter(v=>v.violation).length;
+  // 顶部文件夹 tab
+  const tabsHtml = rows.map((r,i) => {
     const isOn = i===_ovFolderIdx;
-    return `<div onclick="ovSelectFolder(${i})" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px;transition:all .18s;${isOn?'background:var(--accent);':'background:transparent;'}">
-      <span style="font-size:12px;opacity:${isOn?'1':'.6'};">${r.icon}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:${isOn?'700':'500'};color:${isOn?'#fff':'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;">${r.folder}</div>
-        <div style="font-size:9.5px;color:${isOn?'rgba(255,255,255,.65)':'var(--text3)'};">${r.vids.length} 条 · ${r.accs.length} 项目</div>
-      </div>
-      ${viol?`<span style="font-size:9px;background:${isOn?'rgba(255,255,255,.2)':'rgba(196,75,58,.15)'};color:${isOn?'#fff':'var(--red)'};border-radius:20px;padding:1px 6px;flex-shrink:0;">⚠${viol}</span>`:''}
-    </div>`;
+    const viol = r.vids.filter(v=>v.violation||v.promo).length;
+    return `<button onclick="ovSelectFolder(${i})" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:8px;cursor:pointer;border:1.5px solid ${isOn?'#c47c3a':'var(--border)'};background:${isOn?'#c47c3a':'transparent'};color:${isOn?'#fff':'var(--text2)'};font-size:12px;font-weight:${isOn?'700':'500'};font-family:var(--font);transition:all .15s;white-space:nowrap;">${r.icon} ${r.folder}${viol?` <span style="background:${isOn?'rgba(255,255,255,.25)':'rgba(196,75,58,.12)'};color:${isOn?'#fff':'#c44a3a'};border-radius:20px;padding:0 6px;font-size:10px;">⚠${viol}</span>`:''}</button>`;
   }).join('');
 
-  // 顶部汇总数字
-  const vids = cur.vids;
-  const likes = vids.reduce((s,v)=>s+v.likes,0);
-  const coll  = vids.reduce((s,v)=>s+v.coll,0);
-  const comm  = vids.reduce((s,v)=>s+v.comm,0);
-  const share = vids.reduce((s,v)=>s+v.share,0);
-
-  const statItems = [
-    {label:'视频数',val:vids.length,sub:'VIDEOS'},
-    {label:'总点赞',val:fmt(likes),sub:'LIKES'},
-    {label:'总收藏',val:fmt(coll),sub:'FAVORITES'},
-    {label:'总评论',val:fmt(comm),sub:'COMMENTS'},
-    {label:'总转发',val:fmt(share),sub:'SHARES'},
-    {label:'项目数',val:cur.accs.length,sub:'PROJECTS'},
-  ];
-
-  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:22px;">
-    ${statItems.map((s,i)=>`
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:${i===0?'1':'.4'};"></div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);">${s.val}</div>
-      <div style="font-size:8.5px;color:var(--text3);margin-top:4px;letter-spacing:.08em;font-weight:600;">${s.sub}</div>
-    </div>`).join('')}
-  </div>`;
-
-  // 项目卡片
-  const cardsHtml = cur.accs.length ? `
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">
-    ${cur.accs.map((acc,cardIdx)=>{
+  // 卡片
+  const cardsHtml = accs.length ? `
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;">
+    ${accs.map(acc => {
       const av = S.videos.filter(v=>v.accId===acc.id);
-      const aLikes = av.reduce((s,v)=>s+v.likes,0);
-      const aColl  = av.reduce((s,v)=>s+v.coll,0);
-      const aComm  = av.reduce((s,v)=>s+v.comm,0);
-      const aShare = av.reduce((s,v)=>s+v.share,0);
-      const violVids  = av.filter(v=>v.violation);
-      const promoVids = av.filter(v=>v.promo);
-      const [c1,c2,c3] = warmGrads[cardIdx % warmGrads.length];
+      const likes = av.reduce((s,v)=>s+v.likes,0);
+      const coll  = av.reduce((s,v)=>s+v.coll,0);
+      const comm  = av.reduce((s,v)=>s+v.comm,0);
+      const share = av.reduce((s,v)=>s+v.share,0);
+      const abnormal = av.filter(v=>v.violation||v.promo).length;
+      const visit = getVisitCount(acc.id);
 
-      const violListHtml = violVids.map(v=>`
-        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
-          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
-          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
-          <span style="font-size:9px;color:rgba(255,220,180,.9);flex-shrink:0;">⚠ 违规</span>
-          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
-          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
-        </div>`).join('');
+      return `<div onclick="hideOverviewPane();selAcc('${acc.id}')"
+        style="background:#fff;border:1.5px solid #c47c3a;border-radius:16px;padding:20px 18px;cursor:pointer;transition:box-shadow .2s,transform .2s;box-shadow:0 2px 8px rgba(196,124,58,.10);"
+        onmouseover="this.style.boxShadow='0 8px 28px rgba(196,124,58,.22)';this.style.transform='translateY(-3px)'"
+        onmouseout="this.style.boxShadow='0 2px 8px rgba(196,124,58,.10)';this.style.transform=''">
 
-      const promoListHtml = promoVids.map(v=>`
-        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
-          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
-          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
-          <span style="font-size:9px;color:rgba(255,240,180,.9);flex-shrink:0;">📢 推广</span>
-          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
-          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
-        </div>`).join('');
-
-      return `
-      <div style="border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18);transition:transform .2s,box-shadow .2s;cursor:pointer;"
-        onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .28)'"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18)'">
-        <!-- 渐变头部，点击跳到项目 -->
-        <div onclick="hideOverviewPane();selAcc('${acc.id}')"
-          style="background:linear-gradient(135deg,${c1},${c2});padding:16px 16px 14px;position:relative;overflow:hidden;">
-          <!-- 装饰圆 -->
-          <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none;"></div>
-          <div style="position:absolute;right:10px;bottom:-30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;"></div>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em;line-height:1.3;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</div>
-              <div style="font-size:9.5px;color:rgba(255,255,255,.6);margin-top:2px;">${av.length} 条视频${acc.note?' · '+acc.note:''}</div>
-            </div>
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(4px);">${acc.name[0]}</div>
+        <!-- 项目名 + 视频数 -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+          <div style="flex:1;min-width:0;padding-right:10px;">
+            <div style="font-size:15px;font-weight:800;color:#1c1814;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</div>
+            ${acc.note?`<div style="font-size:11px;color:#999;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.note}</div>`:''}
           </div>
-          <!-- 数据 2×2 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aLikes)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">❤ 点赞</div>
-            </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aColl)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">⭐ 收藏</div>
-            </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aComm)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">💬 评论</div>
-            </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aShare)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">↗ 转发</div>
-            </div>
+          <div style="flex-shrink:0;text-align:center;background:#fdf6ee;border:1px solid #e8c898;border-radius:10px;padding:6px 10px;min-width:44px;">
+            <div style="font-size:19px;font-weight:900;color:#c47c3a;line-height:1;font-family:var(--mono);">${av.length}</div>
+            <div style="font-size:8.5px;color:#c8a070;letter-spacing:.06em;margin-top:2px;">视频</div>
           </div>
         </div>
-        <!-- 底部：异常视频列表 -->
-        <div style="background:var(--s1);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;padding:10px 12px;">
-          ${violListHtml}${promoListHtml}
-          ${!violVids.length&&!promoVids.length
-            ?`<div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px;"><span>✓</span><span>无异常视频</span></div>`
-            :''}
+
+        <!-- 细分割线 -->
+        <div style="height:1px;background:linear-gradient(90deg,#c47c3a44,#c47c3a11,transparent);margin-bottom:14px;"></div>
+
+        <!-- 4格数据 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          ${[
+            {icon:'❤',label:'点赞',val:fmt(likes)},
+            {icon:'⭐',label:'收藏',val:fmt(coll)},
+            {icon:'💬',label:'评论',val:fmt(comm)},
+            {icon:'↗',label:'转发',val:fmt(share)},
+          ].map(d=>`<div style="background:#faf8f5;border:1px solid #ede8df;border-radius:9px;padding:9px 11px;">
+            <div style="font-size:15px;font-weight:800;color:#1c1814;font-family:var(--mono);line-height:1;">${d.val}</div>
+            <div style="font-size:9px;color:#b0a090;margin-top:3px;">${d.icon} ${d.label}</div>
+          </div>`).join('')}
+        </div>
+
+        <!-- 异常 + 到诊 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:${abnormal?'#fff5f4':'#f6fff8'};border:1px solid ${abnormal?'#f5c5c0':'#c0eac8'};border-radius:9px;padding:9px 11px;">
+            <div style="font-size:15px;font-weight:800;color:${abnormal?'#c44a3a':'#3a8c5a'};font-family:var(--mono);line-height:1;">${abnormal}</div>
+            <div style="font-size:9px;color:#b0a090;margin-top:3px;">⚠ 异常视频</div>
+          </div>
+          <div style="background:#fffbf0;border:1px solid #f0dfa0;border-radius:9px;padding:9px 11px;">
+            <div style="font-size:15px;font-weight:800;color:#b8872a;font-family:var(--mono);line-height:1;">${visit||0}</div>
+            <div style="font-size:9px;color:#b0a090;margin-top:3px;">🏥 到诊人数</div>
+          </div>
         </div>
       </div>`;
     }).join('')}
-  </div>` : `<div style="text-align:center;padding:80px;color:var(--text3);font-size:13px;">该文件夹暂无项目</div>`;
+  </div>` : `<div style="text-align:center;padding:80px 0;color:#ccc;font-size:13px;">该分组暂无项目</div>`;
 
-  pane.innerHTML = `<div style="display:flex;width:100%;height:100%;min-height:0;">
-    <!-- 左侧导航 -->
-    <div style="width:196px;flex-shrink:0;border-right:1px solid var(--border);padding:14px 10px;overflow-y:auto;background:var(--s1);">
-      <div style="font-size:9px;font-weight:700;color:var(--text3);padding:0 10px 10px;letter-spacing:.12em;text-transform:uppercase;">文件夹</div>
-      ${navHtml}
+  pane.innerHTML = `
+  <div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);">
+    <div style="display:flex;gap:8px;padding:14px 22px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;">
+      <span style="font-size:13px;font-weight:700;color:var(--text);margin-right:4px;">数据总览</span>
+      ${tabsHtml}
     </div>
-    <!-- 右侧内容 -->
-    <div style="flex:1;padding:20px 24px;overflow-y:auto;min-width:0;background:var(--bg);">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:18px;">
-        <span style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px;">${cur.folder}</span>
-        <span style="font-size:11px;color:var(--text3);font-weight:400;">${cur.vids.length} 条视频 · ${cur.accs.length} 个项目</span>
-      </div>
-      ${statsHtml}${cardsHtml}
+    <div style="flex:1;overflow-y:auto;padding:20px 22px;">
+      ${cardsHtml}
     </div>
   </div>`;
 }
