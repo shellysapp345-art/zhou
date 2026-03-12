@@ -3756,12 +3756,16 @@ function openUserManual(){ document.getElementById('userManualModal').style.disp
 function closeUserManual(){ document.getElementById('userManualModal').style.display='none'; }
 
 let _ovFolderIdx = 0;
+let _ovView = 'table';
+let _ovPage = 0;
+const _OV_PAGE_SIZE = 5;
 
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
+  _ovPage = 0;
   renderOverviewPane();
 }
 function hideOverviewPane(){
@@ -3797,58 +3801,124 @@ function renderOverviewPane(){
   if(!pane) return;
   const rows = _ovRows();
   const cur = rows[_ovFolderIdx] || rows[0];
-  const accs = cur.accs;
+  const allAccs = cur.accs;
+
+  const totalPages = Math.ceil(allAccs.length / _OV_PAGE_SIZE) || 1;
+  if(_ovPage >= totalPages) _ovPage = totalPages - 1;
+  const accs = allAccs.slice(_ovPage * _OV_PAGE_SIZE, (_ovPage+1) * _OV_PAGE_SIZE);
 
   function getVisitCount(accId){
     return (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0);
   }
-
-  // 点击异常数字 → 跳到该项目并过滤违规
   function goAbnormal(accId){
     hideOverviewPane();
     S.curAcc=accId; S.curFolder=null; S.page=0; S.searchQuery='';
     S.filter='violation';
     const gs=document.getElementById('globalSearch'); if(gs) gs.value='';
-    // 同步 fchip 按钮高亮
-    document.querySelectorAll('.fchip').forEach(b=>{
-      b.classList.toggle('on', b.textContent.includes('违规'));
-    });
+    document.querySelectorAll('.fchip').forEach(b=>b.classList.toggle('on', b.textContent.includes('违规')));
     render();
   }
   window._ovGoAbnormal = goAbnormal;
+  window._ovSetView = v=>{ _ovView=v; _ovPage=0; renderOverviewPane(); };
+  window._ovPrevPage = ()=>{ if(_ovPage>0){_ovPage--;renderOverviewPane();} };
+  window._ovNextPage = ()=>{ if(_ovPage<totalPages-1){_ovPage++;renderOverviewPane();} };
 
   // 文件夹 tabs
-  const tabsHtml = rows.map((r,i) => {
+  const tabsHtml = rows.map((r,i)=>{
     const isOn = i===_ovFolderIdx;
     const viol = r.vids.filter(v=>v.violation||v.promo).length;
-    return `<button onclick="ovSelectFolder(${i})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:7px;cursor:pointer;border:1.5px solid ${isOn?'#c47c3a':'var(--border)'};background:${isOn?'#c47c3a':'transparent'};color:${isOn?'#fff':'var(--text2)'};font-size:12px;font-weight:${isOn?'700':'500'};font-family:var(--font);transition:all .15s;white-space:nowrap;">${r.icon} ${r.folder}${viol?` <span style="background:${isOn?'rgba(255,255,255,.25)':'rgba(196,75,58,.1)'};color:${isOn?'#fff':'#c44a3a'};border-radius:20px;padding:0 5px;font-size:10px;">⚠${viol}</span>`:''}</button>`;
+    return `<button onclick="ovSelectFolder(${i})" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:8px;cursor:pointer;border:1.5px solid ${isOn?'#c47c3a':'var(--border)'};background:${isOn?'#c47c3a':'transparent'};color:${isOn?'#fff':'var(--text2)'};font-size:13px;font-weight:${isOn?'700':'500'};font-family:var(--font);transition:all .15s;white-space:nowrap;">${r.icon} ${r.folder}${viol?` <span style="background:${isOn?'rgba(255,255,255,.25)':'rgba(196,75,58,.1)'};color:${isOn?'#fff':'#c44a3a'};border-radius:20px;padding:0 6px;font-size:11px;">⚠${viol}</span>`:''}</button>`;
   }).join('');
 
-  // 汇总行
-  const totalVid   = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).length,0);
-  const totalLike  = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.likes,0),0);
-  const totalColl  = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.coll,0),0);
-  const totalComm  = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.comm,0),0);
-  const totalShare = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.share,0),0);
-  const totalAbn   = accs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length,0);
-  const totalVisit = accs.reduce((s,a)=>s+getVisitCount(a.id),0);
+  // 视图切换：只有两个
+  const viewBtns = [
+    {id:'table', icon:'☰', label:'列表'},
+    {id:'card',  icon:'⊞', label:'大卡片'},
+  ].map(v=>{
+    const on = _ovView===v.id;
+    return `<button onclick="window._ovSetView('${v.id}')" title="${v.label}" style="width:34px;height:34px;border-radius:8px;border:1.5px solid ${on?'#c47c3a':'var(--border)'};background:${on?'#c47c3a':'transparent'};color:${on?'#fff':'var(--text2)'};font-size:15px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;">${v.icon}</button>`;
+  }).join('');
 
-  const tableHtml = accs.length ? `
-  <table style="width:100%;border-collapse:collapse;font-size:13px;">
-    <thead>
-      <tr style="border-bottom:2px solid #e8d8c0;">
-        <th style="text-align:left;padding:10px 14px 10px 0;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">项目</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">到诊</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">视频</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">❤ 点赞</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">⭐ 收藏</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">💬 评论</th>
-        <th style="text-align:right;padding:10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">↗ 转发</th>
-        <th style="text-align:right;padding:10px 0 10px 12px;color:#9a8e80;font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;">⚠ 异常</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${accs.map((acc,idx) => {
+  // 翻页：纯左右箭头 + 页数提示
+  const pageBar = `
+  <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:18px 0 8px;">
+    <button onclick="window._ovPrevPage()" style="width:40px;height:40px;border-radius:10px;border:1.5px solid ${_ovPage===0?'var(--border)':'#c47c3a'};background:${_ovPage===0?'transparent':'#c47c3a'};color:${_ovPage===0?'var(--text3)':'#fff'};font-size:20px;cursor:${_ovPage===0?'default':'pointer'};transition:all .15s;opacity:${_ovPage===0?'.4':'1'};" ${_ovPage===0?'disabled':''}>‹</button>
+    <span style="font-size:13px;color:var(--text3);font-weight:500;min-width:120px;text-align:center;">第 ${_ovPage+1} 页 / 共 ${totalPages} 页</span>
+    <button onclick="window._ovNextPage()" style="width:40px;height:40px;border-radius:10px;border:1.5px solid ${_ovPage===totalPages-1?'var(--border)':'#c47c3a'};background:${_ovPage===totalPages-1?'transparent':'#c47c3a'};color:${_ovPage===totalPages-1?'var(--text3)':'#fff'};font-size:20px;cursor:${_ovPage===totalPages-1?'default':'pointer'};transition:all .15s;opacity:${_ovPage===totalPages-1?'.4':'1'};" ${_ovPage===totalPages-1?'disabled':''}>›</button>
+  </div>`;
+
+  // ── 列表视图 ──
+  let contentHtml = '';
+  if(_ovView === 'table'){
+    const totalVid   = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).length,0);
+    const totalLike  = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.likes,0),0);
+    const totalColl  = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.coll,0),0);
+    const totalComm  = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.comm,0),0);
+    const totalShare = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.share,0),0);
+    const totalAbn   = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length,0);
+    const totalVisit = allAccs.reduce((s,a)=>s+getVisitCount(a.id),0);
+
+    contentHtml = `<table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid #e8d8c0;">
+          <th style="text-align:left;padding:14px 16px 14px 0;color:#9a8e80;font-weight:700;font-size:13px;letter-spacing:.04em;">项目</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">到诊</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">视频</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">❤ 点赞</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">⭐ 收藏</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">💬 评论</th>
+          <th style="text-align:right;padding:14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">↗ 转发</th>
+          <th style="text-align:right;padding:14px 0 14px 14px;color:#9a8e80;font-weight:700;font-size:13px;white-space:nowrap;">⚠ 异常</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${accs.map((acc,idx)=>{
+          const av    = S.videos.filter(v=>v.accId===acc.id);
+          const likes = av.reduce((s,v)=>s+v.likes,0);
+          const coll  = av.reduce((s,v)=>s+v.coll,0);
+          const comm  = av.reduce((s,v)=>s+v.comm,0);
+          const share = av.reduce((s,v)=>s+v.share,0);
+          const abn   = av.filter(v=>v.violation||v.promo).length;
+          const visit = getVisitCount(acc.id);
+          const bg    = idx%2===0 ? '#ffffff' : '#fdf9f5';
+          return `<tr style="background:${bg};border-bottom:1px solid #f0e8dc;transition:background .12s;"
+            onmouseover="this.style.background='#fff8ee'" onmouseout="this.style.background='${bg}'">
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 16px 18px 0;cursor:pointer;max-width:220px;">
+              <div style="font-weight:700;color:#1c1814;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</div>
+              ${acc.note?`<div style="font-size:11px;color:#b0a090;margin-top:3px;">${acc.note}</div>`:''}
+            </td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:800;color:#b8872a;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${visit||0}</td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:700;color:#c47c3a;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${av.length}</td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${fmt(likes)}</td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${fmt(coll)}</td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${fmt(comm)}</td>
+            <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:18px 14px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);font-size:18px;cursor:pointer;white-space:nowrap;">${fmt(share)}</td>
+            <td style="padding:18px 0 18px 14px;text-align:right;white-space:nowrap;">
+              ${abn>0
+                ?`<span onclick="event.stopPropagation();window._ovGoAbnormal('${acc.id}')" style="display:inline-block;background:#fff0ee;border:1.5px solid #f5c0bb;border-radius:8px;padding:5px 14px;font-weight:800;color:#c44a3a;font-family:var(--mono);font-size:17px;cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#ffd8d4'" onmouseout="this.style.background='#fff0ee'">${abn}</span>`
+                :`<span style="color:#3a8c5a;font-weight:700;font-size:18px;">✓</span>`}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #e8d8c0;background:#fdf6ee;">
+          <td style="padding:14px 16px 14px 0;font-weight:700;color:#9a8e80;font-size:13px;">合计 · ${allAccs.length} 个项目</td>
+          <td style="padding:14px;text-align:right;font-weight:800;color:#b8872a;font-family:var(--mono);font-size:18px;">${totalVisit}</td>
+          <td style="padding:14px;text-align:right;font-weight:800;color:#c47c3a;font-family:var(--mono);font-size:18px;">${totalVid}</td>
+          <td style="padding:14px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);font-size:18px;">${fmt(totalLike)}</td>
+          <td style="padding:14px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);font-size:18px;">${fmt(totalColl)}</td>
+          <td style="padding:14px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);font-size:18px;">${fmt(totalComm)}</td>
+          <td style="padding:14px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);font-size:18px;">${fmt(totalShare)}</td>
+          <td style="padding:14px 0 14px 14px;text-align:right;font-weight:800;color:${totalAbn?'#c44a3a':'#3a8c5a'};font-family:var(--mono);font-size:18px;">${totalAbn||'✓'}</td>
+        </tr>
+      </tfoot>
+    </table>`;
+
+  } else {
+    // ── 大卡片视图（每行3个，数字超大）──
+    contentHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;">
+      ${accs.map(acc=>{
         const av    = S.videos.filter(v=>v.accId===acc.id);
         const likes = av.reduce((s,v)=>s+v.likes,0);
         const coll  = av.reduce((s,v)=>s+v.coll,0);
@@ -3856,53 +3926,53 @@ function renderOverviewPane(){
         const share = av.reduce((s,v)=>s+v.share,0);
         const abn   = av.filter(v=>v.violation||v.promo).length;
         const visit = getVisitCount(acc.id);
-        const bg = idx%2===0 ? '#ffffff' : '#fdf9f5';
-        return `<tr style="background:${bg};border-bottom:1px solid #f0e8dc;cursor:pointer;transition:background .12s;"
-          onmouseover="this.style.background='#fff8ee'"
-          onmouseout="this.style.background='${bg}'">
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 14px 13px 0;max-width:180px;">
-            <div style="font-weight:700;color:#1c1814;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;">${acc.name}</div>
-            ${acc.note?`<div style="font-size:10px;color:#b0a090;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.note}</div>`:''}
-          </td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:800;color:#b8872a;font-family:var(--mono);white-space:nowrap;">${visit||0}</td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:700;color:#c47c3a;font-family:var(--mono);white-space:nowrap;">${av.length}</td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);white-space:nowrap;">${fmt(likes)}</td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);white-space:nowrap;">${fmt(coll)}</td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);white-space:nowrap;">${fmt(comm)}</td>
-          <td onclick="hideOverviewPane();selAcc('${acc.id}')" style="padding:13px 12px;text-align:right;font-weight:600;color:#1c1814;font-family:var(--mono);white-space:nowrap;">${fmt(share)}</td>
-          <td style="padding:13px 0 13px 12px;text-align:right;white-space:nowrap;">
+        return `<div style="background:#fff;border:2px solid #c47c3a;border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(196,124,58,.10);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 32px rgba(196,124,58,.20)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(196,124,58,.10)'">
+          <!-- 焦糖渐变头 -->
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="background:linear-gradient(135deg,#c47c3a,#e8a95a);padding:20px 22px 16px;cursor:pointer;">
+            <div style="font-size:18px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em;">${acc.name}</div>
+            ${acc.note?`<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.note}</div>`:'<div style="height:16px;"></div>'}
+          </div>
+          <!-- 到诊 + 视频 大数字 -->
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr;cursor:pointer;border-bottom:1.5px solid #f0e0cc;">
+            <div style="padding:18px 20px;border-right:1px solid #f0e0cc;">
+              <div style="font-size:36px;font-weight:900;color:#b8872a;font-family:var(--mono);line-height:1;">${visit||0}</div>
+              <div style="font-size:11px;color:#b0a090;margin-top:6px;font-weight:600;letter-spacing:.04em;">🏥 到诊人数</div>
+            </div>
+            <div style="padding:18px 20px;">
+              <div style="font-size:36px;font-weight:900;color:#c47c3a;font-family:var(--mono);line-height:1;">${av.length}</div>
+              <div style="font-size:11px;color:#b0a090;margin-top:6px;font-weight:600;letter-spacing:.04em;">🎬 视频数量</div>
+            </div>
+          </div>
+          <!-- 4项指标 -->
+          <div onclick="hideOverviewPane();selAcc('${acc.id}')" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;cursor:pointer;border-bottom:1.5px solid #f0e0cc;">
+            ${[{icon:'❤',label:'点赞',val:fmt(likes)},{icon:'⭐',label:'收藏',val:fmt(coll)},{icon:'💬',label:'评论',val:fmt(comm)},{icon:'↗',label:'转发',val:fmt(share)}].map((d,i)=>`
+            <div style="padding:14px 10px;text-align:center;${i<3?'border-right:1px solid #f0e0cc;':''}">
+              <div style="font-size:22px;font-weight:800;color:#1c1814;font-family:var(--mono);line-height:1;">${d.val}</div>
+              <div style="font-size:10px;color:#b0a090;margin-top:5px;">${d.icon} ${d.label}</div>
+            </div>`).join('')}
+          </div>
+          <!-- 异常区 -->
+          <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;min-height:54px;">
+            <span style="font-size:12px;color:#b0a090;font-weight:600;letter-spacing:.03em;">⚠ 异常视频</span>
             ${abn>0
-              ? `<span onclick="event.stopPropagation();window._ovGoAbnormal('${acc.id}')"
-                  style="display:inline-block;background:#fff0ee;border:1px solid #f5c0bb;border-radius:6px;padding:3px 10px;font-weight:800;color:#c44a3a;font-family:var(--mono);font-size:13px;cursor:pointer;transition:background .12s;"
-                  onmouseover="this.style.background='#ffd8d4'" onmouseout="this.style.background='#fff0ee'">${abn}</span>`
-              : `<span style="color:#3a8c5a;font-weight:700;font-size:12px;">✓</span>`
-            }
-          </td>
-        </tr>`;
+              ?`<span onclick="event.stopPropagation();window._ovGoAbnormal('${acc.id}')" style="background:#fff0ee;border:1.5px solid #f5c0bb;border-radius:10px;padding:6px 20px;font-weight:900;color:#c44a3a;font-family:var(--mono);font-size:22px;cursor:pointer;transition:background .15s;letter-spacing:-.5px;" onmouseover="this.style.background='#ffd8d4'" onmouseout="this.style.background='#fff0ee'">${abn} <span style="font-size:13px;font-weight:600;">条 →</span></span>`
+              :`<span style="color:#3a8c5a;font-weight:700;font-size:15px;letter-spacing:.02em;">✓ 无异常</span>`}
+          </div>
+        </div>`;
       }).join('')}
-    </tbody>
-    <tfoot>
-      <tr style="border-top:2px solid #e8d8c0;background:#fdf6ee;">
-        <td style="padding:11px 14px 11px 0;font-weight:700;color:#9a8e80;font-size:11px;letter-spacing:.04em;">合计 · ${accs.length} 个项目</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:800;color:#b8872a;font-family:var(--mono);">${totalVisit}</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:800;color:#c47c3a;font-family:var(--mono);">${totalVid}</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);">${fmt(totalLike)}</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);">${fmt(totalColl)}</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);">${fmt(totalComm)}</td>
-        <td style="padding:11px 12px;text-align:right;font-weight:700;color:#1c1814;font-family:var(--mono);">${fmt(totalShare)}</td>
-        <td style="padding:11px 0 11px 12px;text-align:right;font-weight:800;color:${totalAbn?'#c44a3a':'#3a8c5a'};font-family:var(--mono);">${totalAbn||'✓'}</td>
-      </tr>
-    </tfoot>
-  </table>` : `<div style="text-align:center;padding:80px 0;color:#ccc;font-size:13px;">该分组暂无项目</div>`;
+    </div>`;
+  }
 
   pane.innerHTML = `
   <div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);">
-    <div style="display:flex;gap:8px;padding:14px 24px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;">
-      <span style="font-size:13px;font-weight:800;color:var(--text);margin-right:6px;letter-spacing:.01em;">数据总览</span>
-      ${tabsHtml}
+    <div style="display:flex;gap:8px;padding:14px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:14px;font-weight:800;color:var(--text);margin-right:6px;white-space:nowrap;">数据总览</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;">${tabsHtml}</div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">${viewBtns}</div>
     </div>
-    <div style="flex:1;overflow:auto;padding:0 24px 24px;">
-      ${tableHtml}
+    <div style="flex:1;overflow:auto;padding:20px 24px 0;">
+      ${contentHtml}
+      ${pageBar}
     </div>
   </div>`;
 }
