@@ -30,18 +30,18 @@
   --purple:#6e4f8e;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13.5px;min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;}
 
 .wrap{display:flex;min-height:100vh;}
 
 /* ── SIDEBAR ── */
 .sidebar{
-  width:210px;flex-shrink:0;
+  width:220px;flex-shrink:0;
   background:var(--s1);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;overflow-y:auto;
-  font-size:13px;
+  font-size:15px;
 }
 .sb-brand{padding:16px 14px;border-bottom:1px solid var(--border);}
 .sb-logo{display:flex;align-items:center;gap:9px;}
@@ -172,14 +172,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .cdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .cacc{font-size:10px;color:var(--text2);}
 .cdt{margin-left:auto;font-size:10px;color:var(--text3);}
-.ctitle{font-size:12.5px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:9px;color:var(--text);font-weight:500;}
+.ctitle{font-size:12px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:9px;color:var(--text);}
 
 .cstats{display:flex;border-top:1px solid var(--border);margin:0 -11px;padding:7px 11px 9px;}
 .cs{flex:1;text-align:center;}
 .cs+.cs{border-left:1px solid var(--border);}
-.cs-v{font-size:13px;font-weight:700;font-family:var(--mono);line-height:1.3;color:var(--text);}
+.cs-v{font-size:12px;font-weight:600;font-family:var(--mono);line-height:1.3;color:var(--text);}
 .cs-v.lk{color:var(--red);}.cs-v.cm{color:var(--cyan);}.cs-v.cl{color:var(--gold);}.cs-v.pl{color:var(--purple);}
-.cs-l{font-size:9.5px;color:var(--text3);}
+.cs-l{font-size:9px;color:var(--text3);}
 
 .cfoot{padding:7px 11px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .cchips{display:flex;gap:3px;flex-wrap:wrap;}
@@ -466,9 +466,6 @@ body.dark-mode {
       <button class="fchip" onclick="setFilter('violation',this)">⚠ 违规</button>
       <button class="fchip" onclick="setFilter('promo',this)">📢 推广</button>
       <button class="fchip" onclick="setFilter('normal',this)">✓ 正常</button>
-      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="宫格">⊞</button>
-      <button class="vbtn" id="vb-compact" onclick="setView('compact')" title="缩略">⊡</button>
-      <button class="vbtn" id="vb-list" onclick="setView('list')" title="列表">☰</button>
       <button class="btn btn-primary" onclick="openAddModal()">＋ 添加视频</button>
     </div>
   </div>
@@ -914,7 +911,7 @@ body.dark-mode {
 // STATE
 // ══════════════════════
 const COLORS=['#b87f5a','#7a9e8e','#6a9e6a','#9a7a9e','#c49a3c','#c47a5a','#7a8e9e','#9e8a6a'];
-let S={accounts:[],videos:[],visits:[],folders:[],expandedFolders:new Set(),selectedFolders:new Set(),curAcc:null,curFolder:null,filter:'all',view:'grid',selColor:COLORS[0],page:0,pageSize:50,searchQuery:''};
+let S={accounts:[],videos:[],visits:[],folders:[],expandedFolders:new Set(),selectedFolders:new Set(),curAcc:null,curFolder:null,filter:'all',view:'grid',selColor:COLORS[0],page:0,pageSize:50,searchQuery:'',allExpanded:true};
 
 const SB_URL='https://ogyoxfkohvoeryagkdkm.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9neW94ZmtvaHZvZXJ5YWdrZGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MDAxMDcsImV4cCI6MjA4Nzk3NjEwN30.Tg86SbDRIfoUy0duGeJSEGI8RKIXcNKOMwo9TDlG9gk';
@@ -1120,12 +1117,24 @@ function renderSidebar(){
   const accList=document.getElementById('accList');
   accList.innerHTML='';
 
-  // "All" item
+  // "All" item — with collapse toggle
+  const allExpanded = S.allExpanded !== false; // default expanded
   const allDiv=document.createElement('div');
   allDiv.className='aci'+(S.curAcc==='all'?' on':'');
-  allDiv.innerHTML=`<div class="aci-av" style="background:var(--s4);font-size:15px;">🏠</div>
+  allDiv.innerHTML=`
+    <span style="font-size:0.7em;color:var(--text3);width:12px;flex-shrink:0;">${allExpanded?'▾':'▸'}</span>
+    <div class="aci-av" style="background:var(--s4);font-size:13px;">🏠</div>
     <div class="aci-info"><div class="aci-name">全部项目</div><div class="aci-meta">${all.length} 条视频</div></div>`;
-  allDiv.addEventListener('click',()=>selAcc('all'));
+  allDiv.addEventListener('click',(e)=>{
+    // click on arrow area → toggle collapse; click elsewhere → select all
+    const arrowSpan = allDiv.querySelector('span');
+    if(e.target === arrowSpan){
+      S.allExpanded = !allExpanded;
+      renderSidebar();
+    } else {
+      selAcc('all');
+    }
+  });
   allDiv.addEventListener('dragover',e=>{
     e.preventDefault();
     e.dataTransfer.dropEffect='move';
@@ -1247,8 +1256,10 @@ function renderSidebar(){
     }
   });
 
-  // Accounts without folder
-  S.accounts.filter(a=>!a.folderId).forEach(a=>renderAccItem(a, accList, false));
+  // Accounts without folder — only show when allExpanded
+  if(allExpanded){
+    S.accounts.filter(a=>!a.folderId).forEach(a=>renderAccItem(a, accList, false));
+  }
 
 }
 
@@ -1348,7 +1359,7 @@ function renderGrid(){
   const label=folder?folder.name:(acc?acc.name:'全部项目');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
 
-  grid.className='vgrid'+(S.view==='compact'?' compact':S.view==='list'?' list':'');
+  grid.className='vgrid';
 
   if(!vids.length){
     grid.innerHTML=`<div class="empty"><div class="empty-icon">🎬</div><div class="empty-t">暂无视频</div><div class="empty-s">点右上角「＋ 添加视频」</div></div>`;
@@ -3740,12 +3751,14 @@ function openUserManual(){ document.getElementById('userManualModal').style.disp
 function closeUserManual(){ document.getElementById('userManualModal').style.display='none'; }
 
 let _ovFolderIdx = 0;
+window._ovPage = 0;
 
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
+  window._ovPage = 0;
   renderOverviewPane();
 }
 function hideOverviewPane(){
@@ -3773,6 +3786,12 @@ function _ovRows(){
 
 function ovSelectFolder(idx){
   _ovFolderIdx = idx;
+  window._ovPage = 0;
+  renderOverviewPane();
+}
+
+function ovGoPage(p){
+  window._ovPage = p;
   renderOverviewPane();
 }
 
@@ -3782,7 +3801,7 @@ function renderOverviewPane(){
   const rows = _ovRows();
   const cur = rows[_ovFolderIdx] || rows[0];
 
-  // 暖色渐变色板（简化版，6色循环）
+  // 暖色渐变色板（6色循环）
   const warmGrads = [
     ['#b8732e','#d4944a','#703010'],
     ['#8c4a20','#aa6a3a','#502010'],
@@ -3792,20 +3811,6 @@ function renderOverviewPane(){
     ['#c04828','#dc6e46','#702010'],
   ];
 
-  // 左侧文件夹导航
-  const navHtml = rows.map((r,i)=>{
-    const viol = r.vids.filter(v=>v.violation).length;
-    const isOn = i===_ovFolderIdx;
-    return `<div onclick="ovSelectFolder(${i})" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px;transition:all .18s;${isOn?'background:var(--accent);':'background:transparent;'}">
-      <span style="font-size:12px;opacity:${isOn?'1':'.6'};">${r.icon}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:${isOn?'700':'500'};color:${isOn?'#fff':'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;">${r.folder}</div>
-        <div style="font-size:9.5px;color:${isOn?'rgba(255,255,255,.65)':'var(--text3)'};">${r.vids.length} 条 · ${r.accs.length} 项目</div>
-      </div>
-      ${viol?`<span style="font-size:9px;background:${isOn?'rgba(255,255,255,.2)':'rgba(196,75,58,.15)'};color:${isOn?'#fff':'var(--red)'};border-radius:20px;padding:1px 6px;flex-shrink:0;">⚠${viol}</span>`:''}
-    </div>`;
-  }).join('');
-
   // 顶部汇总数字
   const vids = cur.vids;
   const likes = vids.reduce((s,v)=>s+v.likes,0);
@@ -3814,116 +3819,115 @@ function renderOverviewPane(){
   const share = vids.reduce((s,v)=>s+v.share,0);
 
   const statItems = [
-    {label:'视频数',val:vids.length,sub:'VIDEOS'},
-    {label:'总点赞',val:fmt(likes),sub:'LIKES'},
-    {label:'总收藏',val:fmt(coll),sub:'FAVORITES'},
-    {label:'总评论',val:fmt(comm),sub:'COMMENTS'},
-    {label:'总转发',val:fmt(share),sub:'SHARES'},
-    {label:'项目数',val:cur.accs.length,sub:'PROJECTS'},
+    {val:vids.length,sub:'VIDEOS'},
+    {val:fmt(likes),sub:'LIKES'},
+    {val:fmt(coll),sub:'FAVORITES'},
+    {val:fmt(comm),sub:'COMMENTS'},
+    {val:fmt(share),sub:'SHARES'},
+    {val:cur.accs.length,sub:'PROJECTS'},
   ];
 
-  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:22px;">
+  const statsHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
     ${statItems.map((s,i)=>`
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:${i===0?'1':'.4'};"></div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);">${s.val}</div>
-      <div style="font-size:8.5px;color:var(--text3);margin-top:4px;letter-spacing:.08em;font-weight:600;">${s.sub}</div>
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:${i===0?'1':'.35'};"></div>
+      <div style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);">${s.val}</div>
+      <div style="font-size:8px;color:var(--text3);margin-top:3px;letter-spacing:.1em;font-weight:600;">${s.sub}</div>
     </div>`).join('')}
   </div>`;
 
-  // 项目卡片
-  const cardsHtml = cur.accs.length ? `
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">
-    ${cur.accs.map((acc,cardIdx)=>{
+  // 分页：每次显示5个项目
+  const OV_PAGE_SIZE = 5;
+  const ovPage = (typeof _ovPage !== 'undefined') ? _ovPage : 0;
+  window._ovPage = window._ovPage || 0;
+  const totalAccs = cur.accs.length;
+  const totalOvPages = Math.ceil(totalAccs / OV_PAGE_SIZE);
+  const startIdx = window._ovPage * OV_PAGE_SIZE;
+  const pageAccs = cur.accs.slice(startIdx, startIdx + OV_PAGE_SIZE);
+
+  // 项目卡片（5个一排）
+  const cardsHtml = totalAccs ? `
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;">
+    ${pageAccs.map((acc,cardIdx)=>{
       const av = S.videos.filter(v=>v.accId===acc.id);
       const aLikes = av.reduce((s,v)=>s+v.likes,0);
       const aColl  = av.reduce((s,v)=>s+v.coll,0);
       const aComm  = av.reduce((s,v)=>s+v.comm,0);
       const aShare = av.reduce((s,v)=>s+v.share,0);
-      const violVids  = av.filter(v=>v.violation);
-      const promoVids = av.filter(v=>v.promo);
-      const [c1,c2,c3] = warmGrads[cardIdx % warmGrads.length];
+      const violCount = av.filter(v=>v.violation).length;
+      const promoCount = av.filter(v=>v.promo).length;
+      const [c1,c2,c3] = warmGrads[(startIdx+cardIdx) % warmGrads.length];
+      const rgb = c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',');
 
-      const violListHtml = violVids.map(v=>`
-        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
-          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
-          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
-          <span style="font-size:9px;color:rgba(255,220,180,.9);flex-shrink:0;">⚠ 违规</span>
-          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
-          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
-        </div>`).join('');
-
-      const promoListHtml = promoVids.map(v=>`
-        <div onclick="hideOverviewPane();selAcc('${acc.id}');setTimeout(()=>openEditModal('${v.id}'),300)"
-          style="display:flex;align-items:center;gap:6px;padding:5px 9px;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.12);border-radius:7px;cursor:pointer;margin-top:5px;transition:background .15s;"
-          onmouseover="this.style.background='rgba(0,0,0,.16)'" onmouseout="this.style.background='rgba(0,0,0,.08)'">
-          <span style="font-size:9px;color:rgba(255,240,180,.9);flex-shrink:0;">📢 推广</span>
-          <span style="font-size:10px;color:rgba(255,240,210,.85);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||v.url||'未命名视频'}</span>
-          <span style="font-size:9px;color:rgba(255,220,180,.7);flex-shrink:0;">→</span>
-        </div>`).join('');
+      // 角标：只显示数量，不显示文案
+      const badgesHtml = [
+        violCount  ? `<span style="font-size:9px;background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:2px 7px;font-weight:700;">⚠ ${violCount}</span>` : '',
+        promoCount ? `<span style="font-size:9px;background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:2px 7px;font-weight:700;">📢 ${promoCount}</span>` : '',
+      ].filter(Boolean).join('');
 
       return `
-      <div style="border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18);transition:transform .2s,box-shadow .2s;cursor:pointer;"
-        onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .28)'"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 16px rgba(${c3.replace('#','').match(/../g).map(x=>parseInt(x,16)).join(',')}, .18)'">
-        <!-- 渐变头部，点击跳到项目 -->
+      <div style="border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(${rgb},.15);transition:transform .18s,box-shadow .18s;cursor:pointer;"
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 22px rgba(${rgb},.28)'"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(${rgb},.15)'">
         <div onclick="hideOverviewPane();selAcc('${acc.id}')"
-          style="background:linear-gradient(135deg,${c1},${c2});padding:16px 16px 14px;position:relative;overflow:hidden;">
-          <!-- 装饰圆 -->
-          <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none;"></div>
-          <div style="position:absolute;right:10px;bottom:-30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;"></div>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
-            <div>
-              <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em;line-height:1.3;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acc.name}</div>
-              <div style="font-size:9.5px;color:rgba(255,255,255,.6);margin-top:2px;">${av.length} 条视频${acc.note?' · '+acc.note:''}</div>
+          style="background:linear-gradient(135deg,${c1},${c2});padding:14px 14px 12px;position:relative;overflow:hidden;">
+          <div style="position:absolute;right:-14px;top:-14px;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none;"></div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12.5px;font-weight:700;color:#fff;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:6px;">${acc.name}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.58);margin-top:2px;">${av.length} 条视频${acc.note?' · '+acc.note:''}</div>
             </div>
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;backdrop-filter:blur(4px);">${acc.name[0]}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;">${acc.name[0]}</div>
+              ${badgesHtml ? `<div style="display:flex;gap:3px;">${badgesHtml}</div>` : ''}
+            </div>
           </div>
-          <!-- 数据 2×2 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aLikes)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">❤ 点赞</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
+              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aLikes)}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">❤ 点赞</div>
             </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aColl)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">⭐ 收藏</div>
+            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
+              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aColl)}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">⭐ 收藏</div>
             </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aComm)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">💬 评论</div>
+            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
+              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aComm)}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">💬 评论</div>
             </div>
-            <div style="background:rgba(0,0,0,.15);border-radius:8px;padding:7px 8px;backdrop-filter:blur(4px);">
-              <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aShare)}</div>
-              <div style="font-size:8.5px;color:rgba(255,255,255,.55);margin-top:1px;letter-spacing:.04em;">↗ 转发</div>
+            <div style="background:rgba(0,0,0,.14);border-radius:7px;padding:6px 8px;">
+              <div style="font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:var(--mono);">${fmt(aShare)}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:1px;">↗ 转发</div>
             </div>
           </div>
         </div>
-        <!-- 底部：异常视频列表 -->
-        <div style="background:var(--s1);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;padding:10px 12px;">
-          ${violListHtml}${promoListHtml}
-          ${!violVids.length&&!promoVids.length
-            ?`<div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px;"><span>✓</span><span>无异常视频</span></div>`
-            :''}
+        <div style="background:var(--s1);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;padding:7px 12px;">
+          ${!violCount&&!promoCount
+            ? `<div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;">✓ 无异常</div>`
+            : `<div style="font-size:10px;color:var(--text3);">
+                ${violCount?`<span style="color:var(--red);margin-right:8px;">⚠ 违规 ${violCount} 条</span>`:''}
+                ${promoCount?`<span style="color:var(--gold);">📢 推广 ${promoCount} 条</span>`:''}
+               </div>`
+          }
         </div>
       </div>`;
     }).join('')}
-  </div>` : `<div style="text-align:center;padding:80px;color:var(--text3);font-size:13px;">该文件夹暂无项目</div>`;
+  </div>` : `<div style="text-align:center;padding:60px;color:var(--text3);font-size:13px;">该文件夹暂无项目</div>`;
 
-  pane.innerHTML = `<div style="display:flex;width:100%;height:100%;min-height:0;">
-    <!-- 左侧导航 -->
-    <div style="width:196px;flex-shrink:0;border-right:1px solid var(--border);padding:14px 10px;overflow-y:auto;background:var(--s1);">
-      <div style="font-size:9px;font-weight:700;color:var(--text3);padding:0 10px 10px;letter-spacing:.12em;text-transform:uppercase;">文件夹</div>
-      ${navHtml}
+  // 分页控件
+  const paginationHtml = totalOvPages > 1 ? `
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0 4px;">
+    <button onclick="ovGoPage(${window._ovPage-1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${window._ovPage===0?'opacity:.4;pointer-events:none;':''}">← 上一页</button>
+    <span style="font-size:12px;color:var(--text3);">第 ${window._ovPage+1} / ${totalOvPages} 页 · 共 ${totalAccs} 个项目</span>
+    <button onclick="ovGoPage(${window._ovPage+1})" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;${window._ovPage>=totalOvPages-1?'opacity:.4;pointer-events:none;':''}">下一页 →</button>
+  </div>` : '';
+
+  pane.innerHTML = `<div style="width:100%;padding:20px 24px;overflow-y:auto;background:var(--bg);">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:18px;">
+      <span style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px;">${cur.folder}</span>
+      <span style="font-size:11px;color:var(--text3);">${cur.vids.length} 条视频 · ${cur.accs.length} 个项目</span>
     </div>
-    <!-- 右侧内容 -->
-    <div style="flex:1;padding:20px 24px;overflow-y:auto;min-width:0;background:var(--bg);">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:18px;">
-        <span style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px;">${cur.folder}</span>
-        <span style="font-size:11px;color:var(--text3);font-weight:400;">${cur.vids.length} 条视频 · ${cur.accs.length} 个项目</span>
-      </div>
-      ${statsHtml}${cardsHtml}
-    </div>
+    ${statsHtml}${cardsHtml}${paginationHtml}
   </div>`;
 }
 
