@@ -878,12 +878,12 @@ body.dark-mode {
       <button onclick="doLogout()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
     </div>
   </div>
-  <div style="max-width:760px;margin:40px auto 0;padding:0 20px 60px;width:100%;">
-    <div style="text-align:center;margin-bottom:28px;">
+    <div id="folderSearchArea" style="max-width:760px;margin:40px auto 0;padding:0 20px 60px;width:100%;">
+    <div id="folderSearchHeader" style="text-align:center;margin-bottom:28px;">
       <div style="font-size:20px;font-weight:700;margin-bottom:4px;">搜索项目文件夹</div>
       <div style="font-size:12px;color:var(--text3);">输入文件夹名称查看对应账号和视频数据</div>
     </div>
-    <div style="position:relative;margin-bottom:4px;">
+    <div id="folderSearchBox" style="position:relative;margin-bottom:4px;">
       <input id="folderSearchInput" type="text" placeholder="🔍  输入文件夹名称…"
         style="width:100%;background:var(--s1);border:2px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .18s;"
         oninput="onFolderSearch(this.value)"
@@ -2998,9 +2998,6 @@ async function doLogin(){
   const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
   if(res && res.length && res[0].password === p){
     const row = res[0];
-    // 调试：显示读到的folder_ids
-    console.log('LOGIN row:', JSON.stringify(row));
-    toast('folder_ids: ' + (row.folder_ids||'(空)'));
     currentUser = { username: row.username, role: 'user', folder_id: row.folder_id, folder_ids: row.folder_ids||'[]' };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     showUserApp();
@@ -3084,25 +3081,26 @@ async function loadUserData(){
   if(overlay){overlay.style.display='none';}
   // populate folder search
   renderFolderSuggestions('');
-  // 员工有绑定文件夹时，自动填入并渲染
+  // 员工有绑定文件夹时，直接展示内容，隐藏搜索框
   if(currentUser && currentUser.role==='user'){
-    // 解析多文件夹
     let folderIds = [];
     try { folderIds = JSON.parse(currentUser.folder_ids||'[]'); } catch(e){}
     if(!folderIds.length && currentUser.folder_id) folderIds = [currentUser.folder_id];
-    currentUser._folderIds = folderIds; // 缓存到currentUser
-    if(folderIds.length === 1){
-      const folder = S.folders.find(f=>f.id===folderIds[0]);
-      if(folder){
-        const inp = document.getElementById('folderSearchInput');
-        if(inp) inp.value = folder.name;
+    currentUser._folderIds = folderIds;
+    if(folderIds.length >= 1){
+      // 隐藏搜索框和标题
+      const header = document.getElementById('folderSearchHeader');
+      const box = document.getElementById('folderSearchBox');
+      if(header) header.style.display='none';
+      if(box) box.style.display='none';
+      // 直接渲染内容
+      const area = document.getElementById('folderSearchArea');
+      if(area) area.style.marginTop='16px';
+      if(folderIds.length === 1){
         renderUserSearchResults(folderIds[0]);
+      } else {
+        renderUserSearchResultsMulti(folderIds);
       }
-    } else if(folderIds.length > 1){
-      const inp = document.getElementById('folderSearchInput');
-      const names = folderIds.map(id=>{ const f=S.folders.find(f=>f.id===id); return f?f.name:''; }).filter(Boolean);
-      if(inp) inp.value = names.join(' / ');
-      renderUserSearchResultsMulti(folderIds);
     }
   }
 }
