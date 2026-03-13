@@ -1564,10 +1564,15 @@ function resetModal(){
   if(fauth)fauth.value='';
   const fdyid=document.getElementById('f-douyin-id');
   if(fdyid)fdyid.value='';
-  // populate account select
+  // populate account select - 员工版只显示绑定文件夹的账号
   const sel=document.getElementById('f-acc');
-  sel.innerHTML=S.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-  if(S.curAcc!=='all')sel.value=S.curAcc;
+  let visibleAccounts = S.accounts;
+  if(currentUser && currentUser.role==='user'){
+    const ids = currentUser._folderIds || [];
+    if(ids.length) visibleAccounts = S.accounts.filter(a=>ids.map(String).includes(String(a.folderId)));
+  }
+  sel.innerHTML=visibleAccounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  if(S.curAcc!=='all') sel.value=S.curAcc;
 }
 
 function openEditModal(id){ editV(id); }
@@ -1691,12 +1696,15 @@ async function saveVideoForm(){
   render();closeModal('vidModal');
   toast(id?'✓ 已更新':'✓ 视频已添加');
   // 员工版搜索页同步刷新
-  // FIX: 用 dataset.folderId 而不是文件夹名匹配，避免名称有差异时刷新失效
   const _sp = document.getElementById('userSearchPage');
   if(_sp && _sp.style.display !== 'none'){
-    const _res = document.getElementById('userSearchResults');
-    const _fid = _res && _res.dataset.folderId ? _res.dataset.folderId : null;
-    if(_fid) renderUserSearchResults(_fid);
+    if(window._multiTabRender){
+      window._multiTabRender(window._multiTabActiveIdx || 0);
+    } else {
+      const _res = document.getElementById('userSearchResults');
+      const _fid = _res && _res.dataset.folderId ? _res.dataset.folderId : null;
+      if(_fid) renderUserSearchResults(_fid);
+    }
   }
 }
 
@@ -1710,7 +1718,20 @@ function delV(id){
   showConfirm('删除视频', `删除「${title.slice(0,20)}…」？删除后不可恢复。`, async function(){
     S.videos=S.videos.filter(v=>v.id!==id);
     await deleteVideo(id);
-    render();toast('已删除');
+    // 员工版和管理端分别刷新
+    const _sp = document.getElementById('userSearchPage');
+    if(_sp && _sp.style.display !== 'none'){
+      if(window._multiTabRender){
+        window._multiTabRender(window._multiTabActiveIdx || 0);
+      } else {
+        const _res = document.getElementById('userSearchResults');
+        const _fid = _res && _res.dataset.folderId ? _res.dataset.folderId : null;
+        if(_fid) renderUserSearchResults(_fid);
+      }
+    } else {
+      render();
+    }
+    toast('已删除');
   });
 }
 
@@ -2977,16 +2998,28 @@ function setUserView(mode) {
       btn.style.color = 'var(--text3)';
     }
   });
-  // 重新渲染当前搜索结果
+
+  // 重新渲染：优先用 userSearchResults 上存的 folderId（登录后直接渲染的情况）
+  const res = document.getElementById('userSearchResults');
+  const currentFolderId = res && res.dataset.folderId;
+
+  if (currentFolderId) {
+    // 多文件夹tab模式：用_multiTabActiveIdx追踪当前激活的tab
+    if (window._multiTabRender) {
+      const idx = window._multiTabActiveIdx || 0;
+      window._multiTabRender(idx);
+    } else {
+      // 单文件夹模式
+      renderUserSearchResults(currentFolderId);
+    }
+    return;
+  }
+
+  // fallback：从输入框判断
   const inp = document.getElementById('folderSearchInput');
   if (inp && inp.value.trim()) {
     const folder = S.folders.find(f => f.name === inp.value.trim());
     if (folder) renderUserSearchResults(folder.id);
-    else {
-      // 可能是点了建议后存的folderId，重渲染
-      const res = document.getElementById('userSearchResults');
-      if (res && res.dataset.folderId) renderUserSearchResults(res.dataset.folderId);
-    }
   }
 }
 
@@ -3049,12 +3082,8 @@ function showUserApp(){
 function doUserRefresh(){
   const btn = document.getElementById('userRefreshBtn');
   if(btn){ btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(()=>{ btn.style.transform=''; btn.style.transition=''; },500); }
-  const results = document.getElementById('userSearchResults');
-  const currentFolderId = results && results.dataset.folderId ? results.dataset.folderId : null;
-  loadUserData().then(()=>{
-    if(currentFolderId) renderUserSearchResults(currentFolderId);
-    toast('✓ 数据已刷新');
-  });
+  // loadUserData 内部已处理渲染，不需要在 then 里重复渲染
+  loadUserData().then(()=>{ toast('✓ 数据已刷新'); });
 }
 
 let userSearchTimer = null;
@@ -3062,14 +3091,25 @@ function onUserGlobalSearch(val){
   clearTimeout(userSearchTimer);
   userSearchTimer = setTimeout(()=>{
     const q = val.trim().toLowerCase();
-    // FIX: use dataset.folderId instead of S.curFolder (admin state, never set in user view)
     const results = document.getElementById('userSearchResults');
     if(!results) return;
     const currentFolderId = results.dataset.folderId || null;
     if(!currentFolderId){ return; }
-    // 高亮/过滤：对当前渲染内容里的视频标题做过滤
-    // FIX: 卡片上没有 data-title 属性，统一走重渲染过滤，删除死代码分支
-    renderUserSearchResultsFiltered(currentFolderId, q);
+    if(window._multiTabRender){
+      // 多文件夹tab模式：对当前激活tab的文件夹做过滤
+      const idx = window._multiTabActiveIdx || 0;
+      // 临时替换render函数让它支持过滤
+      if(!q){
+        window._multiTabRender(idx);
+      } else {
+        const filtered = S.videos.filter(v=>(v.title||'').toLowerCase().includes(q)||(v.uploadedBy||'').toLowerCase().includes(q));
+        const origVids = S.videos;
+        S.videos = filtered;
+        try { window._multiTabRender(idx); } finally { S.videos = origVids; }
+      }
+    } else {
+      renderUserSearchResultsFiltered(currentFolderId, q);
+    }
   }, 180);
 }
 
@@ -3131,6 +3171,9 @@ async function loadUserData(){
 function doLogout(){
   sessionStorage.removeItem('currentUser');
   currentUser = null;
+  // 清理多tab状态，防止重新登录时残留旧数据
+  window._multiTabRender = null;
+  window._multiTabActiveIdx = 0;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('mainApp').style.display='none';
   document.getElementById('userSearchPage').style.display='none';
@@ -3187,15 +3230,19 @@ function selectFolder(folderId){
 
 function renderUserSearchResultsMulti(folderIds){
   const container = document.getElementById('userSearchResults');
-  // 统一用 String() 比较，避免数字/字符串类型不匹配
   const validFolders = folderIds.map(id=>S.folders.find(f=>String(f.id)===String(id))).filter(Boolean);
   if(!validFolders.length){ container.innerHTML=''; return; }
 
+  // 用外部变量追踪当前激活的tab
+  window._multiTabActiveIdx = 0;
+
   window._multiTabRender = function(idx){
-    // 先渲染内容（会清空 container）
+    window._multiTabActiveIdx = idx;
+
+    // 先渲染内容（会清空container）
     renderUserSearchResults(validFolders[idx].id);
 
-    // 渲染完成后再插入 tab 栏到最顶部
+    // 渲染完成后插入tab栏
     const tabsHtml = validFolders.map((f,i)=>`
       <button onclick="window._multiTabRender(${i})" style="padding:8px 20px;border-radius:8px;border:1.5px solid ${i===idx?'var(--accent)':'var(--border)'};background:${i===idx?'var(--accent)':'transparent'};color:${i===idx?'#fff':'var(--text2)'};font-size:13px;font-weight:${i===idx?'700':'500'};cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;">
         📁 ${f.name}
