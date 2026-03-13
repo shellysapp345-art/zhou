@@ -3187,23 +3187,29 @@ function selectFolder(folderId){
 
 function renderUserSearchResultsMulti(folderIds){
   const container = document.getElementById('userSearchResults');
-  const validFolders = folderIds.map(id=>S.folders.find(f=>f.id===id)).filter(Boolean);
+  // 统一用 String() 比较，避免数字/字符串类型不匹配
+  const validFolders = folderIds.map(id=>S.folders.find(f=>String(f.id)===String(id))).filter(Boolean);
   if(!validFolders.length){ container.innerHTML=''; return; }
 
   window._multiTabRender = function(idx){
-    // 用完整版渲染该文件夹内容（含视频卡片、编辑按钮等）
+    // 先渲染内容（会清空 container）
     renderUserSearchResults(validFolders[idx].id);
 
-    // 在最顶部插入 tab 栏
+    // 渲染完成后再插入 tab 栏到最顶部
     const tabsHtml = validFolders.map((f,i)=>`
       <button onclick="window._multiTabRender(${i})" style="padding:8px 20px;border-radius:8px;border:1.5px solid ${i===idx?'var(--accent)':'var(--border)'};background:${i===idx?'var(--accent)':'transparent'};color:${i===idx?'#fff':'var(--text2)'};font-size:13px;font-weight:${i===idx?'700':'500'};cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;">
         📁 ${f.name}
       </button>`).join('');
 
     const tabBar = document.createElement('div');
+    tabBar.id = 'multiTabBar';
     tabBar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;';
     tabBar.innerHTML = tabsHtml;
-    container.insertBefore(tabBar, container.firstChild);
+    if(container.firstChild){
+      container.insertBefore(tabBar, container.firstChild);
+    } else {
+      container.appendChild(tabBar);
+    }
   };
 
   window._multiTabRender(0);
