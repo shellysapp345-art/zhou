@@ -2998,6 +2998,9 @@ async function doLogin(){
   const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
   if(res && res.length && res[0].password === p){
     const row = res[0];
+    // 调试：显示读到的folder_ids
+    console.log('LOGIN row:', JSON.stringify(row));
+    toast('folder_ids: ' + (row.folder_ids||'(空)'));
     currentUser = { username: row.username, role: 'user', folder_id: row.folder_id, folder_ids: row.folder_ids||'[]' };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     showUserApp();
