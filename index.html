@@ -3096,11 +3096,10 @@ async function loadUserData(){
         renderUserSearchResults(folderIds[0]);
       }
     } else if(folderIds.length > 1){
-      // 多文件夹：搜索框提示，展示第一个文件夹
       const inp = document.getElementById('folderSearchInput');
       const names = folderIds.map(id=>{ const f=S.folders.find(f=>f.id===id); return f?f.name:''; }).filter(Boolean);
       if(inp) inp.value = names.join(' / ');
-      renderUserSearchResults(folderIds[0]);
+      renderUserSearchResultsMulti(folderIds);
     }
   }
 }
@@ -3160,6 +3159,60 @@ function selectFolder(folderId){
   if(!folder) return;
   document.getElementById('folderSearchInput').value = folder.name;
   renderUserSearchResults(folderId);
+}
+
+function renderUserSearchResultsMulti(folderIds){
+  const container = document.getElementById('userSearchResults');
+  const validFolders = folderIds.map(id=>S.folders.find(f=>f.id===id)).filter(Boolean);
+  if(!validFolders.length){ container.innerHTML=''; return; }
+
+  window._multiTabRender = function(idx){
+    const folderId = validFolders[idx].id;
+
+    // 生成 tab 栏
+    const tabsHtml = validFolders.map((f,i)=>`
+      <button onclick="window._multiTabRender(${i})" style="padding:7px 18px;border-radius:8px;border:1.5px solid ${i===idx?'var(--accent)':'var(--border)'};background:${i===idx?'var(--accent)':'transparent'};color:${i===idx?'#fff':'var(--text2)'};font-size:12px;font-weight:${i===idx?'700':'500'};cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;">
+        📁 ${f.name}
+      </button>`).join('');
+
+    // 生成该文件夹内容（不调用renderUserSearchResults，直接内联生成）
+    const folder = validFolders[idx];
+    const accs = S.accounts.filter(a=>a.folderId===folderId);
+    let bodyHtml = '';
+    if(!accs.length){
+      bodyHtml = `<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">该文件夹暂无账号</div>`;
+    } else {
+      bodyHtml = `<div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-weight:600;letter-spacing:.5px;">📁 ${folder.name} · ${accs.length} 个账号</div>`;
+      accs.forEach(acc=>{
+        const accVids = S.videos.filter(v=>v.accId===acc.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+        const totalPlay  = accVids.reduce((s,v)=>s+v.play,0);
+        const totalLikes = accVids.reduce((s,v)=>s+v.likes,0);
+        const totalComm  = accVids.reduce((s,v)=>s+v.comm,0);
+        bodyHtml += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px;">
+          <div style="padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--s2);">
+            <div style="width:40px;height:40px;border-radius:50%;background:${acc.color};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;">${acc.name.slice(0,1)}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;margin-bottom:3px;">${acc.name}</div>
+              <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);font-family:var(--mono);">
+                <span>📹 ${accVids.length}条</span>
+                <span>▶ ${fmt(totalPlay)}</span>
+                <span>❤ ${fmt(totalLikes)}</span>
+                <span>💬 ${fmt(totalComm)}</span>
+              </div>
+            </div>
+            <button onclick="openAccStatsById('${acc.id}')" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">📊 数据分析</button>
+          </div>
+          <div style="padding:12px 14px;font-size:12px;color:var(--text3);">${accVids.length ? accVids.length+'条视频' : '暂无视频'}</div>
+        </div>`;
+      });
+    }
+
+    container.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">${tabsHtml}</div>
+      ${bodyHtml}`;
+  };
+
+  window._multiTabRender(0);
 }
 
 function renderUserSearchResults(folderId){
