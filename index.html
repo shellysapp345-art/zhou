@@ -3352,8 +3352,12 @@ function renderUserSearchResults(folderId){
 }
 
 // ── USER MANAGEMENT (admin) ──
-function openUserMgmt(){
-  // 渲染多选勾选框
+async function openUserMgmt(){
+  // 每次打开都重新拉最新文件夹，确保新添加的也能显示
+  const freshFolders = await sbFetch('/rest/v1/folders?select=*&order=sort_order');
+  if(freshFolders && Array.isArray(freshFolders)){
+    S.folders = freshFolders.map(f=>({id:f.id, name:f.name, sort_order:f.sort_order||0}));
+  }
   const list = document.getElementById('nu-folder-list');
   if(list){
     list.innerHTML = S.folders.length
