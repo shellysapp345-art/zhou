@@ -60,7 +60,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   background:var(--s1);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;overflow-y:auto;
+  position:sticky;top:0;height:100vh;overflow:hidden;
   font-size:15px;
 }
 .sb-brand{padding:16px 14px;border-bottom:1px solid var(--border);}
@@ -77,7 +77,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .c-red{color:var(--red);}.c-cyan{color:var(--cyan);}.c-gold{color:var(--gold);}.c-green{color:var(--green);}
 
 .sb-lbl{padding:14px 14px 5px;font-size:0.786em;color:var(--text3);font-weight:500;}
-.acc-list{padding:0 8px;flex:1;}
+.acc-list{padding:0 8px;flex:1;overflow-y:auto;}
 .aci{
   display:flex;align-items:center;gap:8px;
   padding:6px 8px;border-radius:7px;
@@ -115,7 +115,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 }
 .sb-add:hover{background:var(--s3);color:var(--text2);}
 
-.sb-foot{padding:10px 12px;border-top:1px solid var(--border);}
+.sb-foot{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;}
 .sb-exp{
   width:100%;background:transparent;border:1px solid var(--border);
   border-radius:7px;padding:7px 10px;color:var(--text2);
@@ -831,10 +831,8 @@ body.dark-mode {
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div class="fg"><label>用户名</label><input id="nu-name" type="text" placeholder="登录账号" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
           <div class="fg"><label>密码</label><input id="nu-pass" type="text" placeholder="登录密码" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
-          <div class="fg"><label>绑定文件夹</label>
-            <select id="nu-folder" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;">
-              <option value="">请选择文件夹</option>
-            </select>
+          <div class="fg"><label>绑定文件夹 <span style="color:var(--text3);font-weight:400;">（可多选）</span></label>
+            <div id="nu-folder-list" style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;"></div>
           </div>
           <button onclick="createUser()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">创建用户</button>
         </div>
@@ -3000,7 +2998,7 @@ async function doLogin(){
   const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
   if(res && res.length && res[0].password === p){
     const row = res[0];
-    currentUser = { username: row.username, role: 'user', folderId: row.folder_id };
+    currentUser = { username: row.username, role: 'user', folder_id: row.folder_id, folder_ids: row.folder_ids||'[]' };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     showUserApp();
   } else {
@@ -3083,13 +3081,26 @@ async function loadUserData(){
   if(overlay){overlay.style.display='none';}
   // populate folder search
   renderFolderSuggestions('');
-  // FIX: 员工有绑定文件夹时，自动填入搜索框并渲染，不用每次手动选择
-  if(currentUser && currentUser.role==='user' && currentUser.folderId){
-    const folder = S.folders.find(f=>f.id===currentUser.folderId);
-    if(folder){
+  // 员工有绑定文件夹时，自动填入并渲染
+  if(currentUser && currentUser.role==='user'){
+    // 解析多文件夹
+    let folderIds = [];
+    try { folderIds = JSON.parse(currentUser.folder_ids||'[]'); } catch(e){}
+    if(!folderIds.length && currentUser.folder_id) folderIds = [currentUser.folder_id];
+    currentUser._folderIds = folderIds; // 缓存到currentUser
+    if(folderIds.length === 1){
+      const folder = S.folders.find(f=>f.id===folderIds[0]);
+      if(folder){
+        const inp = document.getElementById('folderSearchInput');
+        if(inp) inp.value = folder.name;
+        renderUserSearchResults(folderIds[0]);
+      }
+    } else if(folderIds.length > 1){
+      // 多文件夹：搜索框提示，展示第一个文件夹
       const inp = document.getElementById('folderSearchInput');
-      if(inp) inp.value = folder.name;
-      renderUserSearchResults(currentUser.folderId);
+      const names = folderIds.map(id=>{ const f=S.folders.find(f=>f.id===id); return f?f.name:''; }).filter(Boolean);
+      if(inp) inp.value = names.join(' / ');
+      renderUserSearchResults(folderIds[0]);
     }
   }
 }
@@ -3123,9 +3134,11 @@ function onFolderSearch(val){
 function renderFolderSuggestions(val){
   const box = document.getElementById('folderSuggestions');
   let folders = S.folders;
-  // If normal user, only show their bound folder
-  if(currentUser && currentUser.role==='user' && currentUser.folderId){
-    folders = folders.filter(f=>f.id===currentUser.folderId);
+  // 普通用户只显示绑定的文件夹（支持多个）
+  if(currentUser && currentUser.role==='user'){
+    const ids = currentUser._folderIds || [];
+    if(ids.length) folders = folders.filter(f=>ids.includes(f.id));
+    else if(currentUser.folder_id) folders = folders.filter(f=>f.id===currentUser.folder_id);
   }
   const filtered = val.trim()
     ? folders.filter(f=>f.name.toLowerCase().includes(val.toLowerCase()))
@@ -3284,10 +3297,17 @@ function renderUserSearchResults(folderId){
 
 // ── USER MANAGEMENT (admin) ──
 function openUserMgmt(){
-  // Populate folder dropdown
-  const sel = document.getElementById('nu-folder');
-  sel.innerHTML = '<option value="">请选择文件夹</option>' +
-    S.folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  // 渲染多选勾选框
+  const list = document.getElementById('nu-folder-list');
+  if(list){
+    list.innerHTML = S.folders.length
+      ? S.folders.map(f=>`
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;">
+          <input type="checkbox" value="${f.id}" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
+          <span style="font-size:12px;color:var(--text);">${f.name}</span>
+        </label>`).join('')
+      : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
+  }
   loadUserList();
   openModal('userMgmtModal');
 }
@@ -3300,28 +3320,80 @@ async function loadUserList(){
     return;
   }
   list.innerHTML = res.map(u=>{
-    const folder = S.folders.find(f=>f.id===u.folder_id);
-    return `<div style="display:flex;align-items:center;gap:10px;background:var(--s1);border-radius:8px;padding:8px 12px;">
-      <div style="flex:1;">
-        <div style="font-size:12px;font-weight:600;">${u.username}</div>
-        <div style="font-size:10px;color:var(--text3);">📁 ${folder?folder.name:'未绑定文件夹'} · 密码: ${u.password}</div>
+    let folderIds = [];
+    try { folderIds = JSON.parse(u.folder_ids||'[]'); } catch(e){}
+    if(!folderIds.length && u.folder_id) folderIds = [u.folder_id];
+    const folderNames = folderIds.map(id=>{ const f=S.folders.find(f=>f.id===id); return f?f.name:null; }).filter(Boolean);
+    const folderLabel = folderNames.length ? folderNames.join('、') : '未绑定文件夹';
+    const folderIdsJson = JSON.stringify(folderIds).replace(/"/g,'&quot;');
+    return `<div style="border-radius:8px;overflow:hidden;background:var(--s1);">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;">${u.username}</div>
+          <div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${folderLabel} · 密码: ${u.password}</div>
+        </div>
+        <button onclick="editUserFolders('${u.id}','${folderIdsJson}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--accent);cursor:pointer;font-family:inherit;flex-shrink:0;">编辑</button>
+        <button onclick="deleteUser('${u.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--orange);cursor:pointer;font-family:inherit;flex-shrink:0;">删除</button>
       </div>
-      <button onclick="deleteUser('${u.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--orange);cursor:pointer;font-family:inherit;">删除</button>
+      <!-- 编辑面板（默认隐藏） -->
+      <div id="edit-panel-${u.id}" style="display:none;padding:10px 12px 12px;border-top:1px solid var(--border);background:var(--s2);">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:8px;">选择绑定文件夹（可多选）</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+          ${S.folders.map(f=>`
+            <label style="display:inline-flex;align-items:center;gap:5px;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;transition:border-color .12s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <input type="checkbox" class="ef-cb-${u.id}" value="${f.id}" style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer;"/>
+              ${f.name}
+            </label>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="saveUserFolders('${u.id}')" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
+          <button onclick="document.getElementById('edit-panel-${u.id}').style.display='none'" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">取消</button>
+        </div>
+      </div>
     </div>`;
   }).join('');
+}
+
+function editUserFolders(uid, folderIdsJson){
+  // 先关掉所有已开的面板
+  document.querySelectorAll('[id^="edit-panel-"]').forEach(el=>el.style.display='none');
+  const panel = document.getElementById('edit-panel-'+uid);
+  if(!panel) return;
+  panel.style.display='block';
+  // 勾选已绑定的文件夹
+  let folderIds = [];
+  try { folderIds = JSON.parse(folderIdsJson.replace(/&quot;/g,'"')); } catch(e){}
+  document.querySelectorAll('.ef-cb-'+uid).forEach(cb=>{
+    cb.checked = folderIds.includes(cb.value);
+  });
+}
+
+async function saveUserFolders(uid){
+  const checked = [...document.querySelectorAll('.ef-cb-'+uid+':checked')].map(cb=>cb.value);
+  if(!checked.length){ toast('请至少选择一个文件夹','err'); return; }
+  await sbFetch('/rest/v1/users?id=eq.'+uid,'PATCH',{
+    folder_id: checked[0],
+    folder_ids: JSON.stringify(checked)
+  });
+  toast('✓ 文件夹已更新');
+  loadUserList();
 }
 
 async function createUser(){
   const name = document.getElementById('nu-name').value.trim();
   const pass = document.getElementById('nu-pass').value.trim();
-  const folderId = document.getElementById('nu-folder').value;
+  // 收集勾选的文件夹
+  const checked = [...document.querySelectorAll('#nu-folder-list input[type=checkbox]:checked')].map(cb=>cb.value);
   if(!name||!pass){ toast('请填写用户名和密码','err'); return; }
-  if(!folderId){ toast('请选择绑定文件夹','err'); return; }
+  if(!checked.length){ toast('请至少选择一个文件夹','err'); return; }
   const id = 'u'+Date.now();
-  const res = await sbFetch('/rest/v1/users','POST',[{id,username:name,password:pass,folder_id:folderId,role:'user'}]);
+  // folder_id 存第一个（兼容旧逻辑），folder_ids 存全部
+  const res = await sbFetch('/rest/v1/users','POST',[{id, username:name, password:pass, folder_id:checked[0], folder_ids:JSON.stringify(checked), role:'user'}]);
   toast('✓ 用户已创建');
   document.getElementById('nu-name').value='';
   document.getElementById('nu-pass').value='';
+  // 取消所有勾选
+  document.querySelectorAll('#nu-folder-list input[type=checkbox]').forEach(cb=>cb.checked=false);
   loadUserList();
 }
 
