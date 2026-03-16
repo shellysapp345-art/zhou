@@ -3746,8 +3746,6 @@ async function deleteUser(id){
   loadUserList();
 }
 
-
-<script>
 function openUserManual(){ document.getElementById('userManualModal').style.display='flex'; }
 function closeUserManual(){ document.getElementById('userManualModal').style.display='none'; }
 
@@ -4035,10 +4033,6 @@ function renderOverviewPane(){
   // 绑定 ovSelectFolder（兼容旧调用）
   window.ovSelectFolder = function(idx){ _ovFolderIdx=idx; window._ovSelAccId=null; renderOverviewPane(); };
 }
-
-}
-
-</script>
 
 checkLogin();
 
