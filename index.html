@@ -3337,7 +3337,12 @@ function showAdminApp(){
   document.getElementById('mainApp').style.display='flex';
   document.getElementById('btnUserMgmt').style.display='block';
   const _su=document.getElementById('settingsUserMgmt');if(_su)_su.style.display='flex';
-  load().then(()=>{ if(typeof showOverviewPane==='function') showOverviewPane(); });
+  // 先把 overviewPane 设为可见，这样 load() 内部的 render() 会走 renderOverviewPane() 而不是空状态
+  const pane=document.getElementById('overviewPane');
+  if(pane) pane.style.display='flex';
+  const vgrid=document.getElementById('vgrid');
+  if(vgrid) vgrid.style.display='none';
+  load();
 }
 
 function showUserApp(){
