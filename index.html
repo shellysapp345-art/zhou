@@ -1472,12 +1472,12 @@ function renderNavDropdowns(){
     let html = '<div class="ndm-item'+((!S.curFolder)?'  on':'')+'" onclick="selectNavFolder(null)">🏠 全部项目</div>';
     (S.folders||[]).forEach(f=>{
       const isOn = S.curFolder===f.id;
-      html += '<div class="ndm-item'+(isOn?' on':'')+'" onclick="selectNavFolder(''+f.id+'')">📁 '+f.name+'</div>';
+      html += `<div class="ndm-item${isOn?' on':''}" onclick="selectNavFolder('${f.id}')">📁 ${f.name}</div>`;
     });
     // 操作项
     html += '<div class="ndm-sep"></div>';
-    html += '<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('folderMenu');openOverview()">📊 数据总览</div>';
-    html += '<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');addFolder()">＋ 新建文件夹</div>';
+    html += `<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('folderMenu');openOverview()">📊 数据总览</div>`;
+    html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');addFolder()">＋ 新建文件夹</div>`;
     fi.innerHTML = html;
   }
   // 更新文件夹按钮标签
@@ -1491,7 +1491,7 @@ function renderNavDropdowns(){
   const ai = document.getElementById('accMenuItems');
   if(ai){
     // 按文件夹分组显示
-    let html = '<div class="ndm-item'+(S.curAcc==='all'||!S.curAcc?' on':'')+'" onclick="selectNavAcc('all')">全部账号</div>';
+    let html = `<div class="ndm-item${(S.curAcc==='all'||!S.curAcc)?' on':''}" onclick="selectNavAcc('all')">全部账号</div>`;
     // 先显示当前文件夹下的账号，若无文件夹过滤则全部显示
     const visAccs = S.curFolder
       ? S.accounts.filter(a=>String(a.folderId)===String(S.curFolder))
@@ -1499,10 +1499,10 @@ function renderNavDropdowns(){
     visAccs.forEach(a=>{
       const isOn = S.curAcc===a.id;
       const cnt = S.videos.filter(v=>v.accId===a.id).length;
-      html += '<div class="ndm-item'+(isOn?' on':'')+'" onclick="selectNavAcc(''+a.id+'')"><div style="width:20px;height:20px;border-radius:6px;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">'+a.name[0]+'</div><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">'+a.name+'</span><span style="font-size:11px;color:var(--text3);">'+cnt+'</span></div>';
+      html += `<div class="ndm-item${isOn?' on':''}" onclick="selectNavAcc('${a.id}')"><div style="width:20px;height:20px;border-radius:6px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span><span style="font-size:11px;color:var(--text3);">${cnt}</span></div>`;
     });
     html += '<div class="ndm-sep"></div>';
-    html += '<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('accMenu');openAccModal()">＋ 添加账号</div>';
+    html += `<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('accMenu');openAccModal()">＋ 添加账号</div>`;
     ai.innerHTML = html;
   }
   // 更新账号按钮标签
