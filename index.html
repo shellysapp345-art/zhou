@@ -661,7 +661,7 @@ body.dark-mode {
       <div class="lo-d3" style="width:5px;height:5px;border-radius:50%;background:#e8742a;"></div>
     </div>
   </div>
-</div></div>
+</div>
 
 <div class="wrap" id="mainApp" style="display:none;">
 
@@ -3244,8 +3244,13 @@ function setUserView(mode) {
 }
 
 // ── LOGIN & ROLE SYSTEM ──
-const ADMIN = { user: 'admin', pass: 'kanban2026' };
-let currentUser = null; // { username, role, folderId }
+let currentUser = null;
+
+// SHA-256 哈希（与 Supabase pgcrypto 存储格式一致）
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 
 // ── Login event bindings ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -3260,21 +3265,21 @@ async function doLogin(){
   const p = document.getElementById('loginPass').value;
   if(!u || !p){ toast('请填写账号和密码','err'); return; }
 
-  // Admin check
-  if(u === ADMIN.user && p === ADMIN.pass){
-    currentUser = { username: u, role: 'admin', folderId: null };
-    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showAdminApp();
-    return;
-  }
-
-  // User check via Supabase
+  // 统一走 Supabase 验证，密码 SHA-256 哈希后对比
+  const hashed = await sha256hex(p);
   const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
-  if(res && res.length && res[0].password === p){
+  if(res && res.length && res[0].password === hashed){
     const row = res[0];
-    currentUser = { username: row.username, role: 'user', folder_id: row.folder_id, folder_ids: row.folder_ids||'[]' };
-    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showUserApp();
+    currentUser = { username: row.username, role: row.role };
+    if(row.role === 'admin'){
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showAdminApp();
+    } else {
+      currentUser.folder_id = row.folder_id;
+      currentUser.folder_ids = row.folder_ids || '[]';
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showUserApp();
+    }
   } else {
     const err = document.getElementById('loginErr');
     err.classList.add('show');
