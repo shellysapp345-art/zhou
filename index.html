@@ -4056,26 +4056,25 @@ function renderOverviewPane(){
       <div style="font-size:11px;color:var(--text3);">${c.sub}</div>
     </div>`).join('');
 
-  // ── 左侧账号头像网格 ──
+  // ── 左侧账号图标网格（悬浮tooltip） ──
   const accGrid = allAccs.map(a=>{
     const isSel = a.id === window._ovSelAccId;
     const av = S.videos.filter(v=>v.accId===a.id).length;
     return `<div
       onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
       title="${a.name}"
-      style="position:relative;width:44px;height:44px;border-radius:14px;
+      style="position:relative;width:48px;height:48px;border-radius:14px;
         background:${a.color||'#e8742a'};
         display:flex;align-items:center;justify-content:center;
         cursor:pointer;flex-shrink:0;
         border:2.5px solid ${isSel?'var(--text)':'transparent'};
         box-shadow:${isSel?'0 0 0 3px var(--accent-light)':'0 2px 6px rgba(0,0,0,.1)'};
         transition:all .15s;"
-      onmouseover="this.querySelector('.acc-tooltip').style.opacity='1';this.querySelector('.acc-tooltip').style.transform='translateX(0)'"
-      onmouseout="this.querySelector('.acc-tooltip').style.opacity='0';this.querySelector('.acc-tooltip').style.transform='translateX(-4px)'">
-      <span style="font-size:16px;font-weight:800;color:#fff;">${a.name[0]}</span>
-      ${av>0?`<div style="position:absolute;bottom:-4px;right:-4px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;border-radius:6px;padding:1px 4px;font-family:var(--mono);border:1.5px solid var(--bg);">${av}</div>`:''}
-      <!-- tooltip -->
-      <div class="acc-tooltip" style="position:absolute;left:52px;top:50%;transform:translateY(-50%) translateX(-4px);background:var(--text);color:var(--bg) !important;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none;opacity:0;transition:all .15s;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);">${a.name}</div>
+      onmouseover="this.style.transform='scale(1.1)';this.querySelector('.acc-tip').style.opacity='1';this.querySelector('.acc-tip').style.transform='translateY(0)'"
+      onmouseout="this.style.transform='';this.querySelector('.acc-tip').style.opacity='0';this.querySelector('.acc-tip').style.transform='translateY(4px)'">
+      <span style="font-size:17px;font-weight:800;color:#fff;">${a.name[0]}</span>
+      ${av>0?`<div style="position:absolute;bottom:-5px;right:-5px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:7px;padding:1px 5px;font-family:var(--mono);border:2px solid var(--bg);">${av}</div>`:''}
+      <div class="acc-tip" style="position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--text);color:var(--bg);padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none;opacity:0;transition:all .18s;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.18);">${a.name}</div>
     </div>`;
   }).join('');
 
@@ -4100,17 +4099,17 @@ function renderOverviewPane(){
 
   // ── 排行榜横向柱状图 ──
   const rankBars = rankData.map((d,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <div style="width:18px;font-size:11px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:right;flex-shrink:0;">${i+1}</div>
-      <div style="width:28px;height:28px;border-radius:9px;background:${d.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="font-size:12px;font-weight:800;color:#fff;">${d.name[0]}</span>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="width:22px;font-size:14px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:right;flex-shrink:0;">${i+1}</div>
+      <div style="width:36px;height:36px;border-radius:11px;background:${d.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:15px;font-weight:800;color:#fff;">${d.name[0]}</span>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">${d.name}</span>
-          <span style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);flex-shrink:0;">${fmt(d.likes)}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;">${d.name}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text);font-family:var(--mono);flex-shrink:0;">${fmt(d.likes)}</span>
         </div>
-        <div style="height:5px;background:var(--s3);border-radius:99px;overflow:hidden;">
+        <div style="height:6px;background:var(--s3);border-radius:99px;overflow:hidden;">
           <div style="height:100%;width:${Math.round(d.likes/maxLikes*100)}%;background:${d.color};border-radius:99px;transition:width .8s .1s cubic-bezier(.4,0,.2,1);"></div>
         </div>
       </div>
@@ -4157,10 +4156,10 @@ function renderOverviewPane(){
       <!-- 第二层：左侧账号格 + 右侧数据 -->
       <div style="display:flex;gap:16px;align-items:flex-start;">
 
-        <!-- 左侧账号头像网格 20% -->
-        <div style="width:200px;flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+        <!-- 左侧账号图标网格 -->
+        <div style="width:200px;flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);overflow-y:auto;max-height:480px;">
           <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px;">账号列表</div>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;position:relative;">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;position:relative;">
             ${accGrid}
           </div>
           ${allAccs.length===0?`<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0;">暂无账号</div>`:''}
@@ -4205,8 +4204,8 @@ function renderOverviewPane(){
             </div>
 
             <!-- 点赞排行榜 -->
-            <div style="width:280px;flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="width:360px;flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+              <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
                 <span>点赞排行</span>
                 <span style="font-size:10px;color:var(--text3);font-weight:500;">${cur.folder}</span>
               </div>
