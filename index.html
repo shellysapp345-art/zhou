@@ -4181,282 +4181,320 @@ function renderOverviewPane(){
   const rows = _ovRows();
   const cur = rows[_ovFolderIdx] || rows[0];
   const allAccs = cur.accs;
+  const allVids = cur.vids;
 
-  // ── 当前选中账号（默认第一个）──
-  if(!window._ovSelAccId || !allAccs.find(a=>a.id===window._ovSelAccId)){
-    window._ovSelAccId = allAccs[0]?.id || null;
-  }
-  const selAcc = allAccs.find(a=>a.id===window._ovSelAccId) || allAccs[0];
-
-  function getVisitCount(accId){
+  function getLeadCount(accId){
     return (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0);
   }
 
-  // ── 全局汇总数据 ──
-  const totalVid   = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).length,0);
-  const totalLikes = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.likes,0),0);
-  const totalPlay  = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+(v.play||0),0),0);
-  const totalVisit = allAccs.reduce((s,a)=>s+getVisitCount(a.id),0);
-  const totalAbn   = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length,0);
+  // ══ 核心指标计算 ══
+  const totalVid    = allVids.length;
+  const totalPlay   = allVids.reduce((s,v)=>s+(v.play||0),0);
+  const totalLikes  = allVids.reduce((s,v)=>s+v.likes,0);
+  const totalComm   = allVids.reduce((s,v)=>s+v.comm,0);
+  const totalShare  = allVids.reduce((s,v)=>s+(v.share||0),0);
+  const totalColl   = allVids.reduce((s,v)=>s+v.coll,0);
+  const totalLead   = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
+  const totalAbn    = allVids.filter(v=>v.violation||v.promo).length;
+  const violCount   = allVids.filter(v=>v.violation).length;
+  const promoCount  = allVids.filter(v=>v.promo).length;
 
-  // ── 选中账号数据 ──
-  const selVids  = selAcc ? S.videos.filter(v=>v.accId===selAcc.id) : [];
-  const selPlay  = selVids.reduce((s,v)=>s+(v.play||0),0);
-  const selLikes = selVids.reduce((s,v)=>s+v.likes,0);
-  const selComm  = selVids.reduce((s,v)=>s+v.comm,0);
-  const selColl  = selVids.reduce((s,v)=>s+v.coll,0);
-  const selShare = selVids.reduce((s,v)=>s+v.share,0);
-  const selVisit = selAcc ? getVisitCount(selAcc.id) : 0;
-  const selAbn   = selVids.filter(v=>v.violation||v.promo).length;
-  const selColor = selAcc?.color || '#e8742a';
+  // ══ 派生效率指标 ══
+  const cvRate      = totalPlay>0 ? (totalLead/totalPlay*100).toFixed(3) : '0.000';  // 转化率%
+  const likeRate    = totalPlay>0 ? (totalLikes/totalPlay*100).toFixed(2) : '0.00';   // 点赞率%
+  const commRate    = totalPlay>0 ? (totalComm/totalPlay*100).toFixed(2) : '0.00';    // 评论率%
+  const shareRate   = totalPlay>0 ? (totalShare/totalPlay*100).toFixed(2) : '0.00';   // 转发率%
+  const playPerVid  = totalVid>0  ? Math.round(totalPlay/totalVid) : 0;               // 单视频均播
+  const leadPerVid  = totalVid>0  ? (totalLead/totalVid).toFixed(2) : '0.00';         // 单视频均线索
+  const playPerLead = totalLead>0 ? Math.round(totalPlay/totalLead) : 0;              // 每线索需播放
+  const likePerLead = totalLead>0 ? Math.round(totalLikes/totalLead) : 0;             // 每线索需点赞
 
-  // ── 各账号点赞排行（用于横向柱状图）──
-  const rankData = allAccs.map(a=>({
-    name: a.name,
-    color: a.color || '#e8742a',
-    likes: S.videos.filter(v=>v.accId===a.id).reduce((s,v)=>s+v.likes,0),
-    play:  S.videos.filter(v=>v.accId===a.id).reduce((s,v)=>s+(v.play||0),0),
-    vid:   S.videos.filter(v=>v.accId===a.id).length,
-  })).sort((a,b)=>b.likes-a.likes).slice(0,8);
-  const maxLikes = Math.max(...rankData.map(d=>d.likes),1);
+  // ══ 漏斗流失分析 ══
+  const funnelSteps = [
+    { name:'播放', val:totalPlay,  rate:100, color:'#7050a8' },
+    { name:'点赞', val:totalLikes, rate:totalPlay>0?(totalLikes/totalPlay*100):0, color:'#e04a38' },
+    { name:'评论', val:totalComm,  rate:totalPlay>0?(totalComm/totalPlay*100):0,  color:'#2a8ca0' },
+    { name:'转发', val:totalShare, rate:totalPlay>0?(totalShare/totalPlay*100):0, color:'#c49020' },
+    { name:'线索', val:totalLead,  rate:totalPlay>0?(totalLead/totalPlay*100):0,  color:'#2e8c54' },
+  ];
+  // 找流失最大环节（相邻步骤绝对差最大）
+  let maxLosIdx = 1;
+  let maxLoss = 0;
+  for(let i=1;i<funnelSteps.length;i++){
+    const prev = funnelSteps[i-1].val||1;
+    const loss = prev - funnelSteps[i].val;
+    if(loss>maxLoss){ maxLoss=loss; maxLosIdx=i; }
+  }
 
-  // ── 文件夹 tabs ──
+  // ══ 账号效率排名（转化率排序）══
+  const accRank = allAccs.map(a=>{
+    const vids  = S.videos.filter(v=>v.accId===a.id);
+    const play  = vids.reduce((s,v)=>s+(v.play||0),0);
+    const leads = getLeadCount(a.id);
+    const likes = vids.reduce((s,v)=>s+v.likes,0);
+    const cvr   = play>0?(leads/play*100):0;
+    const eff   = vids.length>0?(leads/vids.length):0; // 单视频线索产出
+    return { id:a.id, name:a.name, color:a.color||'#e8742a',
+      vidCnt:vids.length, play, leads, likes, cvr, eff,
+      abn:vids.filter(v=>v.violation||v.promo).length };
+  }).sort((a,b)=>b.cvr-a.cvr);
+  const maxPlay = Math.max(...accRank.map(d=>d.play),1);
+  const maxCvr  = Math.max(...accRank.map(d=>d.cvr),0.001);
+
+  // ══ 异常智能识别 ══
+  const avgPlay = totalVid>0 ? totalPlay/totalVid : 0;
+  const avgLikeRate = totalPlay>0 ? totalLikes/totalPlay : 0;
+  const smartAlerts = [];
+  allVids.forEach(v=>{
+    const acc = S.accounts.find(a=>a.id===v.accId);
+    if(!acc || !allAccs.find(a=>a.id===v.accId)) return;
+    const vLike = v.play>0?v.likes/v.play:0;
+    if(v.play > avgPlay*2 && getLeadCount(v.accId)===0)
+      smartAlerts.push({vid:v, acc, type:'高流量无转化', color:'#e04a38', bg:'rgba(224,74,56,.06)', reason:'播放量是均值的2倍以上但线索为0，内容吸引力强但转化路径可能有问题'});
+    else if(v.violation)
+      smartAlerts.push({vid:v, acc, type:'内容违规', color:'#e04a38', bg:'rgba(224,74,56,.06)', reason:'视频被标记违规，需立即处理避免账号受损'});
+    else if(v.promo)
+      smartAlerts.push({vid:v, acc, type:'推广中', color:'#c49020', bg:'rgba(196,144,32,.06)', reason:'该视频正在投放推广，请跟踪ROI'});
+    else if(v.play>500 && vLike < avgLikeRate*0.3)
+      smartAlerts.push({vid:v, acc, type:'内容质量差', color:'#e06028', bg:'rgba(224,96,40,.06)', reason:'有一定播放但点赞率极低，建议优化内容或暂停该类选题'});
+  });
+  // 去重，限制数量
+  const uniqueAlerts = smartAlerts.filter((a,i,arr)=>arr.findIndex(b=>b.vid.id===a.vid.id)===i).slice(0,6);
+
+  // ══ 经营结论自动生成 ══
+  const conclusions = [];
+  const topAcc  = accRank[0];
+  const lastAcc = accRank[accRank.length-1];
+  if(topAcc)  conclusions.push({ icon:'🏆', color:'#2e8c54', text:`转化率最高：${topAcc.name}，转化率 ${topAcc.cvr.toFixed(3)}%，单视频线索产出 ${topAcc.eff.toFixed(2)} 条` });
+  if(lastAcc && accRank.length>1 && lastAcc.vidCnt>0)
+    conclusions.push({ icon:'⚠️', color:'#e04a38', text:`转化最弱：${lastAcc.name}，转化率仅 ${lastAcc.cvr.toFixed(3)}%，建议复盘内容策略` });
+  if(parseFloat(cvRate)<0.01)
+    conclusions.push({ icon:'📉', color:'#e04a38', text:`整体转化率 ${cvRate}% 偏低，每获1条线索需 ${playPerLead||'—'} 次播放，获客成本偏高` });
+  else
+    conclusions.push({ icon:'📈', color:'#2e8c54', text:`整体转化率 ${cvRate}%，每获1条线索需 ${playPerLead||'—'} 次播放` });
+  if(maxLoss>0)
+    conclusions.push({ icon:'🔍', color:'#7050a8', text:`最大流失环节：播放→${funnelSteps[maxLosIdx].name}，流失 ${fmt(maxLoss)} 次，是重点优化方向` });
+  if(violCount>0)
+    conclusions.push({ icon:'🚨', color:'#e04a38', text:`当前有 ${violCount} 条违规视频需立即处理，风险账号需重点关注` });
+  if(totalVid>0 && totalLead===0)
+    conclusions.push({ icon:'💡', color:'#c49020', text:`历史线索为0，建议先完善线索录入数据，以便准确评估转化效果` });
+
+  // ══ 文件夹 tabs ══
   const tabsHtml = rows.map((r,i)=>{
     const isOn = i===_ovFolderIdx;
-    return `<button onclick="_ovFolderIdx=${i};window._ovSelAccId=null;renderOverviewPane()" style="padding:6px 14px;border-radius:20px;border:1.5px solid ${isOn?'var(--accent)':'var(--border)'};background:${isOn?'var(--accent)':'transparent'};color:${isOn?'#fff':'var(--text2)'};font-size:12px;font-weight:${isOn?'700':'500'};font-family:var(--font);cursor:pointer;transition:all .15s;white-space:nowrap;">${r.folder}</button>`;
+    return `<button onclick="_ovFolderIdx=${i};window._ovSelAccId=null;renderOverviewPane()"
+      style="padding:5px 14px;border-radius:20px;border:1.5px solid ${isOn?'var(--accent)':'var(--border)'};
+             background:${isOn?'var(--accent)':'transparent'};color:${isOn?'#fff':'var(--text2)'};
+             font-size:12px;font-weight:${isOn?'700':'500'};font-family:var(--font);cursor:pointer;transition:all .15s;white-space:nowrap;">${r.folder}</button>`;
   }).join('');
 
-  // ── 汇总卡片 ──
-  const summaryCards = [
-    { label:'总视频数',   val:fmt(totalVid),   sub:`${allAccs.length} 个账号`,      icon:'M15 10l4.553-2.069A1 1 0 0121 8.82V15.18a1 1 0 01-1.447.89L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z', color:'#e8742a' },
-    { label:'总点赞数',   val:fmt(totalLikes), sub:'累计互动数据',                   icon:'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z', color:'#e04a38' },
-    { label:'总播放量',   val:fmt(totalPlay),  sub:'所有视频播放总和',               icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color:'#7050a8' },
-    { label:'到诊人数',   val:fmt(totalVisit), sub:'历史累计到诊',                   icon:'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9', color:'#2a8ca0' },
-  ].map(c=>`
-    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-width:0;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .15s,transform .15s;cursor:default;"
-      onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.08)';this.style.transform='translateY(-1px)'"
-      onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,.04)';this.style.transform=''">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <span style="font-size:13px;font-weight:500;color:var(--text3);">${c.label}</span>
-        <div style="width:28px;height:28px;border-radius:8px;background:${c.color}18;display:flex;align-items:center;justify-content:center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${c.icon}"/></svg>
-        </div>
-      </div>
-      <div style="font-size:32px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:4px;">${c.val}</div>
-      <div style="font-size:12px;color:var(--text3);">${c.sub}</div>
-    </div>`).join('');
-
-
-  // ── 选中账号详情指标（紧凑横排） ──
-  const totalComm = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.comm,0),0);
-  const totalColl = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.coll,0),0);
-  const metrics = selAcc ? [
-    { label:'播放', val:selPlay,  color:'#7050a8', pct: Math.min(100,Math.round(selPlay/Math.max(totalPlay,1)*100)),
-      icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label:'点赞', val:selLikes, color:'#e04a38', pct: Math.min(100,Math.round(selLikes/Math.max(totalLikes,1)*100)),
-      icon:'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-    { label:'评论', val:selComm,  color:'#2a8ca0', pct: Math.min(100,Math.round(selComm/Math.max(totalComm,1)*100)),
-      icon:'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
-    { label:'收藏', val:selColl,  color:'#c49020', pct: Math.min(100,Math.round(selColl/Math.max(totalColl,1)*100)),
-      icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
-  ].map(m=>`
-    <div style="flex:1;min-width:0;background:var(--s2);border-radius:10px;padding:11px 12px;position:relative;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
-        <span style="font-size:11px;color:var(--text3);font-weight:500;">${m.label}</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${m.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${m.icon}"/></svg>
-      </div>
-      <div style="font-size:20px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:7px;">${fmt(m.val)}</div>
-      <div style="height:3px;background:var(--s3);border-radius:99px;overflow:hidden;">
-        <div style="height:100%;width:${m.pct}%;background:${m.color};border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);"></div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;">占总 ${m.pct}%</div>
-    </div>`).join('') : '';
-
-  // ── 排行榜（精简版） ──
-  const rankBars = rankData.map((d,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
-      <span style="width:16px;font-size:11px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:center;flex-shrink:0;">${i+1}</span>
-      <div style="width:24px;height:24px;border-radius:7px;background:${d.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="font-size:11px;font-weight:800;color:#fff;">${d.name[0]}</span>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-          <span style="font-size:11px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px;">${d.name}</span>
-          <span style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);">${fmt(d.likes)}</span>
-        </div>
-        <div style="height:3px;background:var(--s3);border-radius:99px;overflow:hidden;">
-          <div style="height:100%;width:${Math.round(d.likes/maxLikes*100)}%;background:${d.color};border-radius:99px;"></div>
-        </div>
-      </div>
-    </div>`).join('');
-
-  // ── 异常预警数据（弹窗列表） ──
-  const _allAbnVids = S.videos.filter(v=>v.violation||v.promo).filter(v=>allAccs.find(a=>a.id===v.accId));
-  const violVids = _allAbnVids.filter(v=>v.violation);
-  const promoVids = _allAbnVids.filter(v=>!v.violation&&v.promo);
-
-  // ── 左侧账号列表（带名字+数据+异常标签） ──
-  const accListHtml = allAccs.map(a=>{
-    const isSel = a.id === window._ovSelAccId;
-    const av = S.videos.filter(v=>v.accId===a.id).length;
-    const abn = S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length;
-    const aPlay = S.videos.filter(v=>v.accId===a.id).reduce((s,v)=>s+(v.play||0),0);
-    return `<div onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
-      style="display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;
-             border-bottom:1px solid var(--border);transition:background .1s;
-             background:${isSel?'rgba(232,116,42,.06)':'transparent'};"
-      onmouseover="if('${a.id}'!==window._ovSelAccId)this.style.background='var(--s2)'"
-      onmouseout="this.style.background='${isSel?'rgba(232,116,42,.06)':'transparent'}'">
-      <div style="width:28px;height:28px;border-radius:8px;background:${a.color||'#e8742a'};
-                  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                  ${isSel?'box-shadow:0 0 0 2px var(--accent),0 0 0 4px var(--accent-light);':''}">
-        <span style="font-size:12px;font-weight:800;color:#fff;">${a.name[0]}</span>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:${isSel?'700':'500'};color:${isSel?'var(--accent)':'var(--text)'};
-                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.name}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${av}条 · ${fmt(aPlay)}</div>
-      </div>
-      ${abn?`<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(224,74,56,.1);color:var(--red);font-weight:600;flex-shrink:0;">⚠${abn}</span>`:''}
-    </div>`;
-  }).join('');
-
-  // ── 右侧异常预警列表（简版） ──
-  const abnListHtml = _allAbnVids.length ? _allAbnVids.slice(0,4).map(v=>{
-    const acc = S.accounts.find(a=>a.id===v.accId);
-    return `<div onclick="closeAbnModal&&closeAbnModal();hideOverviewPane();selAcc('${v.accId}')"
-      style="padding:7px 9px 7px 11px;border-radius:0 8px 8px 0;margin-bottom:5px;
-             border-left:2.5px solid ${v.violation?'var(--red)':'var(--gold)'};
-             background:${v.violation?'rgba(224,74,56,.05)':'rgba(196,144,32,.05)'};
-             cursor:pointer;transition:opacity .12s;"
-      onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
-      <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">${v.title||'无标题'}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${acc?.name||''} · ${v.violation?'违规':'推广'}</div>
-    </div>`;
-  }).join('') :
-  `<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">✓ 暂无异常</div>`;
-
-  // ── 拼装整体布局：非对称三栏 ──
+  // ══ 拼装页面 ══
   pane.innerHTML = `
   <div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);overflow:hidden;">
 
-    <!-- 顶部：标题 + 文件夹tabs（干净，无图标条） -->
-    <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
-      <span style="font-size:14px;font-weight:800;color:var(--text);margin-right:4px;">数据总览</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">${tabsHtml}</div>
+    <!-- 顶栏：标题 + tabs -->
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--s1);">
+      <span style="font-size:13px;font-weight:800;color:var(--text);">管理驾驶舱</span>
+      <span style="font-size:11px;color:var(--text3);">· ${allAccs.length}个账号 · ${totalVid}条视频</span>
+      <div style="display:flex;gap:5px;margin-left:8px;">${tabsHtml}</div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <button onclick="openVisitQuickEdit()" style="font-size:11px;padding:4px 12px;border-radius:7px;border:1px solid var(--border);background:var(--s2);color:var(--text2);cursor:pointer;font-family:var(--font);">+ 录入线索</button>
+      </div>
     </div>
 
-    <!-- 主体：左列 + 中区 + 右列 -->
-    <div style="flex:1;overflow:hidden;display:flex;gap:0;">
+    <!-- 主滚动区 -->
+    <div style="flex:1;overflow-y:auto;padding:14px 18px 24px;display:flex;flex-direction:column;gap:14px;">
 
-      <!-- 左列：账号列表 210px 固定 -->
-      <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
-        <div style="padding:9px 12px 7px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0;">
-          项目账号 · ${allAccs.length}
-        </div>
-        <div style="flex:1;overflow-y:auto;">
-          ${accListHtml || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3);">暂无账号</div>'}
-        </div>
-      </div>
-
-      <!-- 中区：汇总卡 + 选中账号详情 -->
-      <div style="flex:1;min-width:0;overflow-y:auto;padding:14px 14px 20px;display:flex;flex-direction:column;gap:12px;">
-
-        <!-- 汇总卡4个 -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-          ${[
-            { label:'总视频数', val:fmt(totalVid),   sub:allAccs.length+'个账号', color:'#e8742a',
-              icon:'M15 10l4.553-2.069A1 1 0 0121 8.82V15.18a1 1 0 01-1.447.89L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z' },
-            { label:'总播放量', val:fmt(totalPlay),  sub:'所有视频', color:'#7050a8',
-              icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-            { label:'总点赞数', val:fmt(totalLikes), sub:'累计互动', color:'#e04a38',
-              icon:'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-            { label:'到诊人数', val:fmt(totalVisit), sub:'历史累计', color:'#2a8ca0', editable:true,
-              icon:'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9' },
-          ].map(c=>`
-            <div style="background:var(--s1);border:1px solid var(--border);border-top:3px solid ${c.color};
-                 border-radius:0 0 12px 12px;padding:13px 16px;min-width:0;
-                 cursor:${c.editable?'pointer':'default'};position:relative;
-                 transition:box-shadow .15s,transform .15s;"
-              onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'"
-              onmouseout="this.style.boxShadow='';this.style.transform=''">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <span style="font-size:11px;font-weight:500;color:var(--text3);">${c.label}</span>
-                ${c.editable?`<button onclick="openVisitQuickEdit()" style="font-size:9px;padding:2px 7px;border-radius:4px;background:${c.color}18;color:${c.color};border:none;cursor:pointer;font-family:var(--font);">录入</button>`:''}
-              </div>
-              <div style="font-size:30px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:4px;">${c.val}</div>
-              <div style="font-size:10px;color:var(--text3);">${c.sub}</div>
+      <!-- ① 经营结论自动总结 -->
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">经营结论</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${conclusions.map(c=>`
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;background:${c.color}0d;border-left:3px solid ${c.color};">
+              <span style="font-size:13px;flex-shrink:0;margin-top:1px;">${c.icon}</span>
+              <span style="font-size:12px;color:var(--text);line-height:1.55;">${c.text}</span>
             </div>`).join('')}
         </div>
-
-        <!-- 选中账号详情大卡 -->
-        <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;flex:1;">
-          ${selAcc ? `
-          <!-- 账号头部 -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
-            <div style="width:42px;height:42px;border-radius:12px;background:${selColor};
-                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <span style="font-size:18px;font-weight:800;color:#fff;">${selAcc.name[0]}</span>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:16px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${selAcc.name}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:3px;">${selVids.length} 条视频 · ${selVisit} 次到诊${selShare?' · '+fmt(selShare)+' 次转发':''}</div>
-            </div>
-            <button onclick="hideOverviewPane();selAcc('${selAcc.id}')"
-              style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);
-                     background:transparent;color:var(--accent);font-size:12px;font-weight:700;
-                     cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0;"
-              onmouseover="this.style.background='var(--accent)';this.style.color='#fff'"
-              onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">查看视频 →</button>
-          </div>
-          <!-- 指标2×2网格 -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-            ${metrics}
-          </div>
-          ` : `<div style="display:flex;align-items:center;justify-content:center;height:140px;color:var(--text3);font-size:13px;">← 从左侧选择账号</div>`}
-        </div>
-
       </div>
 
-      <!-- 右列：排行 + 异常预警 -->
-      <div style="width:210px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
-
-        <!-- 点赞排行 -->
-        <div style="flex:1.4;min-height:0;overflow-y:auto;padding:12px;border-bottom:1px solid var(--border);">
-          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-            <span>点赞排行</span>
-            <span style="font-size:10px;color:var(--text3);font-weight:400;">${cur.folder}</span>
-          </div>
-          ${rankBars || '<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">暂无数据</div>'}
-        </div>
-
-        <!-- 异常预警 -->
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:12px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-            <span>异常预警</span>
-            ${totalAbn
-              ? `<span onclick="openAbnModal()" style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(224,74,56,.1);color:var(--red);font-weight:600;cursor:pointer;">${totalAbn}条</span>`
-              : `<span style="font-size:9px;color:var(--green);">✓ 正常</span>`}
-          </div>
-          ${abnListHtml}
-          ${_allAbnVids.length>4?`<div onclick="openAbnModal()" style="text-align:center;font-size:10px;color:var(--accent);padding-top:4px;cursor:pointer;">查看全部 ${_allAbnVids.length} 条 →</div>`:''}
-        </div>
-
+      <!-- ② 核心指标区（5张卡，大字显示） -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+        ${[
+          { label:'总播放量', val:fmt(totalPlay), sub:'所有视频累计', color:'#7050a8', big:true,
+            icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+          { label:'总线索数', val:fmt(totalLead), sub:'历史累计', color:'#2e8c54', big:true, click:'openVisitQuickEdit()',
+            icon:'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+          { label:'转化率', val:cvRate+'%', sub:'线索÷播放', color:'#e8742a', big:true,
+            icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+          { label:'单视频均播', val:fmt(playPerVid), sub:'播放÷视频数', color:'#2a8ca0',
+            icon:'M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z' },
+          { label:'异常预警', val:totalAbn, sub:`${violCount}违规 · ${promoCount}推广`, color:totalAbn?'#e04a38':'#2e8c54', click:'openAbnModal()',
+            icon:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
+        ].map(c=>`
+          <div onclick="${c.click||''}" style="background:var(--s1);border:1px solid var(--border);
+               border-top:3px solid ${c.color};border-radius:0 0 12px 12px;padding:12px 14px;
+               cursor:${c.click?'pointer':'default'};position:relative;
+               transition:box-shadow .15s,transform .15s;"
+            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.boxShadow='';this.style.transform=''">
+            <div style="font-size:10px;font-weight:500;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+              <span>${c.label}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="2" stroke-linecap="round"><path d="${c.icon}"/></svg>
+            </div>
+            <div style="font-size:${c.big?'28':'24'}px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:4px;">${c.val}</div>
+            <div style="font-size:10px;color:var(--text3);">${c.sub}</div>
+          </div>`).join('')}
       </div>
+
+      <!-- ③ 中层：漏斗 + 效率指标 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+        <!-- 转化漏斗 -->
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+            <span>转化漏斗</span>
+            <span style="font-size:10px;color:var(--text3);">播放 → 线索</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${funnelSteps.map((step,i)=>{
+              const prev = i>0?funnelSteps[i-1].val:step.val;
+              const stepRate = prev>0?(step.val/prev*100).toFixed(1):100;
+              const isWorst = i===maxLosIdx && maxLoss>0;
+              const barW = totalPlay>0?Math.max(4,Math.round(step.val/totalPlay*100)):4;
+              return `<div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="width:7px;height:7px;border-radius:50%;background:${step.color};flex-shrink:0;"></div>
+                    <span style="font-size:12px;font-weight:600;color:var(--text);">${step.name}</span>
+                    ${isWorst?`<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(224,74,56,.12);color:var(--red);font-weight:700;">最大流失</span>`:''}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--text3);">${i>0?stepRate+'%转入':''}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono);">${fmt(step.val)}</span>
+                  </div>
+                </div>
+                <div style="height:6px;background:var(--s3);border-radius:99px;overflow:hidden;">
+                  <div style="height:100%;width:${barW}%;background:${step.color};border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);${isWorst?'box-shadow:0 0 6px '+step.color+'88;':''}"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- 内容效率分析 -->
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px;">内容效率分析</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+            ${[
+              { label:'点赞率',   val:likeRate+'%',    sub:'点赞÷播放',      color:'#e04a38' },
+              { label:'评论率',   val:commRate+'%',    sub:'评论÷播放',      color:'#2a8ca0' },
+              { label:'转发率',   val:shareRate+'%',   sub:'转发÷播放',      color:'#c49020' },
+              { label:'线索转化', val:cvRate+'%',      sub:'线索÷播放',      color:'#2e8c54' },
+            ].map(m=>`
+              <div style="background:var(--s2);border-radius:9px;padding:10px 12px;">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:5px;">${m.label}</div>
+                <div style="font-size:20px;font-weight:800;color:${m.color};font-family:var(--mono);line-height:1;">${m.val}</div>
+                <div style="font-size:9px;color:var(--text3);margin-top:3px;">${m.sub}</div>
+              </div>`).join('')}
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;">
+            <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px;">获客成本</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              ${[
+                { label:'每条线索需要播放', val:playPerLead?fmt(playPerLead)+'次':'—', color:'#7050a8' },
+                { label:'每条线索需要点赞', val:likePerLead?fmt(likePerLead)+'次':'—', color:'#e04a38' },
+                { label:'单视频均产线索',   val:leadPerVid+'条',                       color:'#2e8c54' },
+                { label:'单视频均播放量',   val:fmt(playPerVid)+'次',                  color:'#2a8ca0' },
+              ].map(r=>`
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--s2);border-radius:7px;">
+                  <span style="font-size:11px;color:var(--text2);">${r.label}</span>
+                  <span style="font-size:13px;font-weight:700;color:${r.color};font-family:var(--mono);">${r.val}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ 账号效率排名 -->
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+          <span>账号效率排名</span>
+          <span style="font-size:10px;color:var(--text3);">按转化率排序</span>
+        </div>
+        <!-- 表头 -->
+        <div style="display:grid;grid-template-columns:24px 1fr 60px 70px 60px 80px 80px 60px;gap:8px;padding:0 4px 8px;border-bottom:1px solid var(--border);">
+          ${['#','账号','视频数','播放量','线索','转化率','单视频线索','异常'].map(h=>
+            `<span style="font-size:9px;font-weight:700;color:var(--text3);text-align:${h==='#'||h==='视频数'||h==='播放量'||h==='线索'||h==='转化率'||h==='单视频线索'||h==='异常'?'center':'left'};letter-spacing:.3px;">${h}</span>`
+          ).join('')}
+        </div>
+        <!-- 数据行 -->
+        <div style="display:flex;flex-direction:column;gap:0;">
+          ${accRank.map((a,i)=>{
+            const isTop = i===0 && a.cvr>0;
+            const isLow = i===accRank.length-1 && accRank.length>1 && a.vidCnt>0 && a.cvr<accRank[0].cvr*0.3;
+            const playPct = Math.max(2,Math.round(a.play/maxPlay*100));
+            const cvrPct  = maxCvr>0?Math.min(100,Math.round(a.cvr/maxCvr*100)):0;
+            return `<div onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
+              style="display:grid;grid-template-columns:24px 1fr 60px 70px 60px 80px 80px 60px;
+                     gap:8px;padding:9px 4px;border-bottom:1px solid var(--border);
+                     cursor:pointer;transition:background .1s;align-items:center;
+                     background:${isTop?'rgba(46,140,84,.04)':isLow?'rgba(224,74,56,.03)':'transparent'};"
+              onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='${isTop?'rgba(46,140,84,.04)':isLow?'rgba(224,74,56,.03)':'transparent'}'">
+              <span style="font-size:11px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:center;">${i+1}</span>
+              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                <div style="width:22px;height:22px;border-radius:6px;background:${a.color};flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <span style="font-size:10px;font-weight:700;color:#fff;">${a.name[0]}</span>
+                </div>
+                <span style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name}</span>
+                ${isTop?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(46,140,84,.12);color:#2e8c54;font-weight:700;flex-shrink:0;">TOP</span>`:''}
+                ${isLow?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(224,74,56,.12);color:var(--red);font-weight:700;flex-shrink:0;">末位</span>`:''}
+              </div>
+              <span style="font-size:12px;color:var(--text2);text-align:center;">${a.vidCnt}</span>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-size:11px;font-weight:600;color:var(--text);font-family:var(--mono);text-align:center;">${fmt(a.play)}</span>
+                <div style="height:3px;background:var(--s3);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${playPct}%;background:#7050a8;border-radius:99px;"></div></div>
+              </div>
+              <span style="font-size:12px;font-weight:600;color:${a.leads>0?'#2e8c54':'var(--text3)'};text-align:center;">${a.leads}</span>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-size:11px;font-weight:700;color:${a.cvr>0?'var(--accent)':'var(--text3)'};font-family:var(--mono);text-align:center;">${a.cvr.toFixed(3)}%</span>
+                <div style="height:3px;background:var(--s3);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${cvrPct}%;background:var(--accent);border-radius:99px;"></div></div>
+              </div>
+              <span style="font-size:11px;color:var(--text2);text-align:center;">${a.eff.toFixed(2)}</span>
+              <span style="font-size:11px;text-align:center;color:${a.abn?'var(--red)':'var(--text3)'};">${a.abn?'⚠'+a.abn:'—'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- ⑤ 异常智能监控 -->
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+          <span>智能异常监控</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${uniqueAlerts.length?'rgba(224,74,56,.1)':'rgba(46,140,84,.1)'};color:${uniqueAlerts.length?'var(--red)':'#2e8c54'};font-weight:600;">
+            ${uniqueAlerts.length?uniqueAlerts.length+'条需关注':'✓ 全部正常'}
+          </span>
+        </div>
+        ${uniqueAlerts.length ? `
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
+          ${uniqueAlerts.map(al=>`
+            <div onclick="hideOverviewPane();selAcc('${al.vid.accId}')"
+              style="padding:10px 12px;border-radius:9px;border:1px solid ${al.color}30;
+                     background:${al.bg};cursor:pointer;transition:opacity .12s;border-left:3px solid ${al.color};"
+              onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+                <span style="font-size:9px;padding:1px 6px;border-radius:4px;background:${al.color}20;color:${al.color};font-weight:700;">${al.type}</span>
+                <span style="font-size:10px;color:var(--text3);">${al.acc.name}</span>
+              </div>
+              <div style="font-size:11px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${al.vid.title||'无标题'}</div>
+              <div style="font-size:10px;color:var(--text3);line-height:1.5;">${al.reason}</div>
+            </div>`).join('')}
+        </div>` :
+        `<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">✓ 未发现明显异常，数据表现正常</div>`}
+      </div>
+
     </div>
   </div>`;
 
-  // hover 显示录入按钮
-  pane.querySelectorAll('.edit-visit-hint').forEach(el=>{
-    el.closest('div[onclick=""]') || el.parentElement;
-    const card = el.closest('[style*="border-radius:11px"]');
-    if(card){
-      card.addEventListener('mouseenter',()=>el.style.opacity='1');
-      card.addEventListener('mouseleave',()=>el.style.opacity='0');
-    }
-  });
-
-  // 绑定总览面板右键菜单
   window.ovSelectFolder = function(idx){ _ovFolderIdx=idx; window._ovSelAccId=null; renderOverviewPane(); };
   bindOvPaneCtxMenu();
 }
