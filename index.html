@@ -954,16 +954,10 @@ canvas{max-width:100%;}
     <span class="sb-tip">数据总览</span>
   </button>
 
-  <!-- 文件夹 -->
+  <!-- 文件夹 / 账号（合并） -->
   <button class="sb-icon-btn" id="sb-btn-folder" onclick="event.stopPropagation();toggleNavDropdown('folderMenu');positionSbDropdown('folderMenu',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    <span class="sb-tip">文件夹</span>
-  </button>
-
-  <!-- 账号 -->
-  <button class="sb-icon-btn" id="sb-btn-acc" onclick="event.stopPropagation();toggleNavDropdown('accMenu');positionSbDropdown('accMenu',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-    <span class="sb-tip">项目账号</span>
+    <span class="sb-tip">项目 / 账号</span>
   </button>
 
   <div class="sb-sep"></div>
@@ -1013,12 +1007,8 @@ canvas{max-width:100%;}
 
 <!-- 侧边栏弹出下拉菜单（浮层） -->
 <div class="nav-dropdown-menu" id="folderMenu" style="position:fixed;z-index:600;">
-  <div class="ndm-header">文件夹 / 分组</div>
+  <div class="ndm-header">项目 / 账号</div>
   <div id="folderMenuItems"></div>
-</div>
-<div class="nav-dropdown-menu" id="accMenu" style="position:fixed;z-index:600;">
-  <div class="ndm-header">项目账号</div>
-  <div id="accMenuItems"></div>
 </div>
 
 <!-- 主内容 -->
@@ -1129,6 +1119,19 @@ canvas{max-width:100%;}
     <button onclick="closeAlertModal();showOverviewPane()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">查看全部总览 →</button>
   </div>
 </div>
+</div>
+<!-- ══ STAT DETAIL MODAL ══ -->
+<div id="statDetailModal" onclick="if(event.target===this)closeStatDetail()" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(96vw,680px);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mIn .18s ease;overflow:hidden;">
+    <div id="statDetailHead" style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s2);">
+      <div>
+        <div id="statDetailTitle" style="font-size:16px;font-weight:800;color:var(--text);"></div>
+        <div id="statDetailSub" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      </div>
+      <button onclick="closeStatDetail()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="statDetailBody" style="overflow-y:auto;flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:12px;"></div>
+  </div>
 </div>
 <!-- ══ ADD/EDIT MODAL (split panel) ══ -->
 <div class="modal-bg" id="vidModal">
@@ -1759,57 +1762,66 @@ function toggleNavDropdown(menuId){
 document.addEventListener('click', function(e){
   if(!e.target.closest('.nav-dropdown') &&
      !e.target.closest('.nav-dropdown-menu') &&
-     !e.target.closest('#sb-btn-folder') &&
-     !e.target.closest('#sb-btn-acc')){
+     !e.target.closest('#sb-btn-folder')){
     document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
   }
 });
 
 function renderNavDropdowns(){
-  // ── 文件夹菜单 ──
+  // ── 合并菜单：文件夹 + 旗下账号 ──
   const fi = document.getElementById('folderMenuItems');
   if(fi){
-    let html = '<div class="ndm-item'+((!S.curFolder)?'  on':'')+'" onclick="selectNavFolder(null)">🏠 全部项目</div>';
+    let html = '';
+
+    // 全部项目入口
+    const allOn = !S.curFolder && (S.curAcc==='all'||!S.curAcc);
+    html += `<div class="ndm-item${allOn?' on':''}" onclick="selectNavFolder(null)">🏠 全部项目</div>`;
+
+    // 未分组账号（无文件夹）
+    const ungrouped = S.accounts.filter(a=>!a.folderId);
+    if(ungrouped.length){
+      html += '<div class="ndm-sep"></div>';
+      html += `<div style="padding:4px 16px 3px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;">未分组</div>`;
+      ungrouped.forEach(a=>{
+        const isOn = S.curAcc===a.id;
+        const cnt = S.videos.filter(v=>v.accId===a.id).length;
+        html += `<div class="ndm-item${isOn?' on':''}" style="padding-left:22px;" onclick="selectNavAcc('${a.id}')">
+          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span>
+          <span style="font-size:11px;color:var(--text3);">${cnt}</span>
+        </div>`;
+      });
+    }
+
+    // 各文件夹及旗下账号
     (S.folders||[]).forEach(f=>{
-      const isOn = S.curFolder===f.id;
-      html += `<div class="ndm-item${isOn?' on':''}" onclick="selectNavFolder('${f.id}')">📁 ${f.name}</div>`;
+      const folderOn = String(S.curFolder)===String(f.id) && (S.curAcc==='all'||!S.curAcc);
+      const folderAccs = S.accounts.filter(a=>String(a.folderId)===String(f.id));
+      const folderVidCnt = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId)).length;
+      html += '<div class="ndm-sep"></div>';
+      // 文件夹行：点击选整个文件夹
+      html += `<div class="ndm-item${folderOn?' on':''}" onclick="selectNavFolder('${f.id}')">
+        📁 <span style="flex:1;">${f.name}</span>
+        <span style="font-size:11px;color:var(--text3);">${folderVidCnt}条</span>
+      </div>`;
+      // 文件夹下的账号：缩进显示
+      folderAccs.forEach(a=>{
+        const isOn = S.curAcc===a.id;
+        const cnt = S.videos.filter(v=>v.accId===a.id).length;
+        html += `<div class="ndm-item${isOn?' on':''}" style="padding-left:28px;" onclick="selectNavAcc('${a.id}')">
+          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span>
+          <span style="font-size:11px;color:var(--text3);">${cnt}</span>
+        </div>`;
+      });
     });
-    // 操作项
+
+    // 底部操作
     html += '<div class="ndm-sep"></div>';
     html += `<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('folderMenu');openOverview()">📊 数据总览</div>`;
     html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');addFolder()">＋ 新建文件夹</div>`;
+    html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');openAccModal()">＋ 添加账号</div>`;
     fi.innerHTML = html;
-  }
-  // 更新文件夹按钮标签
-  const fl = document.getElementById('folderDropdownLabel');
-  if(fl){
-    const f = S.curFolder ? (S.folders||[]).find(x=>x.id===S.curFolder) : null;
-    fl.textContent = f ? f.name : '文件夹';
-  }
-
-  // ── 账号菜单 ──
-  const ai = document.getElementById('accMenuItems');
-  if(ai){
-    // 按文件夹分组显示
-    let html = `<div class="ndm-item${(S.curAcc==='all'||!S.curAcc)?' on':''}" onclick="selectNavAcc('all')">全部账号</div>`;
-    // 先显示当前文件夹下的账号，若无文件夹过滤则全部显示
-    const visAccs = S.curFolder
-      ? S.accounts.filter(a=>String(a.folderId)===String(S.curFolder))
-      : S.accounts;
-    visAccs.forEach(a=>{
-      const isOn = S.curAcc===a.id;
-      const cnt = S.videos.filter(v=>v.accId===a.id).length;
-      html += `<div class="ndm-item${isOn?' on':''}" onclick="selectNavAcc('${a.id}')"><div style="width:20px;height:20px;border-radius:6px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span><span style="font-size:11px;color:var(--text3);">${cnt}</span></div>`;
-    });
-    html += '<div class="ndm-sep"></div>';
-    html += `<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('accMenu');openAccModal()">＋ 添加账号</div>`;
-    ai.innerHTML = html;
-  }
-  // 更新账号按钮标签
-  const al = document.getElementById('accDropdownLabel');
-  if(al){
-    const a = S.curAcc && S.curAcc!=='all' ? S.accounts.find(x=>x.id===S.curAcc) : null;
-    al.textContent = a ? a.name : '账号';
   }
 }
 
@@ -3931,6 +3943,241 @@ function doLogout(){
 // ══════════════════════════════════════════
 let _alertData = [];
 
+// ══════════════════════════════════════════
+// 指标卡弹窗详情
+// ══════════════════════════════════════════
+function closeStatDetail(){
+  document.getElementById('statDetailModal').style.display='none';
+}
+
+function openStatDetail(type){
+  const modal = document.getElementById('statDetailModal');
+  const titleEl = document.getElementById('statDetailTitle');
+  const subEl   = document.getElementById('statDetailSub');
+  const body    = document.getElementById('statDetailBody');
+
+  // 拿当前总览选中的数据集
+  const rows = _ovRows();
+  const cur  = rows[_ovFolderIdx] || rows[0];
+  const allAccs = cur.accs;
+  const allVids = cur.vids;
+
+  function getLeadCount(accId){ return (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0); }
+  function rowCard(label, val, color, sub){
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--s2);border-radius:10px;border-left:3px solid ${color};">
+      <span style="font-size:13px;color:var(--text);">${label}</span>
+      <div style="text-align:right;">
+        <div style="font-size:16px;font-weight:800;color:${color};font-family:var(--mono);">${val}</div>
+        ${sub?`<div style="font-size:10px;color:var(--text3);">${sub}</div>`:''}
+      </div>
+    </div>`;
+  }
+  function accRankList(getter, color, unit=''){
+    return allAccs.map(a=>({ a, v:getter(a) }))
+      .sort((x,y)=>y.v-x.v)
+      .map((d,i)=>{
+        const max = allAccs.map(a=>getter(a)).reduce((m,v)=>Math.max(m,v),1);
+        const pct = Math.max(3, Math.round(d.v/max*100));
+        return `<div style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:11px;font-weight:700;color:${i<3?color:'var(--text3)'};">${i+1}</span>
+              <div style="width:18px;height:18px;border-radius:5px;background:${d.a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${d.a.name[0]}</div>
+              <span style="font-size:13px;color:var(--text);">${d.a.name}</span>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:${color};font-family:var(--mono);">${fmt(d.v)}${unit}</span>
+          </div>
+          <div style="height:5px;background:var(--s3);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;"></div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+
+  let html = '';
+
+  if(type==='play'){
+    titleEl.textContent = '总播放量详情';
+    subEl.textContent   = '各账号播放量排行 · Top视频';
+    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
+    const avg = allVids.length>0?Math.round(totalPlay/allVids.length):0;
+    const topVids = [...allVids].sort((a,b)=>(b.play||0)-(a.play||0)).slice(0,5);
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${rowCard('总播放量', fmt(totalPlay), '#7050a8', '累计')}
+      ${rowCard('单视频均播', fmt(avg), '#7050a8', '播放÷视频数')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 账号播放量排行</div>`;
+    html += accRankList(a=>allVids.filter(v=>v.accId===a.id).reduce((s,v)=>s+(v.play||0),0), '#7050a8');
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 播放量 Top 5 视频</div>`;
+    html += topVids.map(v=>{
+      const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s2);border-radius:10px;cursor:pointer;" onclick="closeStatDetail();selAcc('${a.id}')">
+        <div style="width:6px;height:36px;border-radius:3px;background:#7050a8;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.name} · ${v.date||''}</div>
+        </div>
+        <span style="font-size:16px;font-weight:800;color:#7050a8;font-family:var(--mono);flex-shrink:0;">${fmt(v.play)}</span>
+      </div>`;
+    }).join('');
+
+  } else if(type==='lead'){
+    titleEl.textContent = '总线索数详情';
+    subEl.textContent   = '各账号线索排行 · 录入记录';
+    const totalLead = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
+    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
+    const cvRate = totalPlay>0?(totalLead/totalPlay*100).toFixed(3):'0.000';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${rowCard('总线索数', fmt(totalLead), 'var(--green)', '历史累计')}
+      ${rowCard('整体转化率', cvRate+'%', 'var(--green)', '线索÷播放')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 账号线索量排行</div>`;
+    html += accRankList(a=>getLeadCount(a.id), 'var(--green)');
+    const visits = (S.visits||[]).filter(v=>allAccs.find(a=>a.id===v.accId)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
+    if(visits.length){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 最近线索录入记录</div>`;
+      html += visits.map(v=>{
+        const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--s2);border-radius:9px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:16px;height:16px;border-radius:4px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;">${a.name[0]}</div>
+            <span style="font-size:12px;color:var(--text);">${a.name}</span>
+            <span style="font-size:11px;color:var(--text3);">${v.date||''}</span>
+          </div>
+          <span style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--mono);">+${v.count}</span>
+        </div>`;
+      }).join('');
+    }
+    html += `<button onclick="closeStatDetail();openVisitQuickEdit()" style="padding:10px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);width:100%;">＋ 录入新线索数据</button>`;
+
+  } else if(type==='cvr'){
+    titleEl.textContent = '转化率详情';
+    subEl.textContent   = '各账号转化率对比 · 效率分析';
+    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
+    const totalLead = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
+    const cvRate = totalPlay>0?(totalLead/totalPlay*100).toFixed(3):'0.000';
+    const playPerLead = totalLead>0?Math.round(totalPlay/totalLead):0;
+    html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      ${rowCard('整体转化率', cvRate+'%', '#e8742a')}
+      ${rowCard('每线索均播', playPerLead?fmt(playPerLead)+'次':'—', '#e8742a', '获客成本')}
+      ${rowCard('总线索数', fmt(totalLead), '#e8742a')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 各账号转化率排行</div>`;
+    html += allAccs.map(a=>{
+      const vids  = allVids.filter(v=>v.accId===a.id);
+      const play  = vids.reduce((s,v)=>s+(v.play||0),0);
+      const leads = getLeadCount(a.id);
+      const cvr   = play>0?(leads/play*100).toFixed(3):'0.000';
+      const maxCvr = Math.max(...allAccs.map(x=>{ const p=allVids.filter(v=>v.accId===x.id).reduce((s,v)=>s+(v.play||0),0); const l=getLeadCount(x.id); return p>0?l/p*100:0; }), 0.001);
+      const pct = Math.max(2, Math.round(parseFloat(cvr)/maxCvr*100));
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${a.name[0]}</div>
+            <span style="font-size:13px;color:var(--text);">${a.name}</span>
+            <span style="font-size:11px;color:var(--text3);">${vids.length}条视频 · ${fmt(play)}播放</span>
+          </div>
+          <span style="font-size:15px;font-weight:800;color:#e8742a;font-family:var(--mono);">${cvr}%</span>
+        </div>
+        <div style="height:5px;background:var(--s3);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:#e8742a;border-radius:99px;"></div>
+        </div>
+      </div>`;
+    }).sort(()=>0).join(''); // 已在外部 accRank 排序，这里不重复
+
+  } else if(type==='avgplay'){
+    titleEl.textContent = '单视频均播详情';
+    subEl.textContent   = '播放分布 · 高/低于均值视频';
+    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
+    const avg = allVids.length>0?Math.round(totalPlay/allVids.length):0;
+    const above = allVids.filter(v=>(v.play||0)>=avg);
+    const below = allVids.filter(v=>(v.play||0)<avg);
+    html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      ${rowCard('单视频均播', fmt(avg), '#2a8ca0')}
+      ${rowCard('高于均值', above.length+'条', '#2e8c54', `占比${allVids.length?Math.round(above.length/allVids.length*100):0}%`)}
+      ${rowCard('低于均值', below.length+'条', '#e04a38', `占比${allVids.length?Math.round(below.length/allVids.length*100):0}%`)}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 各账号均播排行</div>`;
+    html += accRankList(a=>{ const vs=allVids.filter(v=>v.accId===a.id); return vs.length?Math.round(vs.reduce((s,v)=>s+(v.play||0),0)/vs.length):0; }, '#2a8ca0');
+    const worstVids = [...allVids].filter(v=>(v.play||0)<avg).sort((a,b)=>(a.play||0)-(b.play||0)).slice(0,5);
+    if(worstVids.length){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 低于均值 · 需关注视频</div>`;
+      html += worstVids.map(v=>{
+        const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(224,74,56,.05);border:1px solid rgba(224,74,56,.15);border-radius:9px;cursor:pointer;" onclick="closeStatDetail();selAcc('${a.id}')">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name}</div>
+          </div>
+          <span style="font-size:14px;font-weight:700;color:#e04a38;font-family:var(--mono);flex-shrink:0;">${fmt(v.play||0)}</span>
+        </div>`;
+      }).join('');
+    }
+
+  } else if(type==='abn'){
+    titleEl.textContent = '异常预警详情';
+    subEl.textContent   = '违规 · 推广 · 低互动视频';
+    const violVids = allVids.filter(v=>v.violation);
+    const promoVids = allVids.filter(v=>v.promo);
+    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
+    const avgLikeRate = totalPlay>0?allVids.reduce((s,v)=>s+v.likes,0)/totalPlay:0;
+    const lowVids = allVids.filter(v=>(v.play||0)>500 && v.play>0 && v.likes/v.play < avgLikeRate*0.3);
+    html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      ${rowCard('违规视频', violVids.length+'条', '#e04a38')}
+      ${rowCard('推广中', promoVids.length+'条', '#c49020')}
+      ${rowCard('低互动预警', lowVids.length+'条', '#7050a8', '点赞率＜均值30%')}
+    </div>`;
+    if(violVids.length){
+      html += `<div style="font-size:12px;font-weight:700;color:#e04a38;margin-top:4px;letter-spacing:.4px;">⚠ 违规视频（需立即处理）</div>`;
+      html += violVids.slice(0,5).map(v=>{
+        const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(224,74,56,.07);border:1px solid rgba(224,74,56,.2);border-radius:9px;cursor:pointer;" onclick="closeStatDetail();selAcc('${a.id}')">
+          <span style="font-size:13px;flex-shrink:0;">⚠</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name} · ${v.date||''}</div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#e04a38;font-family:var(--mono);">${fmt(v.play)}</span>
+        </div>`;
+      }).join('');
+    }
+    if(promoVids.length){
+      html += `<div style="font-size:12px;font-weight:700;color:#c49020;margin-top:4px;letter-spacing:.4px;">📢 推广中视频</div>`;
+      html += promoVids.slice(0,5).map(v=>{
+        const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(196,144,32,.07);border:1px solid rgba(196,144,32,.2);border-radius:9px;">
+          <span style="font-size:13px;flex-shrink:0;">📢</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name}</div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#c49020;font-family:var(--mono);">${fmt(v.play)}</span>
+        </div>`;
+      }).join('');
+    }
+    if(lowVids.length){
+      html += `<div style="font-size:12px;font-weight:700;color:#7050a8;margin-top:4px;letter-spacing:.4px;">📉 低互动视频（点赞率＜均值30%）</div>`;
+      html += lowVids.slice(0,5).map(v=>{
+        const a = S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#999'};
+        const likeRate = v.play>0?(v.likes/v.play*100).toFixed(2):'0';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(112,80,168,.05);border:1px solid rgba(112,80,168,.15);border-radius:9px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name} · 点赞率 ${likeRate}%</div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:#7050a8;font-family:var(--mono);">${fmt(v.play)}</span>
+        </div>`;
+      }).join('');
+    }
+    if(!violVids.length && !promoVids.length && !lowVids.length){
+      html = `<div style="text-align:center;padding:40px;color:var(--text3);">✅ 暂无异常视频，运营状况良好</div>`;
+    }
+  }
+
+  body.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
 function openAlertModal(){
   const modal = document.getElementById('alertModal');
   if(!modal) return;
@@ -4588,21 +4835,20 @@ function renderOverviewPane(){
       <!-- ② 核心指标区（5张卡，大字显示） -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
         ${[
-          { label:'总播放量', val:fmt(totalPlay), sub:'所有视频累计', color:'#7050a8', big:true,
+          { label:'总播放量',  val:fmt(totalPlay),   sub:'所有视频累计',           color:'#7050a8', click:"openStatDetail('play')",
             icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-          { label:'总线索数', val:fmt(totalLead), sub:'历史累计', color:'var(--green)', big:true, click:'openVisitQuickEdit()',
+          { label:'总线索数',  val:fmt(totalLead),   sub:'历史累计',               color:'var(--green)', click:"openStatDetail('lead')",
             icon:'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-          { label:'转化率', val:cvRate+'%', sub:'线索÷播放', color:'#e8742a', big:true,
+          { label:'转化率',    val:cvRate+'%',       sub:'线索÷播放',              color:'#e8742a', click:"openStatDetail('cvr')",
             icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-          { label:'单视频均播', val:fmt(playPerVid), sub:'播放÷视频数', color:'#2a8ca0',
+          { label:'单视频均播', val:fmt(playPerVid), sub:'播放÷视频数',            color:'#2a8ca0', click:"openStatDetail('avgplay')",
             icon:'M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z' },
-          { label:'异常预警', val:totalAbn, sub:`${violCount} 违规 / ${promoCount} 推广`, color:totalAbn?'#e04a38':'#2e8c54', click:'openAlertModal()',
+          { label:'异常预警',  val:totalAbn,         sub:`${violCount}违规 / ${promoCount}推广`, color:totalAbn?'#e04a38':'#2e8c54', click:"openStatDetail('abn')",
             icon:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
         ].map(c=>`
-          <div onclick="${c.click||''}" style="background:var(--s1);border:1px solid var(--border);
+          <div onclick="${c.click}" style="background:var(--s1);border:1px solid var(--border);
                border-top:3px solid ${c.color};border-radius:0 0 12px 12px;padding:14px 16px;
-               cursor:${c.click?'pointer':'default'};position:relative;
-               transition:box-shadow .15s,transform .15s;"
+               cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s;"
             onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'"
             onmouseout="this.style.boxShadow='';this.style.transform=''">
             <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
@@ -4611,6 +4857,7 @@ function renderOverviewPane(){
             </div>
             <div style="font-size:${c.big?'30':'26'}px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:5px;">${c.val}</div>
             <div style="font-size:11px;color:var(--text3);">${c.sub}</div>
+            <div style="position:absolute;bottom:8px;right:10px;font-size:9px;color:var(--text3);opacity:.6;">点击查看详情 →</div>
           </div>`).join('')}
       </div>
 
