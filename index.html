@@ -955,13 +955,13 @@ canvas{max-width:100%;}
   </button>
 
   <!-- 文件夹 -->
-  <button class="sb-icon-btn" id="sb-btn-folder" onclick="toggleNavDropdown('folderMenu');positionSbDropdown('folderMenu',this)">
+  <button class="sb-icon-btn" id="sb-btn-folder" onclick="event.stopPropagation();toggleNavDropdown('folderMenu');positionSbDropdown('folderMenu',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     <span class="sb-tip">文件夹</span>
   </button>
 
   <!-- 账号 -->
-  <button class="sb-icon-btn" id="sb-btn-acc" onclick="toggleNavDropdown('accMenu');positionSbDropdown('accMenu',this)">
+  <button class="sb-icon-btn" id="sb-btn-acc" onclick="event.stopPropagation();toggleNavDropdown('accMenu');positionSbDropdown('accMenu',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     <span class="sb-tip">项目账号</span>
   </button>
@@ -1606,7 +1606,7 @@ async function load(){
         author:v.author||'',douyin_id:v.douyin_id||'',uploadedBy:v.uploaded_by||''
       }));
     }
-  }catch(e){console.error('load error',e);}
+  }catch(e){console.error('load error',e);toast('⚠ 数据加载失败，请检查网络后刷新','err');}
   if(overlay){overlay.style.display='none';}
   render();
 }
@@ -1755,9 +1755,12 @@ function toggleNavDropdown(menuId){
   document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
   if(!isOpen) menu.classList.add('open');
 }
-// 点击外部关闭
+// 点击外部关闭（排除侧边栏图标按钮本身和下拉菜单内部）
 document.addEventListener('click', function(e){
-  if(!e.target.closest('.nav-dropdown')){
+  if(!e.target.closest('.nav-dropdown') &&
+     !e.target.closest('.nav-dropdown-menu') &&
+     !e.target.closest('#sb-btn-folder') &&
+     !e.target.closest('#sb-btn-acc')){
     document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
   }
 });
@@ -2067,14 +2070,23 @@ function renderGrid(){
   const ptEl=document.getElementById('pageTitle');
   const grid=document.getElementById('vgrid');
 
-  // 未选择账号且未选择文件夹，显示欢迎页
+  // 确保 vgrid 可见（overviewPane 可能使其隐藏）
+  if(grid && grid.style.display==='none') grid.style.display='';
+  const pane=document.getElementById('overviewPane');
+  if(pane && pane.style.display!=='none') pane.style.display='none';
+
+  // 未选择账号且未选择文件夹，且无搜索词：直接展示全部视频
   if(!S.curAcc && !S.curFolder && !S.searchQuery){
-    grid.className='vgrid';
-    if(ptEl) ptEl.innerHTML='请选择账号或文件夹';
-    grid.innerHTML=`<div class="empty"><div class="empty-icon">👈</div><div class="empty-t">从左侧选择项目或文件夹</div><div class="empty-s">点击「全部项目」查看所有视频</div></div>`;
-    const paginationEl=document.getElementById('pagination');
-    if(paginationEl) paginationEl.innerHTML='';
-    return;
+    if(S.videos.length===0){
+      grid.className='vgrid';
+      if(ptEl) ptEl.innerHTML='全部视频';
+      grid.innerHTML=`<div class="empty"><div class="empty-icon">🎬</div><div class="empty-t">暂无视频数据</div><div class="empty-s">点右上角「＋ 添加」录入视频</div></div>`;
+      const paginationEl=document.getElementById('pagination');
+      if(paginationEl) paginationEl.innerHTML='';
+      return;
+    }
+    // 有数据时展示全部
+    S.curAcc='all';
   }
 
   let vids;
@@ -2240,8 +2252,9 @@ function onGlobalSearch(val){
   _searchTimer=setTimeout(()=>{
     S.searchQuery=val.trim();
     S.page=0;
-    // 搜索时自动切到全部账号
+    // 搜索时自动切到全部账号，并隐藏总览面板
     if(S.searchQuery){ S.curAcc='all'; S.curFolder=null; }
+    hideOverviewPane();
     renderGrid();
   },200);
 }
@@ -4689,7 +4702,7 @@ function renderOverviewPane(){
             const isLow = i===accRank.length-1 && accRank.length>1 && a.vidCnt>0 && a.cvr<accRank[0].cvr*0.3;
             const playPct = Math.max(2,Math.round(a.play/maxPlay*100));
             const cvrPct  = maxCvr>0?Math.min(100,Math.round(a.cvr/maxCvr*100)):0;
-            return `<div onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
+            return `<div onclick="selAcc('${a.id}')"
               style="display:grid;grid-template-columns:24px 1fr 60px 70px 60px 80px 80px 60px;
                      gap:8px;padding:10px 4px;border-bottom:1px solid var(--border);
                      cursor:pointer;transition:background .1s;align-items:center;
