@@ -1910,7 +1910,7 @@ function renderSidebar(){
 
     // 各文件夹
     (S.folders||[]).forEach(f => {
-      const folderAccs = S.accounts.filter(a=>a.folderId===f.id);
+      const folderAccs = S.accounts.filter(a=>String(a.folderId)===String(f.id));
       const folderVids = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId));
       const isFExpanded = S.expandedFolders.has(f.id);
       const isFActive = S.curFolder===f.id;
@@ -2074,7 +2074,7 @@ function renderGrid(){
 
   let vids;
   if(S.curFolder){
-    const folderAccIds=S.accounts.filter(a=>a.folderId===S.curFolder).map(a=>a.id);
+    const folderAccIds=S.accounts.filter(a=>String(a.folderId)===String(S.curFolder)).map(a=>a.id);
     vids=S.videos.filter(v=>folderAccIds.includes(v.accId));
   } else {
     vids=(!S.curAcc||S.curAcc==='all')?S.videos:S.videos.filter(v=>v.accId===S.curAcc);
@@ -2210,7 +2210,7 @@ async function renameFolder(id,oldName){
 async function deleteFolder(id,name){
   showConfirm('删除文件夹',`删除「${name}」？文件夹下的项目不会被删除，只是取消归类。`,async()=>{
     S.folders=S.folders.filter(f=>f.id!==id);
-    S.accounts.forEach(a=>{if(a.folderId===id)a.folderId=null;});
+    S.accounts.forEach(a=>{if(String(a.folderId)===String(id))a.folderId=null;});
     if(S.curFolder===id)S.curFolder=null;
     render();
     await sbFetch('/rest/v1/folders?id=eq.'+id,'DELETE');
@@ -3036,7 +3036,7 @@ function renderMultiLineChart(folderIds){
   const datasets = [];
   folderIds.forEach((fid, fi)=>{
     const folder = S.folders.find(f=>f.id===fid);
-    const accIds = S.accounts.filter(a=>a.folderId===fid).map(a=>a.id);
+    const accIds = S.accounts.filter(a=>String(a.folderId)===String(fid)).map(a=>a.id);
     const vids = S.videos.filter(v=>accIds.includes(v.accId));
     metrics.forEach((m,mi)=>{
       datasets.push({
@@ -3065,7 +3065,7 @@ function renderMultiBarChart(folderIds){
 
   const datasets = folderIds.map((fid,i)=>{
     const folder = S.folders.find(f=>f.id===fid);
-    const accIds = S.accounts.filter(a=>a.folderId===fid).map(a=>a.id);
+    const accIds = S.accounts.filter(a=>String(a.folderId)===String(fid)).map(a=>a.id);
     const vids = S.videos.filter(v=>accIds.includes(v.accId));
     return {
       label: folder?folder.name:'文件夹',
@@ -3086,7 +3086,7 @@ function renderMultiBarChart(folderIds){
 
 function renderMultiTreeChart(folderIds){
   // 多文件夹爆款雷达：合并所有文件夹账号
-  const accs = folderIds.flatMap(fid => S.accounts.filter(a=>a.folderId===fid));
+  const accs = folderIds.flatMap(fid => S.accounts.filter(a=>String(a.folderId)===String(fid)));
   const accIds = accs.map(a=>a.id);
   const vids = S.videos.filter(v=>accIds.includes(v.accId));
   renderTreeChart(null, accs, vids);
@@ -4393,7 +4393,7 @@ function _ovRows(){
   const rows = [];
   rows.push({ folder:'全部', icon:'🏠', accs: S.accounts, vids: S.videos, isAll:true });
   (S.folders||[]).forEach(f=>{
-    const accs = S.accounts.filter(a=>a.folderId===f.id);
+    const accs = S.accounts.filter(a=>String(a.folderId)===String(f.id));
     const vids = S.videos.filter(v=>accs.map(a=>a.id).includes(v.accId));
     rows.push({ folder:f.name, icon:'📁', accs, vids, folderId:f.id });
   });
