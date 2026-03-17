@@ -4246,34 +4246,6 @@ function renderOverviewPane(){
       <div style="font-size:12px;color:var(--text3);">${c.sub}</div>
     </div>`).join('');
 
-  // ── 账号图标条（只显示头像，悬浮显示名称） ──
-  const accIconBar = allAccs.map(a=>{
-    const isSel = a.id === window._ovSelAccId;
-    const av = S.videos.filter(v=>v.accId===a.id).length;
-    const abn = S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length;
-    return `<div onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
-      style="position:relative;width:36px;height:36px;flex-shrink:0;cursor:pointer;border-radius:10px;
-             background:${a.color||'#e8742a'};
-             outline:${isSel?'2.5px solid var(--accent)':'2.5px solid transparent'};
-             outline-offset:2px;
-             transition:outline .15s,transform .12s;
-             display:flex;align-items:center;justify-content:center;"
-      onmouseover="this.style.transform='scale(1.08)';this.querySelector('.acc-tip').style.opacity='1';this.querySelector('.acc-tip').style.pointerEvents='none'"
-      onmouseout="this.style.transform='';this.querySelector('.acc-tip').style.opacity='0'">
-      <span style="font-size:14px;font-weight:800;color:#fff;line-height:1;">${a.name[0]}</span>
-      ${abn?`<div style="position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid var(--bg);"></div>`:''}
-      <div class="acc-tip" style="
-        position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
-        background:var(--text);color:var(--bg);
-        font-size:11px;font-weight:500;white-space:nowrap;
-        padding:4px 8px;border-radius:6px;
-        opacity:0;transition:opacity .15s;pointer-events:none;z-index:99;
-        font-family:var(--font);box-shadow:0 2px 8px rgba(0,0,0,.15);">
-        ${a.name}<span style="opacity:.6;margin-left:5px;">${av}条${abn?` · ⚠${abn}`:''}</span>
-        <span style="position:absolute;right:100%;top:50%;transform:translateY(-50%);border:5px solid transparent;border-right-color:var(--text);"></span>
-      </div>
-    </div>`;
-  }).join('');
 
   // ── 选中账号详情指标（紧凑横排） ──
   const totalComm = allAccs.reduce((s,a)=>s+S.videos.filter(v=>v.accId===a.id).reduce((x,v)=>x+v.comm,0),0);
@@ -4323,93 +4295,154 @@ function renderOverviewPane(){
   const violVids = _allAbnVids.filter(v=>v.violation);
   const promoVids = _allAbnVids.filter(v=>!v.violation&&v.promo);
 
-  // ── 拼装整体布局 ──
+  // ── 左侧账号列表（带名字+数据+异常标签） ──
+  const accListHtml = allAccs.map(a=>{
+    const isSel = a.id === window._ovSelAccId;
+    const av = S.videos.filter(v=>v.accId===a.id).length;
+    const abn = S.videos.filter(v=>v.accId===a.id&&(v.violation||v.promo)).length;
+    const aPlay = S.videos.filter(v=>v.accId===a.id).reduce((s,v)=>s+(v.play||0),0);
+    return `<div onclick="window._ovSelAccId='${a.id}';renderOverviewPane()"
+      style="display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;
+             border-bottom:1px solid var(--border);transition:background .1s;
+             background:${isSel?'rgba(232,116,42,.06)':'transparent'};"
+      onmouseover="if('${a.id}'!==window._ovSelAccId)this.style.background='var(--s2)'"
+      onmouseout="this.style.background='${isSel?'rgba(232,116,42,.06)':'transparent'}'">
+      <div style="width:28px;height:28px;border-radius:8px;background:${a.color||'#e8742a'};
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                  ${isSel?'box-shadow:0 0 0 2px var(--accent),0 0 0 4px var(--accent-light);':''}">
+        <span style="font-size:12px;font-weight:800;color:#fff;">${a.name[0]}</span>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:${isSel?'700':'500'};color:${isSel?'var(--accent)':'var(--text)'};
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.name}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${av}条 · ${fmt(aPlay)}</div>
+      </div>
+      ${abn?`<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(224,74,56,.1);color:var(--red);font-weight:600;flex-shrink:0;">⚠${abn}</span>`:''}
+    </div>`;
+  }).join('');
+
+  // ── 右侧异常预警列表（简版） ──
+  const abnListHtml = _allAbnVids.length ? _allAbnVids.slice(0,4).map(v=>{
+    const acc = S.accounts.find(a=>a.id===v.accId);
+    return `<div onclick="closeAbnModal&&closeAbnModal();hideOverviewPane();selAcc('${v.accId}')"
+      style="padding:7px 9px 7px 11px;border-radius:0 8px 8px 0;margin-bottom:5px;
+             border-left:2.5px solid ${v.violation?'var(--red)':'var(--gold)'};
+             background:${v.violation?'rgba(224,74,56,.05)':'rgba(196,144,32,.05)'};
+             cursor:pointer;transition:opacity .12s;"
+      onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+      <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">${v.title||'无标题'}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${acc?.name||''} · ${v.violation?'违规':'推广'}</div>
+    </div>`;
+  }).join('') :
+  `<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">✓ 暂无异常</div>`;
+
+  // ── 拼装整体布局：非对称三栏 ──
   pane.innerHTML = `
   <div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);overflow:hidden;">
 
-    <!-- 顶部 tabs + 账号图标条 -->
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;">
-      <span style="font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;margin-right:4px;">数据总览</span>
-      <div style="display:flex;gap:5px;flex-wrap:nowrap;">${tabsHtml}</div>
-      <div style="width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 4px;"></div>
-      <!-- 账号图标条 -->
-      <div style="display:flex;gap:7px;align-items:center;flex-wrap:nowrap;overflow-x:auto;padding:2px 0;">
-        ${accIconBar || '<span style="font-size:12px;color:var(--text3);">暂无账号</span>'}
-      </div>
+    <!-- 顶部：标题 + 文件夹tabs（干净，无图标条） -->
+    <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
+      <span style="font-size:14px;font-weight:800;color:var(--text);margin-right:4px;">数据总览</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${tabsHtml}</div>
     </div>
 
-    <!-- 主体滚动区 -->
-    <div style="flex:1;overflow-y:auto;padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px;">
+    <!-- 主体：左列 + 中区 + 右列 -->
+    <div style="flex:1;overflow:hidden;display:flex;gap:0;">
 
-      <!-- 汇总卡：5个（多了异常预警徽章） -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
-        ${[
-          { label:'总视频',  val:fmt(totalVid),   sub:allAccs.length+'个账号', color:'#e8742a',
-            icon:'M15 10l4.553-2.069A1 1 0 0121 8.82V15.18a1 1 0 01-1.447.89L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z' },
-          { label:'总播放',  val:fmt(totalPlay),  sub:'所有视频', color:'#7050a8',
-            icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-          { label:'总点赞',  val:fmt(totalLikes), sub:'累计互动', color:'#e04a38',
-            icon:'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-          { label:'到诊人数', val:fmt(totalVisit), sub:'历史累计', color:'#2a8ca0', editable:true,
-            icon:'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9' },
-          { label:'异常预警', val:totalAbn, sub:totalAbn?`${violVids.length}违规 · ${promoVids.length}推广`:'全部正常',
-            color:totalAbn?'#e04a38':'#2e8c54', clickFn:'openAbnModal()',
-            icon:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
-        ].map(c=>`
-          <div onclick="${c.clickFn||''}" style="background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:12px 14px;min-width:0;
-               cursor:${c.clickFn||c.editable?'pointer':'default'};transition:box-shadow .15s,transform .15s;position:relative;overflow:hidden;"
-            onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.07)';this.style.transform='translateY(-1px)'"
-            onmouseout="this.style.boxShadow='';this.style.transform=''">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:500;color:var(--text3);">${c.label}</span>
-              <div style="width:24px;height:24px;border-radius:7px;background:${c.color}18;display:flex;align-items:center;justify-content:center;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${c.icon}"/></svg>
-              </div>
-            </div>
-            <div style="font-size:26px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:3px;">${c.val}</div>
-            <div style="font-size:10px;color:var(--text3);">${c.sub}</div>
-            ${c.editable?`<div style="position:absolute;top:8px;right:8px;opacity:0;transition:opacity .15s;" class="edit-visit-hint">
-              <button onclick="event.stopPropagation();openVisitQuickEdit()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;font-family:var(--font);">录入</button>
-            </div>`:''}
-          </div>`).join('')}
+      <!-- 左列：账号列表 210px 固定 -->
+      <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
+        <div style="padding:9px 12px 7px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0;">
+          项目账号 · ${allAccs.length}
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          ${accListHtml || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3);">暂无账号</div>'}
+        </div>
       </div>
 
-      <!-- 中间区：选中账号详情 + 排行榜 -->
-      <div style="display:flex;gap:12px;align-items:flex-start;">
+      <!-- 中区：汇总卡 + 选中账号详情 -->
+      <div style="flex:1;min-width:0;overflow-y:auto;padding:14px 14px 20px;display:flex;flex-direction:column;gap:12px;">
 
-        <!-- 选中账号详情 -->
-        <div style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          ${selAcc ? `
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-            <div style="width:34px;height:34px;border-radius:9px;background:${selColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <span style="font-size:15px;font-weight:800;color:#fff;">${selAcc.name[0]}</span>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${selAcc.name}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:1px;">${selVids.length}条 · ${selVisit}次到诊 · ${selShare?fmt(selShare)+'转发':''}</div>
-            </div>
-            <button onclick="hideOverviewPane();selAcc('${selAcc.id}')"
-              style="padding:4px 11px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0;"
-              onmouseover="this.style.background='var(--accent)';this.style.color='#fff'"
-              onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">查看 →</button>
-          </div>
-          <!-- 指标横排 -->
-          <div style="display:flex;gap:8px;">
-            ${metrics}
-          </div>
-          ` : `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px;">点击顶部账号头像查看详情</div>`}
+        <!-- 汇总卡4个 -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+          ${[
+            { label:'总视频数', val:fmt(totalVid),   sub:allAccs.length+'个账号', color:'#e8742a',
+              icon:'M15 10l4.553-2.069A1 1 0 0121 8.82V15.18a1 1 0 01-1.447.89L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z' },
+            { label:'总播放量', val:fmt(totalPlay),  sub:'所有视频', color:'#7050a8',
+              icon:'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { label:'总点赞数', val:fmt(totalLikes), sub:'累计互动', color:'#e04a38',
+              icon:'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
+            { label:'到诊人数', val:fmt(totalVisit), sub:'历史累计', color:'#2a8ca0', editable:true,
+              icon:'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5m4 0H9' },
+          ].map(c=>`
+            <div style="background:var(--s1);border:1px solid var(--border);border-top:3px solid ${c.color};
+                 border-radius:0 0 12px 12px;padding:13px 16px;min-width:0;
+                 cursor:${c.editable?'pointer':'default'};position:relative;
+                 transition:box-shadow .15s,transform .15s;"
+              onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.boxShadow='';this.style.transform=''">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <span style="font-size:11px;font-weight:500;color:var(--text3);">${c.label}</span>
+                ${c.editable?`<button onclick="openVisitQuickEdit()" style="font-size:9px;padding:2px 7px;border-radius:4px;background:${c.color}18;color:${c.color};border:none;cursor:pointer;font-family:var(--font);">录入</button>`:''}
+              </div>
+              <div style="font-size:30px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:4px;">${c.val}</div>
+              <div style="font-size:10px;color:var(--text3);">${c.sub}</div>
+            </div>`).join('')}
         </div>
 
-        <!-- 排行榜（紧凑版） -->
-        <div style="width:240px;flex-shrink:0;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <!-- 选中账号详情大卡 -->
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;flex:1;">
+          ${selAcc ? `
+          <!-- 账号头部 -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+            <div style="width:42px;height:42px;border-radius:12px;background:${selColor};
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:18px;font-weight:800;color:#fff;">${selAcc.name[0]}</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:16px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${selAcc.name}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px;">${selVids.length} 条视频 · ${selVisit} 次到诊${selShare?' · '+fmt(selShare)+' 次转发':''}</div>
+            </div>
+            <button onclick="hideOverviewPane();selAcc('${selAcc.id}')"
+              style="padding:6px 14px;border-radius:20px;border:1.5px solid var(--accent);
+                     background:transparent;color:var(--accent);font-size:12px;font-weight:700;
+                     cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0;"
+              onmouseover="this.style.background='var(--accent)';this.style.color='#fff'"
+              onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">查看视频 →</button>
+          </div>
+          <!-- 指标2×2网格 -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+            ${metrics}
+          </div>
+          ` : `<div style="display:flex;align-items:center;justify-content:center;height:140px;color:var(--text3);font-size:13px;">← 从左侧选择账号</div>`}
+        </div>
+
+      </div>
+
+      <!-- 右列：排行 + 异常预警 -->
+      <div style="width:210px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- 点赞排行 -->
+        <div style="flex:1.4;min-height:0;overflow-y:auto;padding:12px;border-bottom:1px solid var(--border);">
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
             <span>点赞排行</span>
             <span style="font-size:10px;color:var(--text3);font-weight:400;">${cur.folder}</span>
           </div>
           ${rankBars || '<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">暂无数据</div>'}
         </div>
-      </div>
 
+        <!-- 异常预警 -->
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+            <span>异常预警</span>
+            ${totalAbn
+              ? `<span onclick="openAbnModal()" style="font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(224,74,56,.1);color:var(--red);font-weight:600;cursor:pointer;">${totalAbn}条</span>`
+              : `<span style="font-size:9px;color:var(--green);">✓ 正常</span>`}
+          </div>
+          ${abnListHtml}
+          ${_allAbnVids.length>4?`<div onclick="openAbnModal()" style="text-align:center;font-size:10px;color:var(--accent);padding-top:4px;cursor:pointer;">查看全部 ${_allAbnVids.length} 条 →</div>`:''}
+        </div>
+
+      </div>
     </div>
   </div>`;
 
