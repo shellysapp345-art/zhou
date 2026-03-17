@@ -74,81 +74,217 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16
 
 .wrap{display:flex;min-height:100vh;}
 
-/* ── SIDEBAR ── */
+/* ══════════════════════════════════════════
+   ICON SIDEBAR — Claude 风格极简图标栏
+   ══════════════════════════════════════════ */
 .sidebar{
-  width:224px;flex-shrink:0;
+  width:52px;flex-shrink:0;
   background:var(--sb-bg);
-  border-right:none;
-  display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;overflow:hidden;
-  font-size:14px;
+  border-right:1px solid var(--sb-border);
+  display:flex;flex-direction:column;align-items:center;
+  position:sticky;top:0;height:100vh;overflow:visible;
+  font-size:14px;z-index:100;
+  padding:10px 0;gap:2px;
 }
-.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--sb-border);}
-.sb-logo{display:flex;align-items:center;gap:10px;}
-.sb-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden;}
-.sb-icon img{width:100%;height:100%;object-fit:cover;}
-.sb-name{font-size:0.929em;font-weight:700;color:var(--sb-text);letter-spacing:-.1px;}
-.sb-sub{font-size:0.7em;color:var(--sb-text2);margin-top:2px;}
 
-/* stats bar */
-.sb-stats-bar{padding:10px 16px;border-bottom:1px solid var(--sb-border);display:flex;gap:14px;font-size:0.75em;color:var(--sb-text2);}
-.sb-stats-bar b{color:var(--sb-text);font-weight:600;}
+/* Logo 图标 */
+.sb-logo-icon{
+  width:32px;height:32px;border-radius:9px;
+  background:var(--accent);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-bottom:8px;cursor:pointer;
+}
+.sb-logo-icon img{width:100%;height:100%;object-fit:cover;}
+
+/* 侧边栏分隔线 */
+.sb-sep{width:24px;height:1px;background:var(--sb-border);margin:6px 0;flex-shrink:0;}
+
+/* 图标按钮通用样式 */
+.sb-icon-btn{
+  position:relative;
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;background:transparent;
+  color:var(--sb-text2);transition:background .12s,color .12s;
+  flex-shrink:0;
+}
+.sb-icon-btn:hover{background:var(--sb-hover);color:var(--sb-text);}
+.sb-icon-btn.active{background:var(--sb-active);color:var(--accent);}
+.sb-icon-btn svg{width:17px;height:17px;flex-shrink:0;}
+
+/* Tooltip */
+.sb-icon-btn .sb-tip{
+  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:var(--text);color:var(--bg);
+  font-size:11px;font-weight:500;white-space:nowrap;
+  padding:5px 10px;border-radius:7px;
+  pointer-events:none;opacity:0;transition:opacity .15s;
+  font-family:var(--font);z-index:999;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.sb-icon-btn .sb-tip::before{
+  content:'';position:absolute;right:100%;top:50%;transform:translateY(-50%);
+  border:5px solid transparent;border-right-color:var(--text);
+}
+.sb-icon-btn:hover .sb-tip{opacity:1;}
+
+/* 徽标 (违规数等) */
+.sb-badge{
+  position:absolute;top:3px;right:3px;
+  min-width:14px;height:14px;
+  background:var(--red);color:#fff;
+  font-size:8px;font-weight:700;
+  border-radius:7px;display:flex;align-items:center;justify-content:center;
+  padding:0 3px;line-height:1;
+  border:1.5px solid var(--sb-bg);
+}
+
+/* 底部用户头像区 */
+.sb-foot-icon{
+  margin-top:auto;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+  cursor:pointer;flex-shrink:0;position:relative;
+}
+.sb-foot-icon .sb-tip{
+  position:absolute;left:calc(100% + 10px);bottom:0;top:auto;transform:none;
+}
+.sb-foot-icon:hover .sb-tip{opacity:1;}
+
+/* 隐藏旧侧边栏元素 */
+.sb-stats-bar,.sb-lbl,.acc-list,.sb-add,.sb-exp,.sb-live,
+.sb-name,.sb-sub,.aci-info,.aci-badge,.aci-actions{display:none!important;}
 .sb-stats,.sbs,.sbs-n,.sbs-v{display:none;}
 .c-red{color:#f07060;}.c-cyan{color:#60c0d0;}.c-gold{color:#e0b040;}.c-green{color:#50c080;}
-
-.sb-lbl{padding:16px 16px 6px;font-size:0.714em;color:var(--sb-text3);font-weight:600;letter-spacing:.6px;text-transform:uppercase;}
-.acc-list{padding:0 8px;flex:1;overflow-y:auto;}
-.acc-list::-webkit-scrollbar{width:3px;}
-.acc-list::-webkit-scrollbar-thumb{background:var(--sb-text3);border-radius:2px;}
-.aci{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 8px;border-radius:8px;
-  cursor:pointer;transition:background .12s;
-  position:relative;margin-bottom:1px;
-}
-.aci:hover{background:var(--sb-hover);}
-.aci.on{background:var(--sb-active);}
-.aci.on::before{
-  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
-  width:3px;height:16px;background:var(--accent);border-radius:0 3px 3px 0;
-}
-.aci-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7em;font-weight:700;flex-shrink:0;}
-.aci-info{flex:1;min-width:0;}
-.aci-name{font-size:0.75em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--sb-text);}
-.aci-meta{font-size:0.65em;color:var(--sb-text2);}
-.aci-badge{font-size:0.643em;background:rgba(232,116,42,.2);color:var(--accent2);padding:1px 5px;border-radius:5px;flex-shrink:0;}
-.aci-actions{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .12s;}
-.aci:hover .aci-actions{opacity:1;}
-.aci-dm,.aci-del{
-  width:20px;height:20px;border-radius:5px;border:none;background:transparent;
-  color:var(--sb-text2);font-size:0.75em;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:all .12s;text-decoration:none;
-}
-.aci-dm:hover{color:#60c0d0;background:var(--sb-hover);}
-.aci-del:hover{color:#f07060;background:rgba(240,112,96,.1);}
-
-.sb-add{
-  margin:2px 8px;display:flex;align-items:center;gap:7px;
-  padding:7px 8px;border-radius:8px;border:none;
-  color:var(--sb-text2);font-size:0.8em;cursor:pointer;
-  transition:all .12s;background:transparent;
-  width:calc(100% - 16px);font-family:var(--font);
-}
-.sb-add:hover{background:var(--sb-hover);color:var(--sb-text);}
-
-.sb-foot{padding:10px 12px;border-top:1px solid var(--sb-border);flex-shrink:0;}
-.sb-exp{
-  width:100%;background:transparent;border:1px solid var(--sb-border);
-  border-radius:8px;padding:7px 10px;color:var(--sb-text2);
-  font-size:0.75em;cursor:pointer;font-family:var(--font);
-  transition:all .12s;margin-bottom:5px;text-align:left;display:flex;
-  align-items:center;gap:6px;
-}
-.sb-exp:hover{background:var(--sb-hover);color:var(--sb-text);}
-.sb-live{display:flex;align-items:center;gap:6px;font-size:0.714em;color:var(--sb-text3);margin-top:6px;}
-.sb-live::before{content:'';width:5px;height:5px;background:#50c080;border-radius:50%;animation:blink 2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ══════════════════════════════════════════
+   TOOLTIP 通用（顶栏图标按钮）
+   ══════════════════════════════════════════ */
+.tb-icon-wrap{position:relative;display:inline-flex;}
+.tb-tip{
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);
+  font-size:11px;font-weight:500;white-space:nowrap;
+  padding:4px 9px;border-radius:6px;
+  pointer-events:none;opacity:0;transition:opacity .15s;
+  font-family:var(--font);z-index:999;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.tb-tip::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--text);
+}
+.tb-icon-wrap:hover .tb-tip{opacity:1;}
+
+/* ══════════════════════════════════════════
+   主题自定义弹窗
+   ══════════════════════════════════════════ */
+#themeModal{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#themeModal.open{display:flex;}
+#themeBox{background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(94vw,560px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+.theme-swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0;}
+.theme-swatch.on{border-color:var(--text);transform:scale(1.1);}
+.theme-preset{padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;background:var(--s1);}
+.theme-preset:hover{border-color:var(--accent);background:var(--s2);}
+.theme-preset.on{border-color:var(--accent);background:var(--accent-light);}
+
+/* ══════════════════════════════════════════
+   账号详情弹窗（图表模式）
+   ══════════════════════════════════════════ */
+#accDetailModal{position:fixed;inset:0;z-index:9200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#accDetailModal.open{display:flex;}
+#accDetailBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(95vw,780px);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+
+/* ══════════════════════════════════════════
+   批量操作弹窗
+   ══════════════════════════════════════════ */
+#batchModal{position:fixed;inset:0;z-index:9300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#batchModal.open{display:flex;}
+#batchBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(94vw,520px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+
+/* ══════════════════════════════════════════
+   视频卡片多选模式
+   ══════════════════════════════════════════ */
+.vcard.selected{
+  outline:2px solid var(--accent);
+  background:var(--accent-light)!important;
+}
+.vcard.select-mode .cthumb::after{
+  content:'';position:absolute;inset:0;background:rgba(232,116,42,.08);pointer-events:none;
+}
+.card-checkbox{
+  position:absolute;top:8px;right:8px;z-index:5;
+  width:20px;height:20px;border-radius:6px;
+  background:rgba(255,255,255,.9);border:2px solid rgba(255,255,255,.8);
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.select-mode-active .vcard .card-checkbox{display:flex;}
+.vcard.selected .card-checkbox{background:var(--accent);border-color:var(--accent);}
+
+/* 多选工具栏 */
+#selectToolbar{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);
+  border-radius:14px;padding:10px 16px;
+  display:none;align-items:center;gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:500;
+  font-size:13px;font-weight:500;
+  animation:mIn .15s ease;
+}
+#selectToolbar.show{display:flex;}
+#selectToolbar button{
+  background:rgba(255,255,255,.15);border:none;border-radius:8px;
+  padding:6px 12px;color:var(--bg);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:var(--font);transition:background .12s;
+}
+#selectToolbar button:hover{background:rgba(255,255,255,.25);}
+#selectToolbar button.danger{color:#ffaaaa;}
+#selectToolbar button.danger:hover{background:rgba(255,80,80,.2);}
+
+/* ══════════════════════════════════════════
+   快捷编辑弹窗（单击视频卡片）
+   ══════════════════════════════════════════ */
+#quickEditModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);}
+#quickEditModal.open{display:flex;}
+#quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+
+/* ══════════════════════════════════════════
+   总览卡片右键菜单
+   ══════════════════════════════════════════ */
+#ovCardCtxMenu{
+  position:fixed;z-index:9999;
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:10px;padding:4px;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);
+  min-width:160px;display:none;
+  animation:ctxIn .12s ease;
+}
+#ovCardCtxMenu.show{display:block;}
+
+/* ══════════════════════════════════════════
+   顶栏精简
+   ══════════════════════════════════════════ */
+.topbar-compact{
+  background:var(--s1);border-bottom:1px solid var(--border);
+  padding:8px 16px;display:flex;align-items:center;gap:8px;
+  position:sticky;top:0;z-index:50;
+  box-shadow:0 1px 0 var(--border);
+}
+/* 顶栏图标按钮 */
+.tb-ibtn{
+  width:30px;height:30px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;flex-shrink:0;
+}
+.tb-ibtn:hover{background:var(--s2);color:var(--text);}
+.tb-ibtn.accent{color:var(--accent);border-color:rgba(232,116,42,.3);}
+.tb-ibtn svg{width:14px;height:14px;}
 
 /* ── MAIN ── */
 .main{flex:1;min-width:0;display:flex;flex-direction:column;}
@@ -666,7 +802,7 @@ body.dark-mode {
 <div class="wrap" id="mainApp" style="display:none;">
 
 <style>
-  .wrap { display:flex; flex-direction:column; min-height:100vh; }
+  .wrap { display:flex; flex-direction:row; min-height:100vh; }
   #settingsModal {
     display:none;position:fixed;inset:0;z-index:9000;
     background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
@@ -703,7 +839,7 @@ body.dark-mode {
   .ndm-header { padding:10px 16px 6px; font-size:12px; font-weight:700; color:var(--text3); letter-spacing:.6px; text-transform:uppercase; }
 </style>
 
-<!-- 隐藏左侧栏容器，保留供renderSidebar写入DOM -->
+<!-- 隐藏旧侧边栏兼容数据节点 -->
 <div id="accColumn" style="display:none;">
   <div style="display:none;" id="sb-total-wrap"><b id="sb-total">0</b></div>
   <div style="display:none;" id="sb-viol-wrap"><b id="sb-viol">0</b></div>
@@ -712,117 +848,165 @@ body.dark-mode {
   <div id="accList" style="display:none;"></div>
 </div>
 
-<!-- 主内容全宽 -->
+<!-- ══ CLAUDE 风格图标侧边栏 ══ -->
+<nav class="sidebar" id="iconSidebar">
+
+  <!-- Logo -->
+  <div class="sb-logo-icon" onclick="showOverviewPane()" title="数据总览">
+    <img src="data:image/png;base64,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" alt="logo" onerror="this.style.display='none';this.parentElement.style.background='var(--accent)'"/>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <!-- 数据总览 -->
+  <button class="sb-icon-btn" id="sb-btn-overview" onclick="showOverviewPane()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span class="sb-tip">数据总览</span>
+  </button>
+
+  <!-- 文件夹 -->
+  <button class="sb-icon-btn" id="sb-btn-folder" onclick="toggleNavDropdown('folderMenu');positionSbDropdown('folderMenu',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="sb-tip">文件夹</span>
+  </button>
+
+  <!-- 账号 -->
+  <button class="sb-icon-btn" id="sb-btn-acc" onclick="toggleNavDropdown('accMenu');positionSbDropdown('accMenu',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <span class="sb-tip">项目账号</span>
+  </button>
+
+  <div class="sb-sep"></div>
+
+  <!-- 图表 -->
+  <button class="sb-icon-btn" id="sb-btn-chart" onclick="allCtxChart('line')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="sb-tip">数据图表</span>
+  </button>
+
+  <!-- 导出 -->
+  <button class="sb-icon-btn" onclick="exportCSV()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span class="sb-tip">导出 CSV</span>
+  </button>
+
+  <!-- 主题 -->
+  <button class="sb-icon-btn" onclick="openThemeModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+    <span class="sb-tip">主题配色</span>
+  </button>
+
+  <div class="sb-sep"></div>
+
+  <!-- 手册 -->
+  <button class="sb-icon-btn" onclick="openManual()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span class="sb-tip">使用手册</span>
+  </button>
+
+  <!-- 深色模式 -->
+  <button class="sb-icon-btn" id="btnDark" onclick="toggleDark()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <span class="sb-tip">深色 / 浅色</span>
+  </button>
+
+  <!-- 设置 -->
+  <button class="sb-icon-btn accent" onclick="openSettingsModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="sb-tip">设置</span>
+  </button>
+
+  <!-- 用户管理（管理员） -->
+  <button class="sb-icon-btn" id="btnUserMgmt" style="display:none;" onclick="openUserMgmt()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="sb-tip">用户管理</span>
+  </button>
+
+  <!-- 违规数徽标占位（渲染时更新） -->
+  <div style="display:none;"><b id="sb-total">0</b><b id="sb-viol">0</b><b id="sb-likes">0</b></div>
+
+  <!-- 底部：用户头像 -->
+  <div class="sb-foot-icon" id="sbUserAvatar" onclick="doLogout()" style="margin-top:auto;">
+    <span id="sbUserInitial">管</span>
+    <div class="sb-tip" style="bottom:0;top:auto;transform:none;left:calc(100% + 10px);">退出登录</div>
+  </div>
+
+</nav>
+
+<!-- 侧边栏弹出下拉菜单（浮层） -->
+<div class="nav-dropdown-menu" id="folderMenu" style="position:fixed;z-index:600;">
+  <div class="ndm-header">文件夹 / 分组</div>
+  <div id="folderMenuItems"></div>
+</div>
+<div class="nav-dropdown-menu" id="accMenu" style="position:fixed;z-index:600;">
+  <div class="ndm-header">项目账号</div>
+  <div id="accMenuItems"></div>
+</div>
+
+<!-- 主内容 -->
 <div class="main" style="flex:1;min-width:0;">
-  <!-- ══ 新顶栏：全宽，含logo + 统计 + 下拉导航 + 工具 ══ -->
+  <!-- ══ 精简顶栏 ══ -->
   <div class="topbar" style="padding:8px 16px;gap:8px;flex-wrap:nowrap;">
 
-    <!-- Logo -->
-    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <div style="width:38px;height:38px;border-radius:10px;overflow:hidden;background:var(--sb-bg);flex-shrink:0;">
-        <img src="data:image/jpeg;base64,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J5XGeMjuO4XztVSO2/fPPh1K281WN4/VP5qmx26Z3jJTMcfqFxT4zjlO8OgsNsicO9tKwH+idOezVXiOnmbZVWspbFjNzrHvI+MQODBv3lx6D81dThl4aafA6ynynLZIa2+sHNBBH1ipie/f+J3mrJRQxQt5YomRtHc1oAX6brrjkIiLjoiIgIiICIiAiIgIiICIiAiIgIiIPieGKeJ0U0bJI3DZzXDcEeYUV5tw9aU5XJJNWY1DR1D+pmonexdv47Dp9FK6IKtXTgtweeQuoMiu9I0no17WSbf0X3YuC7BaWYPut/u1ewH7jA2IH59VaJEGHaX6aYjpvbJaDFbb7q2dwdNI93PJIR2buP8ARYNrJw4YPqTf5MgrJay3XSVoE01M4bS7DYFzT37DbdTUiCINFuH7CtL7gbrbvea+6FpaKqpI3YD28oHQKUrxbLfebbNbbpRw1lHO3llhlYHNcPQruogr5eOEbSu4XV9bG26UcbzuaeCccg9NwSF0uJrQe45LppYLFgezWWAFkVFLLt7VhAG/Mf4unf4qyCINY9Hw2aw1NX7v/olPEd9i+SRrW/nurO6IcL1BZ8Eudo1DMVxluckcpgp5CBTFm+xDv5up7FZtEGP4Dh+P4PjsVhxugbR0URJ5Qdy5x7SSe0qu3GBoRm2oWU0+SYvPFWNjpxC6ilmDCwjvbv06q1KINXl04fNYLfIWS4VcJT4wgSD827rNdEuHbVh+c2e8VVsnx+lo6uOeSpneGPDWuBIDe0kgbLYciCqnFdw85ZqPqHSZPjVRRmOSmjpqiOeTkMXKTs4eI2P0U7aKYDRabae2/GKRzZJYW89TMBt7WU/ed6dw8gs1RAREQEREBERAREQEREBERATZEQNk2REBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREH//2Q==" style="width:100%;height:100%;object-fit:cover;"/>
-      </div>
-      <div style="line-height:1.3;">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">抖音看板</div>
-        <div style="font-size:11px;color:var(--text3);">管理版</div>
-      </div>
-    </div>
-
-    <!-- 统计数 -->
-    <div style="display:flex;align-items:center;gap:10px;padding:0 10px;border-left:1px solid var(--border);border-right:1px solid var(--border);flex-shrink:0;">
-      <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="16" rx="2"/><path d="m22 8-6 4 6 4V8z"/></svg>
-        <b id="sb-total" style="color:var(--text);font-size:15px;">0</b>
-      </span>
-      <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <b id="sb-viol" style="color:var(--gold);font-size:15px;">0</b>
-      </span>
-      <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        <b id="sb-likes" style="color:var(--cyan);font-size:15px;">0</b>
-      </span>
-    </div>
-
-    <!-- 文件夹下拉 -->
-    <div class="nav-dropdown" id="folderDropdown" style="flex-shrink:0;">
-      <button onclick="toggleNavDropdown('folderMenu')"
-        style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:10px;background:var(--s1);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;"
-        onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span id="folderDropdownLabel">文件夹</span>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="nav-dropdown-menu" id="folderMenu">
-        <div class="ndm-header">文件夹 / 分组</div>
-        <div id="folderMenuItems"></div>
-      </div>
-    </div>
-
-    <!-- 账号下拉 -->
-    <div class="nav-dropdown" id="accDropdown" style="flex-shrink:0;">
-      <button onclick="toggleNavDropdown('accMenu')"
-        style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:10px;background:var(--s1);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;"
-        onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        <span id="accDropdownLabel">账号</span>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="nav-dropdown-menu" id="accMenu">
-        <div class="ndm-header">项目账号</div>
-        <div id="accMenuItems"></div>
-      </div>
+    <!-- 页面标题 -->
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <span class="tb-title" id="pageTitle">数据总览</span>
     </div>
 
     <!-- 搜索框 -->
     <input id="globalSearch" type="text" placeholder="搜索标题 / 上传人…" oninput="onGlobalSearch(this.value)"
-      style="flex:1;min-width:120px;max-width:280px;border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;"
-      onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"/>
+      style="flex:1;min-width:100px;max-width:260px;border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
+      onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
 
-    <!-- 刷新 -->
-    <button id="refreshBtn" onclick="doRefresh()" title="刷新数据"
-      style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;"
-      onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-    </button>
+    <div style="flex:1;"></div>
 
-    <!-- 右侧工具组 -->
-    <div class="tb-right" style="flex-shrink:0;">
-      <button class="fchip on" onclick="setFilter('all',this)">全部</button>
-      <button class="fchip" onclick="setFilter('violation',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 违规</button>
-      <button class="fchip" onclick="setFilter('promo',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> 推广</button>
-      <button class="fchip" onclick="setFilter('normal',this)">✓ 正常</button>
+    <!-- 过滤 chips -->
+    <div class="tb-right" style="flex-shrink:0;gap:4px;">
+      <button class="fchip on" id="fc-all" onclick="setFilter('all',this)">全部</button>
+      <div class="tb-icon-wrap">
+        <button class="fchip" id="fc-violation" onclick="setFilter('violation',this)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+        <span class="tb-tip">违规视频</span>
+      </div>
+      <div class="tb-icon-wrap">
+        <button class="fchip" id="fc-promo" onclick="setFilter('promo',this)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        </button>
+        <span class="tb-tip">推广中</span>
+      </div>
+      <div class="tb-icon-wrap">
+        <button class="fchip" id="fc-normal" onclick="setFilter('normal',this)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <span class="tb-tip">正常视频</span>
+      </div>
+
+      <!-- 视图切换 -->
       <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="宫格"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
       <button class="vbtn" id="vb-compact" onclick="setView('compact')" title="缩略"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/><rect x="3" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="17" y="10" width="4" height="4"/><rect x="3" y="17" width="4" height="4"/><rect x="10" y="17" width="4" height="4"/><rect x="17" y="17" width="4" height="4"/></svg></button>
       <button class="vbtn" id="vb-list" onclick="setView('list')" title="列表"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
 
-      <!-- 手册 -->
-      <div class="icon-btn-wrap" style="position:relative;">
-        <button onclick="openManual()" title="使用手册"
-          style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
-          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <!-- 刷新 -->
+      <div class="tb-icon-wrap">
+        <button class="tb-ibtn" id="refreshBtn" onclick="doRefresh()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         </button>
-      </div>
-      <!-- 深色模式 -->
-      <div class="icon-btn-wrap" style="position:relative;">
-        <button id="btnDark" onclick="toggleDark()" title="深色/浅色"
-          style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
-          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
-      </div>
-      <!-- 设置 -->
-      <div class="icon-btn-wrap" style="position:relative;">
-        <button onclick="openSettingsModal()" title="设置"
-          style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;"
-          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
+        <span class="tb-tip">刷新数据</span>
       </div>
 
-      <button class="btn btn-primary" onclick="openAddModal()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加视频
+      <!-- 多选模式 -->
+      <div class="tb-icon-wrap">
+        <button class="tb-ibtn" id="selectModeBtn" onclick="toggleSelectMode()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="3" y="17" width="5" height="5" rx="1"/><line x1="11" y1="5" x2="21" y2="5"/><line x1="11" y1="12" x2="21" y2="12"/><line x1="11" y1="19" x2="21" y2="19"/></svg>
+        </button>
+        <span class="tb-tip">多选批量操作</span>
+      </div>
+
+      <!-- 添加 -->
+      <button class="btn btn-primary" onclick="openAddModal()" style="padding:6px 12px;font-size:12px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        添加
       </button>
     </div>
   </div>
@@ -832,7 +1016,6 @@ body.dark-mode {
   </div>
 </div>
 </div>
-
 <!-- ══ ADD/EDIT MODAL (split panel) ══ -->
 <div class="modal-bg" id="vidModal">
 <div class="modal-split" onclick="event.stopPropagation()">
@@ -1864,12 +2047,13 @@ function renderGrid(){
         <div style="display:flex;flex-direction:column;">${bodyHTML}</div>
       </div>`;
     }
-    return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.05}s;cursor:pointer;">
+    return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.05}s;cursor:pointer;" oncontextmenu="event.preventDefault();showOvCardCtxMenu(event,'${v.accId}')">
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-ov"><div class="play-btn">▶</div></div>
         <div class="ctags">${tags}</div>
         ${v.dur?`<div class="cdur">${v.dur}</div>`:''}
+        <div class="card-checkbox"></div>
       </div>
       ${bodyHTML}
     </div>`;
@@ -2211,13 +2395,16 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   });
 
-  // 视频卡片点击事件委托（管理版）
+  // 视频卡片点击事件委托（管理版）—— 支持多选模式和快捷编辑
   const vgrid = document.getElementById('vgrid');
   if(vgrid){
     vgrid.addEventListener('click', function(e){
       if(e.target.closest('button, a')) return;
       const card = e.target.closest('[data-vid]');
-      if(card) editV(card.getAttribute('data-vid'));
+      if(!card) return;
+      const vid = card.getAttribute('data-vid');
+      if(_selectMode){ toggleVidSelect(vid, e); }
+      else { openQuickEdit(vid); }
     });
   }
 
@@ -3478,6 +3665,9 @@ function showAdminApp(){
   document.getElementById('mainApp').style.display='flex';
   const _bu=document.getElementById('btnUserMgmt');if(_bu)_bu.style.display='block';
   const _su=document.getElementById('settingsUserMgmt');if(_su)_su.style.display='flex';
+  // 更新侧边栏头像
+  const sbAvatar = document.getElementById('sbUserInitial');
+  if(sbAvatar && currentUser) sbAvatar.textContent = (currentUser.username||'管')[0].toUpperCase();
   // 先把 overviewPane 设为可见，这样 load() 内部的 render() 会走 renderOverviewPane() 而不是空状态
   const pane=document.getElementById('overviewPane');
   if(pane) pane.style.display='flex';
@@ -4239,6 +4429,427 @@ function renderOverviewPane(){
   window.ovSelectFolder = function(idx){ _ovFolderIdx=idx; window._ovSelAccId=null; renderOverviewPane(); };
 }
 
+
+// ══════════════════════════════════════════
+// 侧边栏图标 → 下拉菜单定位
+// ══════════════════════════════════════════
+function positionSbDropdown(menuId, btnEl){
+  const menu = document.getElementById(menuId);
+  if(!menu) return;
+  const rect = btnEl.getBoundingClientRect();
+  menu.style.top = rect.top + 'px';
+  menu.style.left = (rect.right + 8) + 'px';
+}
+
+// ══════════════════════════════════════════
+// 主题/配色弹窗
+// ══════════════════════════════════════════
+const THEME_PRESETS = [
+  { name:'暖橙（默认）', accent:'#e8742a', bg:'#f2f0ec', sb:'#e8e4dc' },
+  { name:'深海蓝',       accent:'#2a7cd4', bg:'#f0f4f8', sb:'#dce8f4' },
+  { name:'薄荷绿',       accent:'#2a9c6a', bg:'#f0f5f2', sb:'#dceee6' },
+  { name:'玫瑰红',       accent:'#d44a6a', bg:'#f5f0f2', sb:'#f0dce4' },
+  { name:'紫罗兰',       accent:'#7050a8', bg:'#f2f0f8', sb:'#e4daf4' },
+  { name:'极夜深色',     accent:'#e8742a', bg:'#141210', sb:'#1a1814', dark:true },
+];
+const ACCENT_COLORS = ['#e8742a','#2a7cd4','#2a9c6a','#d44a6a','#7050a8','#c49020','#2a8ca0','#e04a38'];
+let _currentTheme = JSON.parse(localStorage.getItem('ov_theme')||'{}');
+
+function openThemeModal(){
+  renderThemePresets();
+  renderAccentPicker();
+  document.getElementById('themeModal').classList.add('open');
+}
+function closeThemeModal(){ document.getElementById('themeModal').classList.remove('open'); }
+
+function renderThemePresets(){
+  const el = document.getElementById('themePresetList');
+  if(!el) return;
+  el.innerHTML = THEME_PRESETS.map((p,i)=>`
+    <button onclick="applyThemePreset(${i})" class="theme-preset" style="padding:10px 8px;font-size:11px;text-align:left;">
+      <div style="width:24px;height:24px;border-radius:6px;background:${p.accent};margin-bottom:6px;"></div>
+      <div style="font-weight:600;color:var(--text);">${p.name}</div>
+    </button>`).join('');
+}
+function renderAccentPicker(){
+  const el = document.getElementById('themeAccentPicker');
+  if(!el) return;
+  const cur = _currentTheme.accent || '#e8742a';
+  el.innerHTML = ACCENT_COLORS.map(c=>`
+    <div class="theme-swatch ${c===cur?'on':''}" style="background:${c};" onclick="applyAccent('${c}')"></div>`).join('');
+}
+function applyThemePreset(idx){
+  const p = THEME_PRESETS[idx];
+  document.documentElement.style.setProperty('--accent', p.accent);
+  document.documentElement.style.setProperty('--bg', p.bg);
+  document.documentElement.style.setProperty('--sb-bg', p.sb);
+  if(p.dark) document.body.classList.add('dark-mode');
+  else document.body.classList.remove('dark-mode');
+  _currentTheme = {preset:idx, accent:p.accent};
+  localStorage.setItem('ov_theme', JSON.stringify(_currentTheme));
+  renderAccentPicker();
+  toast('✓ 主题已切换');
+}
+function applyAccent(color){
+  document.documentElement.style.setProperty('--accent', color);
+  document.documentElement.style.setProperty('--accent2', color+'cc');
+  _currentTheme.accent = color;
+  localStorage.setItem('ov_theme', JSON.stringify(_currentTheme));
+  renderAccentPicker();
+  toast('✓ 主题色已更新');
+}
+function setRadius(size){
+  const map = {sm:'6px', md:'12px', lg:'20px'};
+  document.documentElement.style.setProperty('--vcard-radius', map[size]||'12px');
+  ['sm','md','lg'].forEach(s=>{
+    const b = document.getElementById('radius-'+s);
+    if(b) b.classList.toggle('on', s===size);
+  });
+  _currentTheme.radius = size;
+  localStorage.setItem('ov_theme', JSON.stringify(_currentTheme));
+}
+function resetTheme(){
+  ['--accent','--accent2','--bg','--sb-bg','--vcard-radius'].forEach(v=>document.documentElement.style.removeProperty(v));
+  document.body.classList.remove('dark-mode');
+  _currentTheme = {};
+  localStorage.removeItem('ov_theme');
+  renderAccentPicker();
+  toast('✓ 已恢复默认主题');
+}
+// 启动时恢复主题
+(function(){
+  const t = JSON.parse(localStorage.getItem('ov_theme')||'{}');
+  if(t.accent) document.documentElement.style.setProperty('--accent', t.accent);
+  if(t.radius){ const m={sm:'6px',md:'12px',lg:'20px'}; document.documentElement.style.setProperty('--vcard-radius', m[t.radius]||'12px'); }
+})();
+
+// ══════════════════════════════════════════
+// 账号详情弹窗
+// ══════════════════════════════════════════
+let _accDetailId = null;
+let _accDetailChart = null;
+
+function openAccDetail(accId){
+  _accDetailId = accId;
+  const acc = S.accounts.find(a=>a.id===accId);
+  if(!acc) return;
+  const vids = S.videos.filter(v=>v.accId===accId);
+  const totalPlay  = vids.reduce((s,v)=>s+(v.play||0),0);
+  const totalLikes = vids.reduce((s,v)=>s+v.likes,0);
+  const totalComm  = vids.reduce((s,v)=>s+v.comm,0);
+  const totalColl  = vids.reduce((s,v)=>s+v.coll,0);
+  const visitCount = (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0);
+
+  document.getElementById('accDetailTitle').textContent = acc.name + ' — 数据详情';
+  document.getElementById('accDetailSubtitle').textContent = vids.length + ' 条视频 · ' + visitCount + ' 次到诊';
+
+  // 摘要卡片
+  const cards = [
+    {label:'视频数', val:vids.length, color:acc.color||'#e8742a'},
+    {label:'总播放', val:fmt(totalPlay), color:'#7050a8'},
+    {label:'总点赞', val:fmt(totalLikes), color:'#e04a38'},
+    {label:'到诊数', val:visitCount, color:'#2a8ca0'},
+  ];
+  document.getElementById('accDetailCards').innerHTML = cards.map(c=>`
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:${c.color};font-family:var(--mono);line-height:1;">${c.val}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">${c.label}</div>
+    </div>`).join('');
+
+  // 图表
+  switchAccDetailTab('chart');
+  document.getElementById('accDetailModal').classList.add('open');
+  setTimeout(()=>{
+    const ctx = document.getElementById('accDetailChart');
+    if(!ctx) return;
+    if(_accDetailChart){ _accDetailChart.destroy(); _accDetailChart=null; }
+    const sorted = [...vids].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).slice(-20);
+    _accDetailChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: sorted.map(v=>v.date||''),
+        datasets:[
+          {label:'播放',data:sorted.map(v=>v.play||0),backgroundColor:(acc.color||'#e8742a')+'55',borderColor:acc.color||'#e8742a',borderWidth:1.5},
+          {label:'点赞',data:sorted.map(v=>v.likes||0),backgroundColor:'#e04a3855',borderColor:'#e04a38',borderWidth:1.5},
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}
+    });
+    // 视频列表
+    document.getElementById('accDetailVideoList').innerHTML = sorted.reverse().map(v=>`
+      <div onclick="editV('${v.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
+        <div style="width:60px;height:40px;background:var(--s3);border-radius:6px;overflow:hidden;flex-shrink:0;">
+          ${v.thumb?`<img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.style.display='none'"/>`:''}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'无标题'}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${v.date||''} · ▶ ${fmt(v.play)} · ❤ ${fmt(v.likes)}</div>
+        </div>
+        <span style="font-size:10px;padding:2px 7px;border-radius:5px;background:${v.violation?'rgba(224,74,56,.1)':v.promo?'rgba(196,144,32,.1)':'rgba(46,140,84,.08)'};color:${v.violation?'var(--red)':v.promo?'var(--gold)':'var(--green)'};">${v.violation?'违规':v.promo?'推广':'正常'}</span>
+      </div>`).join('');
+  }, 80);
+}
+function closeAccDetail(){
+  document.getElementById('accDetailModal').classList.remove('open');
+  if(_accDetailChart){ _accDetailChart.destroy(); _accDetailChart=null; }
+}
+function switchAccDetailTab(tab){
+  document.getElementById('adPanel-chart').style.display = tab==='chart'?'flex':'none';
+  document.getElementById('adPanel-list').style.display  = tab==='list'?'block':'none';
+  const c = document.getElementById('adTab-chart');
+  const l = document.getElementById('adTab-list');
+  if(c){ c.style.background=tab==='chart'?'var(--accent)':'transparent'; c.style.color=tab==='chart'?'#fff':'var(--text2)'; c.style.borderColor=tab==='chart'?'var(--accent)':'var(--border)'; }
+  if(l){ l.style.background=tab==='list'?'var(--accent)':'transparent'; l.style.color=tab==='list'?'#fff':'var(--text2)'; l.style.borderColor=tab==='list'?'var(--accent)':'var(--border)'; }
+}
+
+// ══════════════════════════════════════════
+// 快捷编辑弹窗
+// ══════════════════════════════════════════
+let _qeVidId = null;
+
+function openQuickEdit(vidId){
+  _qeVidId = vidId;
+  const v = S.videos.find(x=>x.id===vidId);
+  if(!v) return;
+  document.getElementById('qeTitle').textContent = '快捷编辑';
+  document.getElementById('qeBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:11px;font-weight:500;color:var(--text2);">标题</label>
+      <textarea id="qe-title" style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;resize:vertical;height:70px;transition:border-color .12s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${v.title||''}</textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${[['播放量','qe-play',v.play],['点赞数','qe-likes',v.likes],['评论数','qe-comm',v.comm],['收藏数','qe-coll',v.coll]].map(([l,id,val])=>`
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;transition:border-color .12s;" onfocusin="this.style.borderColor='var(--accent)'" onfocusout="this.style.borderColor='var(--border)'">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">${l}</div>
+          <input id="${id}" type="number" value="${val||0}" style="background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-weight:600;font-family:var(--mono);width:100%;"/>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:10px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+        <input type="checkbox" id="qe-violation" ${v.violation?'checked':''} style="accent-color:var(--red);"/> ⚠ 违规
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+        <input type="checkbox" id="qe-promo" ${v.promo?'checked':''} style="accent-color:var(--gold);"/> 📢 推广
+      </label>
+    </div>`;
+  document.getElementById('quickEditModal').classList.add('open');
+}
+function closeQuickEdit(){
+  document.getElementById('quickEditModal').classList.remove('open');
+  _qeVidId = null;
+}
+function openFullEdit(){
+  closeQuickEdit();
+  if(_qeVidId) editV(_qeVidId);
+}
+async function saveQuickEdit(){
+  if(!_qeVidId) return;
+  const v = S.videos.find(x=>x.id===_qeVidId);
+  if(!v) return;
+  v.title     = document.getElementById('qe-title').value.trim();
+  v.play      = Number(document.getElementById('qe-play').value)||0;
+  v.likes     = Number(document.getElementById('qe-likes').value)||0;
+  v.comm      = Number(document.getElementById('qe-comm').value)||0;
+  v.coll      = Number(document.getElementById('qe-coll').value)||0;
+  v.violation = document.getElementById('qe-violation').checked;
+  v.promo     = document.getElementById('qe-promo').checked;
+  try{
+    await sbFetch('/rest/v1/videos?id=eq.'+_qeVidId,'PATCH',{
+      title:v.title, play:v.play, likes:v.likes, comm:v.comm, coll:v.coll,
+      violation:v.violation, promo:v.promo
+    });
+  }catch(e){ toast('保存失败','err'); return; }
+  render();
+  closeQuickEdit();
+  toast('✓ 已更新');
+}
+
+// ══════════════════════════════════════════
+// 视频卡片多选模式
+// ══════════════════════════════════════════
+let _selectMode = false;
+let _selectedVids = new Set();
+
+function toggleSelectMode(){
+  _selectMode = !_selectMode;
+  _selectedVids.clear();
+  const grid = document.getElementById('vgrid');
+  const btn  = document.getElementById('selectModeBtn');
+  if(grid) grid.classList.toggle('select-mode-active', _selectMode);
+  if(btn)  btn.classList.toggle('accent', _selectMode);
+  updateSelectToolbar();
+  if(_selectMode) toast('多选模式：点击卡片选择视频');
+  else { document.getElementById('selectToolbar').classList.remove('show'); render(); }
+}
+function exitSelectMode(){ _selectMode=false; _selectedVids.clear(); toggleSelectMode(); }
+function toggleVidSelect(vidId, e){
+  e && e.stopPropagation();
+  if(_selectedVids.has(vidId)) _selectedVids.delete(vidId);
+  else _selectedVids.add(vidId);
+  // 更新卡片样式
+  document.querySelectorAll('[data-vid]').forEach(c=>{
+    c.classList.toggle('selected', _selectedVids.has(c.dataset.vid));
+    const cb = c.querySelector('.card-checkbox');
+    if(cb) cb.innerHTML = _selectedVids.has(c.dataset.vid) ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' : '';
+  });
+  updateSelectToolbar();
+}
+function selectAll(){
+  const cards = document.querySelectorAll('#vgrid [data-vid]');
+  cards.forEach(c=>_selectedVids.add(c.dataset.vid));
+  cards.forEach(c=>{ c.classList.add('selected'); const cb=c.querySelector('.card-checkbox'); if(cb) cb.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'; });
+  updateSelectToolbar();
+}
+function updateSelectToolbar(){
+  const tb = document.getElementById('selectToolbar');
+  const cnt = document.getElementById('selectCount');
+  if(!tb) return;
+  tb.classList.toggle('show', _selectMode && _selectedVids.size > 0);
+  if(cnt) cnt.textContent = '已选 '+_selectedVids.size+' 条';
+}
+
+// ══════════════════════════════════════════
+// 批量操作弹窗
+// ══════════════════════════════════════════
+function openBatchModal(){
+  const sub = document.getElementById('batchSubtitle');
+  const sel = document.getElementById('batchMoveTarget');
+  if(sub) sub.textContent = '已选 '+_selectedVids.size+' 条视频';
+  if(sel){
+    sel.innerHTML='<option value="">— 选择目标账号 —</option>'+
+      S.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  }
+  document.getElementById('batchModal').classList.add('open');
+}
+function closeBatchModal(){ document.getElementById('batchModal').classList.remove('open'); }
+async function batchSetStatus(status){
+  const ids = [..._selectedVids];
+  if(!ids.length){ toast('请先选择视频','err'); return; }
+  ids.forEach(id=>{
+    const v = S.videos.find(x=>x.id===id);
+    if(v){ v.violation=status==='violation'; v.promo=status==='promo'; }
+  });
+  try{
+    await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'PATCH',{violation:status==='violation',promo:status==='promo'})));
+    render(); closeBatchModal(); exitSelectMode();
+    toast('✓ 已批量更新 '+ids.length+' 条');
+  }catch(e){ toast('批量更新失败','err'); }
+}
+async function batchMove(){
+  const ids = [..._selectedVids];
+  const accId = document.getElementById('batchMoveTarget').value;
+  if(!ids.length){ toast('请先选择视频','err'); return; }
+  if(!accId){ toast('请选择目标账号','err'); return; }
+  ids.forEach(id=>{ const v=S.videos.find(x=>x.id===id); if(v) v.accId=accId; });
+  try{
+    await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'PATCH',{acc_id:accId})));
+    render(); closeBatchModal(); exitSelectMode();
+    toast('✓ 已移动 '+ids.length+' 条视频');
+  }catch(e){ toast('移动失败','err'); }
+}
+function batchDelete(){
+  const ids = [..._selectedVids];
+  if(!ids.length){ toast('请先选择视频','err'); return; }
+  showConfirm('批量删除', '确认删除 '+ids.length+' 条视频？删除后不可恢复。', async function(){
+    S.videos = S.videos.filter(v=>!ids.includes(v.id));
+    await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'DELETE')));
+    render(); closeBatchModal(); exitSelectMode();
+    toast('已删除 '+ids.length+' 条');
+  });
+}
+
+// ══════════════════════════════════════════
+// 总览卡片右键菜单
+// ══════════════════════════════════════════
+let _ovCtxAccId = null;
+
+function showOvCardCtxMenu(e, accId){
+  e.preventDefault(); e.stopPropagation();
+  _ovCtxAccId = accId;
+  const menu = document.getElementById('ovCardCtxMenu');
+  menu.classList.add('show');
+  const x = Math.min(e.clientX, window.innerWidth - 180);
+  const y = Math.min(e.clientY, window.innerHeight - 150);
+  menu.style.left = x+'px'; menu.style.top = y+'px';
+  setTimeout(()=>document.addEventListener('click', hideOvCardCtx, {once:true}), 0);
+}
+function hideOvCardCtx(){ document.getElementById('ovCardCtxMenu').classList.remove('show'); }
+function ovCtxChart(){ hideOvCardCtx(); if(_ovCtxAccId) openChartModal(S.accounts.find(a=>a.id===_ovCtxAccId)?.folderId, 'line'); }
+function ovCtxDetail(){ hideOvCardCtx(); if(_ovCtxAccId) openAccDetail(_ovCtxAccId); }
+function ovCtxFilter(){ hideOvCardCtx(); if(_ovCtxAccId){ selAcc(_ovCtxAccId); } }
+function ovCtxCopyData(){
+  hideOvCardCtx();
+  if(!_ovCtxAccId) return;
+  const acc = S.accounts.find(a=>a.id===_ovCtxAccId);
+  if(!acc) return;
+  const vids = S.videos.filter(v=>v.accId===_ovCtxAccId);
+  const totalPlay  = vids.reduce((s,v)=>s+(v.play||0),0);
+  const totalLikes = vids.reduce((s,v)=>s+v.likes,0);
+  const totalComm  = vids.reduce((s,v)=>s+v.comm,0);
+  const totalColl  = vids.reduce((s,v)=>s+v.coll,0);
+  const text = `${acc.name}\n视频数：${vids.length}\n播放量：${fmt(totalPlay)}\n点赞数：${fmt(totalLikes)}\n评论数：${fmt(totalComm)}\n收藏数：${fmt(totalColl)}`;
+  navigator.clipboard?.writeText(text).then(()=>toast('✓ 已复制')).catch(()=>toast('复制失败','err'));
+}
+
+// ══════════════════════════════════════════
+// 修改视频卡片点击行为（支持多选模式）
+// ══════════════════════════════════════════
+const _origVgridClick = document.getElementById('vgrid');
+document.addEventListener('DOMContentLoaded', function(){
+  const vgrid = document.getElementById('vgrid');
+  if(vgrid){
+    // 移除旧的事件监听，重新绑定支持多选
+    vgrid.onclick = function(e){
+      if(e.target.closest('button, a')) return;
+      const card = e.target.closest('[data-vid]');
+      if(!card) return;
+      const vid = card.getAttribute('data-vid');
+      if(_selectMode){ toggleVidSelect(vid, e); }
+      else { openQuickEdit(vid); }
+    };
+    // 右键菜单绑定到视频卡片（已有contextmenu处理，这里补充卡片的）
+  }
+});
+
+// ══════════════════════════════════════════
+// 侧边栏下拉定位辅助：overviewPane上也绑右键到总览卡片
+// ══════════════════════════════════════════
+function positionSbDropdown(menuId, btnEl){
+  const menu = document.getElementById(menuId);
+  if(!menu) return;
+  const rect = btnEl.getBoundingClientRect();
+  menu.style.top  = (rect.top)+'px';
+  menu.style.left = (rect.right+8)+'px';
+}
+
+// 给renderOverviewPane的卡片添加右键菜单支持
+const _origRenderOverviewPane = renderOverviewPane;
+function renderOverviewPane(){
+  _origRenderOverviewPane();
+  // 延迟绑定右键到总览面板内的账号行
+  setTimeout(()=>{
+    document.querySelectorAll('#overviewPane [data-accid]').forEach(el=>{
+      el.addEventListener('contextmenu', e=>showOvCardCtxMenu(e, el.dataset.accid));
+    });
+    // 绑定汇总卡片右键
+    document.querySelectorAll('.ov-summary-card').forEach(el=>{
+      el.addEventListener('contextmenu', e=>{
+        e.preventDefault(); e.stopPropagation();
+        _ovCtxAccId = window._ovSelAccId || null;
+        if(_ovCtxAccId) showOvCardCtxMenu(e, _ovCtxAccId);
+      });
+    });
+  }, 50);
+}
+
+// ══════════════════════════════════════════
+// 侧边栏用户头像更新
+// ══════════════════════════════════════════
+function updateSbUserAvatar(){
+  const el = document.getElementById('sbUserInitial');
+  if(el && currentUser) el.textContent = (currentUser.username||'管')[0].toUpperCase();
+}
+
 checkLogin();
 
 // ── SIDEBAR RESIZER ──
@@ -4650,6 +5261,147 @@ function switchManualTab(section, el){
 <!-- 数据总览弹窗（已迁移为内嵌面板，此div保留兼容） -->
 <div id="overviewModal" style="display:none;"></div>
 
+
+<!-- ══ 主题/配色自定义弹窗 ══ -->
+<div id="themeModal" onclick="if(event.target===this)closeThemeModal()">
+<div id="themeBox" onclick="event.stopPropagation()">
+  <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">主题配色</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">自定义界面主题色与外观</div>
+    </div>
+    <button onclick="closeThemeModal()" style="width:28px;height:28px;border-radius:7px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:18px 22px;display:flex;flex-direction:column;gap:16px;">
+
+    <!-- 预设主题 -->
+    <div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">预设主题</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="themePresetList">
+        <!-- 由JS渲染 -->
+      </div>
+    </div>
+
+    <!-- 主题色自定义 -->
+    <div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">主题色</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="themeAccentPicker">
+        <!-- 由JS渲染 -->
+      </div>
+    </div>
+
+    <!-- 圆角/字体选项 -->
+    <div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">卡片圆角</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="setRadius('sm')" id="radius-sm" class="theme-preset" style="flex:1;text-align:center;font-size:12px;padding:8px;">小</button>
+        <button onclick="setRadius('md')" id="radius-md" class="theme-preset on" style="flex:1;text-align:center;font-size:12px;padding:8px;">中</button>
+        <button onclick="setRadius('lg')" id="radius-lg" class="theme-preset" style="flex:1;text-align:center;font-size:12px;padding:8px;">大</button>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);"></div>
+    <button onclick="resetTheme()" style="width:100%;padding:10px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);transition:background .12s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">恢复默认主题</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ 账号详情弹窗（数据图表） ══ -->
+<div id="accDetailModal" onclick="if(event.target===this)closeAccDetail()">
+<div id="accDetailBox" onclick="event.stopPropagation()">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);" id="accDetailTitle">账号数据详情</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="accDetailSubtitle">视频数据分析</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="switchAccDetailTab('chart')" id="adTab-chart" style="padding:5px 12px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">图表</button>
+      <button onclick="switchAccDetailTab('list')" id="adTab-list" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);">视频列表</button>
+      <button onclick="closeAccDetail()" style="width:28px;height:28px;border-radius:7px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+  </div>
+  <!-- 图表面板 -->
+  <div id="adPanel-chart" style="flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;" id="accDetailCards"></div>
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;">互动数据对比</div>
+      <canvas id="accDetailChart" height="200"></canvas>
+    </div>
+  </div>
+  <!-- 视频列表面板 -->
+  <div id="adPanel-list" style="display:none;flex:1;overflow:auto;padding:16px 20px;">
+    <div id="accDetailVideoList"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ 快捷编辑弹窗（单击卡片） ══ -->
+<div id="quickEditModal" onclick="if(event.target===this)closeQuickEdit()">
+<div id="quickEditBox" onclick="event.stopPropagation()">
+  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:14px;font-weight:700;color:var(--text);" id="qeTitle">快捷编辑</div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="openFullEdit()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--s2);color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font);">完整编辑</button>
+      <button onclick="closeQuickEdit()" style="width:26px;height:26px;border-radius:6px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+  </div>
+  <div style="padding:16px 18px;display:flex;flex-direction:column;gap:11px;" id="qeBody">
+    <!-- 由JS渲染 -->
+  </div>
+  <div style="padding:10px 18px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);">
+    <button onclick="closeQuickEdit()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);">取消</button>
+    <button onclick="saveQuickEdit()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">保存</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ 批量操作弹窗 ══ -->
+<div id="batchModal" onclick="if(event.target===this)closeBatchModal()">
+<div id="batchBox" onclick="event.stopPropagation()">
+  <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);" id="batchTitle">批量操作</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="batchSubtitle">已选 0 条视频</div>
+    </div>
+    <button onclick="closeBatchModal()" style="width:26px;height:26px;border-radius:6px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;">批量修改状态</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="batchSetStatus('normal')" style="flex:1;padding:10px;border-radius:9px;border:1px solid rgba(46,140,84,.3);background:rgba(46,140,84,.06);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;" onmouseover="this.style.background='rgba(46,140,84,.12)'" onmouseout="this.style.background='rgba(46,140,84,.06)'">✓ 标为正常</button>
+      <button onclick="batchSetStatus('violation')" style="flex:1;padding:10px;border-radius:9px;border:1px solid rgba(224,74,56,.3);background:rgba(224,74,56,.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;" onmouseover="this.style.background='rgba(224,74,56,.12)'" onmouseout="this.style.background='rgba(224,74,56,.06)'">⚠ 标为违规</button>
+      <button onclick="batchSetStatus('promo')" style="flex:1;padding:10px;border-radius:9px;border:1px solid rgba(196,144,32,.3);background:rgba(196,144,32,.06);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;" onmouseover="this.style.background='rgba(196,144,32,.12)'" onmouseout="this.style.background='rgba(196,144,32,.06)'">📢 标为推广</button>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:6px;">批量移动</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="batchMoveTarget" style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;">
+        <option value="">— 选择目标账号 —</option>
+      </select>
+      <button onclick="batchMove()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">移动</button>
+    </div>
+    <div style="height:1px;background:var(--border);margin:2px 0;"></div>
+    <button onclick="batchDelete()" style="width:100%;padding:10px;border-radius:9px;border:1px solid rgba(224,74,56,.25);background:rgba(224,74,56,.06);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;" onmouseover="this.style.background='rgba(224,74,56,.12)'" onmouseout="this.style.background='rgba(224,74,56,.06)'">🗑 删除所选视频</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ 总览卡片右键菜单 ══ -->
+<div id="ovCardCtxMenu">
+  <div class="ctx-item" onclick="ovCtxChart()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 查看图表</div>
+  <div class="ctx-item" onclick="ovCtxDetail()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> 账号详情</div>
+  <div class="ctx-item" onclick="ovCtxFilter()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> 筛选该账号</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ovCtxCopyData()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制数据</div>
+</div>
+<div id="ovCtxAccId" style="display:none;"></div>
+
+<!-- 多选工具栏 -->
+<div id="selectToolbar">
+  <span id="selectCount" style="font-size:12px;opacity:.7;">已选 0 条</span>
+  <button onclick="selectAll()">全选</button>
+  <button onclick="openBatchModal()">批量操作</button>
+  <button onclick="exitSelectMode()" style="opacity:.6;">退出</button>
+</div>
 
 <!-- 设置弹窗 -->
 <div id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
