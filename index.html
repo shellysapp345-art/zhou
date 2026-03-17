@@ -83,7 +83,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   border-right:1px solid var(--sb-border);
   display:flex;flex-direction:column;align-items:center;
   position:sticky;top:0;height:100vh;overflow:visible;
-  font-size:14px;z-index:100;
+  font-size:14px;z-index:200;
   padding:10px 0;gap:2px;
 }
 
@@ -968,11 +968,6 @@ canvas{max-width:100%;}
 
   <div class="sb-sep"></div>
 
-  <!-- 图表 -->
-  <button class="sb-icon-btn" id="sb-btn-chart" onclick="allCtxChart('line')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span class="sb-tip">数据图表</span>
-  </button>
 
   <!-- 导出 -->
   <button class="sb-icon-btn" onclick="exportCSV()">
@@ -1003,13 +998,16 @@ canvas{max-width:100%;}
   </button>
 
   <!-- 违规数徽标占位（渲染时更新） -->
-  <div style="display:none;"><b id="sb-total">0</b><b id="sb-viol">0</b><b id="sb-likes">0</b></div>
+  <div style="display:none;"><b id="sb-total">0</b><b id="sb-viol">0</b><b id="sb-likes">0</b><span id="sbUserInitial"></span></div>
 
-  <!-- 底部：用户头像 -->
-  <div class="sb-foot-icon" id="sbUserAvatar" onclick="doLogout()" style="margin-top:auto;">
-    <span id="sbUserInitial">管</span>
-    <div class="sb-tip" style="bottom:0;top:auto;transform:none;left:calc(100% + 10px);">退出登录</div>
-  </div>
+  <!-- 底部：退出登录按钮 -->
+  <button class="sb-icon-btn" id="sbUserAvatar" onclick="doLogout()" title="退出登录"
+    style="margin-top:auto;color:var(--sb-text2);transition:color .15s,background .15s;"
+    onmouseover="this.style.color='var(--red)';this.style.background='rgba(224,74,56,.1)'"
+    onmouseout="this.style.color='var(--sb-text2)';this.style.background='transparent'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <span class="sb-tip">退出登录</span>
+  </button>
 
 </nav>
 
@@ -5099,13 +5097,7 @@ document.addEventListener('DOMContentLoaded', function(){
 // ══════════════════════════════════════════
 // 侧边栏下拉定位辅助：overviewPane上也绑右键到总览卡片
 // ══════════════════════════════════════════
-function positionSbDropdown(menuId, btnEl){
-  const menu = document.getElementById(menuId);
-  if(!menu) return;
-  const rect = btnEl.getBoundingClientRect();
-  menu.style.top  = (rect.top)+'px';
-  menu.style.left = (rect.right+8)+'px';
-}
+/* positionSbDropdown: see above */
 
 // ══════════════════════════════════════════
 // 异常预警弹窗
