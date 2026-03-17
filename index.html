@@ -4425,8 +4425,9 @@ function renderOverviewPane(){
     </div>
   </div>`;
 
-  // 绑定 ovSelectFolder（兼容旧调用）
+  // 绑定总览面板右键菜单
   window.ovSelectFolder = function(idx){ _ovFolderIdx=idx; window._ovSelAccId=null; renderOverviewPane(); };
+  bindOvPaneCtxMenu();
 }
 
 
@@ -4794,7 +4795,7 @@ function ovCtxCopyData(){
 // ══════════════════════════════════════════
 // 修改视频卡片点击行为（支持多选模式）
 // ══════════════════════════════════════════
-const _origVgridClick = document.getElementById('vgrid');
+// vgrid 点击已在 DOMContentLoaded 里重新绑定
 document.addEventListener('DOMContentLoaded', function(){
   const vgrid = document.getElementById('vgrid');
   if(vgrid){
@@ -4822,16 +4823,12 @@ function positionSbDropdown(menuId, btnEl){
   menu.style.left = (rect.right+8)+'px';
 }
 
-// 给renderOverviewPane的卡片添加右键菜单支持
-const _origRenderOverviewPane = renderOverviewPane;
-function renderOverviewPane(){
-  _origRenderOverviewPane();
-  // 延迟绑定右键到总览面板内的账号行
+// 右键绑定由 bindOvPaneCtxMenu() 在需要时调用，不再包装 renderOverviewPane
+function bindOvPaneCtxMenu(){
   setTimeout(()=>{
     document.querySelectorAll('#overviewPane [data-accid]').forEach(el=>{
       el.addEventListener('contextmenu', e=>showOvCardCtxMenu(e, el.dataset.accid));
     });
-    // 绑定汇总卡片右键
     document.querySelectorAll('.ov-summary-card').forEach(el=>{
       el.addEventListener('contextmenu', e=>{
         e.preventDefault(); e.stopPropagation();
