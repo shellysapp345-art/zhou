@@ -948,10 +948,11 @@ canvas{max-width:100%;}
 
   <div class="sb-sep"></div>
 
-  <!-- 数据总览 -->
-  <button class="sb-icon-btn" id="sb-btn-overview" onclick="showOverviewPane()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span class="sb-tip">数据总览</span>
+  <!-- 点赞排名 -->
+  <button class="sb-icon-btn" id="sb-btn-likes-rank" onclick="openLikesRankModal()"
+    style="width:36px;height:28px;border-radius:8px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="sb-tip">点赞排名</span>
   </button>
 
   <!-- 文件夹 / 账号（合并） -->
@@ -1776,6 +1777,7 @@ function renderNavDropdowns(){
     // 全部项目入口
     const allOn = !S.curFolder && (S.curAcc==='all'||!S.curAcc);
     html += `<div class="ndm-item${allOn?' on':''}" onclick="selectNavFolder(null)">🏠 全部项目</div>`;
+    html += `<div class="ndm-item" style="color:var(--accent);padding-left:22px;font-size:12px;" onclick="toggleNavDropdown('folderMenu');openOverview()"><span style="opacity:.6;">└</span> 📊 数据总览</div>`;
 
     // 未分组账号（无文件夹）
     const ungrouped = S.accounts.filter(a=>!a.folderId);
@@ -1818,7 +1820,6 @@ function renderNavDropdowns(){
 
     // 底部操作
     html += '<div class="ndm-sep"></div>';
-    html += `<div class="ndm-item" style="color:var(--accent);" onclick="toggleNavDropdown('folderMenu');openOverview()">📊 数据总览</div>`;
     html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');addFolder()">＋ 新建文件夹</div>`;
     html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');openAccModal()">＋ 添加账号</div>`;
     fi.innerHTML = html;
@@ -4636,15 +4637,14 @@ function closeUserManual(){ document.getElementById('userManualModal').style.dis
 
 let _ovFolderIdx = 0;
 let _ovView = 'table';
-let _ovPage = 0;
-const _OV_PAGE_SIZE = 5;
+
+
 
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
-  _ovPage = 0;
   renderOverviewPane();
 }
 function hideOverviewPane(){
@@ -5378,7 +5378,101 @@ document.addEventListener('DOMContentLoaded', function(){
 // ══════════════════════════════════════════
 // 异常预警弹窗
 // ══════════════════════════════════════════
-function openAbnModal(){
+// ══════════════════════════════════════════
+// 点赞排名弹窗
+// ══════════════════════════════════════════
+let _lrMetric = 'likes';
+
+function openLikesRankModal(){
+  _lrMetric = 'likes';
+  const modal = document.getElementById('likesRankModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  renderLikesRank('likes');
+}
+function closeLikesRankModal(){
+  const m = document.getElementById('likesRankModal');
+  if(m) m.style.display = 'none';
+}
+
+function renderLikesRank(metric){
+  _lrMetric = metric;
+  // 更新 tab 样式
+  ['likes','play','cvr'].forEach(k=>{
+    const btn = document.getElementById('lrTab-'+k);
+    if(!btn) return;
+    const on = k===metric;
+    btn.style.background = on ? 'var(--accent)' : 'transparent';
+    btn.style.color      = on ? '#fff' : 'var(--text2)';
+    btn.style.borderColor= on ? 'var(--accent)' : 'var(--border)';
+  });
+
+  // 计算每个账号数据
+  function getLeads(accId){ return (S.visits||[]).filter(v=>v.accId===accId).reduce((s,v)=>s+v.count,0); }
+  const data = S.accounts.map(a=>{
+    const vids  = S.videos.filter(v=>v.accId===a.id);
+    const play  = vids.reduce((s,v)=>s+(v.play||0),0);
+    const likes = vids.reduce((s,v)=>s+v.likes,0);
+    const leads = getLeads(a.id);
+    const cvr   = play>0 ? (leads/play*100) : 0;
+    return { id:a.id, name:a.name, color:a.color||'#e8742a',
+             vidCnt:vids.length, play, likes, leads, cvr };
+  });
+
+  const labels = { likes:'点赞数', play:'播放量', cvr:'转化率' };
+  const sorted = [...data].sort((a,b)=>b[metric]-a[metric]);
+  const maxVal = Math.max(...sorted.map(d=>d[metric]), 1);
+
+  const sub = document.getElementById('likesRankSub');
+  if(sub) sub.textContent = `${sorted.length} 个账号 · 按${labels[metric]}排序`;
+
+  const body = document.getElementById('likesRankBody');
+  if(!body) return;
+
+  body.innerHTML = sorted.map((a,i)=>{
+    const val     = metric==='cvr' ? a[metric].toFixed(3)+'%' : fmt(a[metric]);
+    const barPct  = Math.max(2, Math.round(a[metric]/maxVal*100));
+    const isTop   = i===0;
+    const isLast  = i===sorted.length-1 && sorted.length>1;
+    const subInfo = `${a.vidCnt}条视频 · 播${fmt(a.play)} · 赞${fmt(a.likes)} · 线索${a.leads}`;
+    return `
+    <div onclick="closeLikesRankModal();selectNavAcc('${a.id}')"
+      style="display:flex;align-items:center;gap:12px;padding:10px 0;
+             border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .12s;"
+      onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+      <!-- 排名数字 -->
+      <div style="width:24px;text-align:center;flex-shrink:0;">
+        ${i<3
+          ? `<div style="width:22px;height:22px;border-radius:50%;background:${['#e8742a','#a49890','#c49020'][i]};display:flex;align-items:center;justify-content:center;"><span style="font-size:11px;font-weight:800;color:#fff;">${i+1}</span></div>`
+          : `<span style="font-size:12px;font-weight:600;color:var(--text3);">${i+1}</span>`}
+      </div>
+      <!-- 头像 -->
+      <div style="width:32px;height:32px;border-radius:9px;background:${a.color};
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:14px;font-weight:800;color:#fff;">${a.name[0]}</span>
+      </div>
+      <!-- 名称 + 进度条 -->
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name}</span>
+          ${isTop  ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(232,116,42,.12);color:var(--accent);font-weight:700;flex-shrink:0;">TOP1</span>` : ''}
+          ${isLast && a[metric]===0 ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(224,74,56,.1);color:var(--red);font-weight:700;flex-shrink:0;">无数据</span>` : ''}
+        </div>
+        <div style="height:4px;background:var(--s3);border-radius:99px;overflow:hidden;margin-bottom:3px;">
+          <div style="height:100%;width:${barPct}%;background:${a.color};border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);">${subInfo}</div>
+      </div>
+      <!-- 数值 -->
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:18px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1;">${val}</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${labels[metric]}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
   const modal = document.getElementById('abnModal');
   if(!modal) return;
   // 收集当前总览所选文件夹的账号
@@ -6079,6 +6173,36 @@ function switchManualTab(section, el){
     </div>
   </div>
 </div>
+</div>
+
+<!-- ══ 点赞排名弹窗 ══ -->
+<div id="likesRankModal" onclick="if(event.target===this)closeLikesRankModal()"
+  style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.3);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div onclick="event.stopPropagation()"
+    style="background:var(--s1);border:1px solid var(--border);border-radius:16px;
+           width:min(94vw,520px);max-height:82vh;overflow:hidden;display:flex;flex-direction:column;
+           box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;">
+    <!-- 头部 -->
+    <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">点赞排名</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="likesRankSub">全部账号</div>
+      </div>
+      <!-- 切换维度 -->
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="renderLikesRank('likes')" id="lrTab-likes"
+          style="padding:4px 12px;border-radius:20px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">点赞</button>
+        <button onclick="renderLikesRank('play')" id="lrTab-play"
+          style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font);">播放</button>
+        <button onclick="renderLikesRank('cvr')" id="lrTab-cvr"
+          style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font);">转化率</button>
+        <button onclick="closeLikesRankModal()"
+          style="width:28px;height:28px;border-radius:7px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">✕</button>
+      </div>
+    </div>
+    <!-- 列表 -->
+    <div id="likesRankBody" style="overflow-y:auto;padding:12px 20px 20px;flex:1;"></div>
+  </div>
 </div>
 
 <!-- 设置弹窗 -->
