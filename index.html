@@ -4545,7 +4545,7 @@ function renderUserSearchResults(folderId){
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:${isCompact?'3px':'4px'};">
                 <div style="display:flex;align-items:center;gap:5px;padding:${isCompact?'4px 6px':'6px 8px'};border-radius:8px;background:${v.play===maxVal&&v.play>0?'rgba(232,116,42,.08)':'var(--s2)'};border:1px solid ${v.play===maxVal&&v.play>0?'rgba(232,116,42,.25)':'var(--border)'};">
                   <span style="font-size:11px;opacity:.6;">▶</span>
-                  <div><div style="font-size:${isCompact?'11px':'12px'};font-weight:700;font-family:var(--mono);color:${v.play===maxVal&&v.play>0?'var(--accent)':(v.play>0?'var(--text)':'var(--orange))')};">${v.play>0?fmt(v.play):'—⚠'}</div><div style="font-size:9px;color:var(--text3);">播放</div></div>
+                  <div><div style="font-size:${isCompact?'11px':'12px'};font-weight:700;font-family:var(--mono);color:${v.play===maxVal&&v.play>0?'var(--accent)':(v.play>0?'var(--text)':'var(--orange)')};">${v.play>0?fmt(v.play):'—⚠'}</div><div style="font-size:9px;color:var(--text3);">播放</div></div>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;padding:${isCompact?'4px 6px':'6px 8px'};border-radius:8px;background:${v.likes===maxVal&&v.likes>0&&v.likes>v.play?'rgba(232,116,42,.08)':'var(--s2)'};border:1px solid ${v.likes===maxVal&&v.likes>0&&v.likes>v.play?'rgba(232,116,42,.25)':'var(--border)'};">
                   <span style="font-size:11px;opacity:.6;">♥</span>
