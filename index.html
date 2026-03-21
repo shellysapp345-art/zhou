@@ -800,7 +800,24 @@ canvas{max-width:100%;}
 .mhead-t{font-size:16px;}
 
 /* 设置弹窗 */
-#settingsBox{background:var(--s1);}
+#settingsModal{
+  display:none;
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+#settingsModal.open{ display:flex; }
+#settingsBox{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:20px;
+  width:min(92vw,440px);
+  box-shadow:0 16px 48px rgba(0,0,0,.12);
+  animation:mIn .18s ease;
+  overflow:hidden;
+  max-height:90vh;
+  overflow-y:auto;
+}
 
 /* 卡片缩略图占位 */
 .cthumb-fallback{background:var(--s3);}
