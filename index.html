@@ -5727,61 +5727,71 @@ checkLogin();
     </div>
     <div class="manual-nav">
       <div class="manual-tab active" onclick="switchManualTab('overview',this)">🏠 总览</div>
-      <div class="manual-tab" onclick="switchManualTab('account',this)">👤 项目管理</div>
+      <div class="manual-tab" onclick="switchManualTab('account',this)">📁 项目管理</div>
       <div class="manual-tab" onclick="switchManualTab('video',this)">🎬 视频管理</div>
+      <div class="manual-tab" onclick="switchManualTab('plugin',this)">🧩 插件使用</div>
       <div class="manual-tab" onclick="switchManualTab('stats',this)">📊 数据分析</div>
       <div class="manual-tab" onclick="switchManualTab('user',this)">👥 用户权限</div>
-      <div class="manual-tab" onclick="switchManualTab('tips',this)">💡 使用技巧</div>
+      <div class="manual-tab" onclick="switchManualTab('tips',this)">💡 技巧</div>
     </div>
     <div class="manual-body">
 
       <!-- 总览 -->
       <div class="manual-section active" id="manual-overview">
         <h3><span>🏠</span> 系统总览</h3>
-        <p>抖音看板是一套多项目视频数据管理系统，支持管理员和员工双角色，数据实时同步至云端。</p>
+        <p>抖音看板是一套多项目视频数据管理系统，支持管理员和员工双角色，数据实时同步至云端，配合浏览器插件可一键抓取抖音数据。</p>
         <div class="manual-card">
           <div class="manual-card-title">🖥️ 界面结构</div>
           <div class="manual-card-desc">
-            <b>左侧边栏</b> — 项目列表、文件夹切换、导出工具<br>
-            <b>主内容区</b> — 视频卡片展示（宫格/缩略/列表三种视图）<br>
-            <b>顶部栏</b> — 搜索、筛选、视图切换、添加视频
+            <b>左侧边栏</b> — 图标导航，点击可展开项目/账号列表、视频排名、导出工具<br>
+            <b>主内容区</b> — 视频卡片展示，支持宫格 / 缩略 / 列表三种视图<br>
+            <b>顶部栏</b> — 搜索、状态筛选、视图切换、刷新、添加视频
           </div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">👤 双角色说明</div>
           <div class="manual-card-desc">
-            <span class="manual-badge">管理员</span> 拥有全部功能：增删项目/视频/用户，数据分析，CSV 导出<br>
-            <span class="manual-badge green">员工</span> 仅能查看所属文件夹内的项目和视频，可搜索和上传视频
+            <span class="manual-badge">管理员</span> 拥有全部功能：增删项目/视频/用户，数据分析，CSV 导出，视频排名<br>
+            <span class="manual-badge green">员工</span> 仅可查看所属文件夹内项目和视频，可搜索、上传视频和查看评论三要素
           </div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">💾 数据说明</div>
           <div class="manual-card-desc">所有数据存储在 Supabase 云端数据库，多设备实时同步。点击顶部 <b>↺ 刷新</b> 按钮可手动拉取最新数据。</div>
         </div>
+        <div class="manual-card" style="border-color:rgba(232,136,74,.35);background:rgba(232,136,74,.06);">
+          <div class="manual-card-title" style="color:var(--accent);">✨ 最新功能</div>
+          <div class="manual-card-desc">
+            · <b>评论三要素扫描</b>：插件自动扫描评论区，检测关键词是否带齐，结果显示在视频卡片上<br>
+            · <b>视频排名</b>：按点赞/播放/评论等指标查看 TOP 50 视频排名<br>
+            · <b>批量三要素扫描</b>：批量更新数据时同步扫描所有视频的评论三要素<br>
+            · <b>点卡片直接编辑</b>：点击视频卡片任意位置即可打开完整编辑面板
+          </div>
+        </div>
       </div>
 
-      <!-- 账号管理 -->
+      <!-- 项目管理 -->
       <div class="manual-section" id="manual-account">
-        <h3><span>👤</span> 项目管理</h3>
+        <h3><span>📁</span> 项目管理</h3>
         <div class="manual-step">
           <div class="manual-step-num">1</div>
-          <div class="manual-step-content"><b>添加项目</b>：点击左侧边栏底部「＋ 添加项目」，填写项目名称、颜色标签、运营备注，可选绑定文件夹。</div>
+          <div class="manual-step-content"><b>添加项目</b>：点击侧边栏「项目 / 账号」→「＋ 添加账号」，填写项目名称、颜色标签、运营备注，可选绑定文件夹。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">2</div>
-          <div class="manual-step-content"><b>编辑项目</b>：点击项目列表中任意项目的 <b>✏️ 编辑</b> 按钮，可修改名称、颜色、运营周期等信息。</div>
+          <div class="manual-step-content"><b>编辑项目</b>：在数据总览页面的账号列表中，点击账号旁的编辑按钮，可修改名称、颜色、运营周期等信息。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">3</div>
-          <div class="manual-step-content"><b>删除账号</b>：点击 <b>🗑 删除</b> 按钮，该账号下所有视频数据将同步从数据库删除，<b style="color:var(--red)">操作不可逆</b>，请谨慎。</div>
+          <div class="manual-step-content"><b>文件夹分组</b>：点击「项目 / 账号」菜单里的「＋ 新建文件夹」，然后在项目编辑中绑定文件夹，用于员工权限隔离。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">4</div>
-          <div class="manual-step-content"><b>文件夹分组</b>：点击「＋ 添加文件夹」创建分组，在项目编辑中将项目绑定至指定文件夹，便于员工权限分配。</div>
+          <div class="manual-step-content"><b>删除项目</b>：删除后该项目下所有视频数据同步从数据库删除，<b style="color:var(--red)">操作不可逆</b>，请谨慎确认。</div>
         </div>
         <div class="manual-card">
-          <div class="manual-card-title">📊 项目统计栏</div>
-          <div class="manual-card-desc">侧边栏顶部实时展示：<b>总视频数 📹</b>、<b>违规数 ⚠</b>、<b>总点赞 ❤</b>、<b>推广数 📢</b>。</div>
+          <div class="manual-card-title">📊 项目统计</div>
+          <div class="manual-card-desc">数据总览页面实时展示各项目的视频总数、总点赞、违规数和推广数，点击项目可查看深度分析。</div>
         </div>
       </div>
 
@@ -5790,41 +5800,99 @@ checkLogin();
         <h3><span>🎬</span> 视频管理</h3>
         <div class="manual-step">
           <div class="manual-step-num">1</div>
-          <div class="manual-step-content"><b>添加视频</b>：点击右上角「＋ 添加视频」，粘贴抖音视频链接，系统会自动解析封面和标题。</div>
+          <div class="manual-step-content"><b>添加视频</b>：点击右上角「＋ 添加」，粘贴抖音视频链接，填写播放/点赞/评论/收藏/转发等数据，选择归属项目和发布日期。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">2</div>
-          <div class="manual-step-content"><b>填写数据</b>：输入播放量、点赞、评论、收藏、转发数，选择发布日期，勾选是否违规或推广。</div>
+          <div class="manual-step-content"><b>编辑视频</b>：<b>点击视频卡片任意位置</b>即可打开完整编辑面板，修改所有字段后保存实时同步云端。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">3</div>
-          <div class="manual-step-content"><b>编辑视频</b>：点击视频卡片右上角 <b>✏</b> 按钮，可修改所有数据字段。保存后实时更新云端。</div>
+          <div class="manual-step-content"><b>删除视频</b>：点击视频卡片右下角 <b>🗑</b> 按钮，确认后从数据库永久删除。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">4</div>
-          <div class="manual-step-content"><b>删除视频</b>：点击视频卡片 <b>🗑</b> 按钮，确认后从数据库永久删除。</div>
+          <div class="manual-step-content"><b>批量操作</b>：点击顶部多选按钮进入选择模式，勾选多个视频后可批量移动项目或批量删除。</div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">🔍 搜索与筛选</div>
           <div class="manual-card-desc">
             顶部搜索框：按<b>视频标题</b>实时过滤<br>
-            筛选按钮：<span class="manual-badge">全部</span> <span class="manual-badge gold">⚠ 违规</span> <span class="manual-badge green">📢 推广</span> <span class="manual-badge cyan">✓ 正常</span><br>
+            筛选按钮：<span class="manual-badge">全部</span> <span class="manual-badge gold">⚠ 违规</span> <span class="manual-badge">📢 推广</span> <span class="manual-badge green">✓ 正常</span><br>
             视图切换：<b>⊞ 宫格</b> / <b>⊡ 缩略</b> / <b>☰ 列表</b>
           </div>
         </div>
         <div class="manual-card">
+          <div class="manual-card-title">🏆 视频排名</div>
+          <div class="manual-card-desc">点击侧边栏「视频排名」图标，可查看按点赞/播放/评论/转发/收藏排序的 TOP 50 视频，点击跳转对应项目。</div>
+        </div>
+        <div class="manual-card">
+          <div class="manual-card-title">💬 三要素徽章</div>
+          <div class="manual-card-desc">通过插件扫描过评论的视频，卡片底部会显示 <span class="manual-badge green">✓ 三要素(3/3)</span> 或 <span class="manual-badge" style="background:rgba(217,83,79,.08);color:var(--red);border:1px solid rgba(217,83,79,.2);">✗ 三要素(1/3)</span>，直观反映评论带齐情况。</div>
+        </div>
+        <div class="manual-card">
           <div class="manual-card-title">📥 导出 CSV</div>
-          <div class="manual-card-desc">点击侧边栏底部「📥 导出全部数据 CSV」，导出所有项目下全部视频数据为 Excel 可读格式。</div>
+          <div class="manual-card-desc">点击侧边栏「导出 CSV」图标，导出所有项目下全部视频数据为 Excel 可读格式。</div>
+        </div>
+      </div>
+
+      <!-- 插件使用 -->
+      <div class="manual-section" id="manual-plugin">
+        <h3><span>🧩</span> 浏览器插件使用</h3>
+        <p>配合专属浏览器插件，可直接从抖音页面抓取数据、扫描评论三要素，无需手动填写。</p>
+
+        <div class="manual-card" style="border-color:rgba(232,136,74,.35);background:rgba(232,136,74,.06);">
+          <div class="manual-card-title" style="color:var(--accent);">📱 插件主界面 — 保存视频 + 评论扫描</div>
+          <div class="manual-card-desc">
+            <span class="manual-badge" style="background:rgba(232,136,74,.12);color:var(--accent);border-color:rgba(232,136,74,.3);">1</span> 在抖音视频页面点击插件图标，点「<b>读取数据 + 扫描评论</b>」<br>
+            <span class="manual-badge" style="background:rgba(232,136,74,.12);color:var(--accent);border-color:rgba(232,136,74,.3);">2</span> 插件自动读取播放/点赞等数据，同时打开评论区扫描关键词<br>
+            <span class="manual-badge" style="background:rgba(232,136,74,.12);color:var(--accent);border-color:rgba(232,136,74,.3);">3</span> 扫描完成后显示三要素是否带齐（✓ / ✗）及各关键词命中数<br>
+            <span class="manual-badge" style="background:rgba(232,136,74,.12);color:var(--accent);border-color:rgba(232,136,74,.3);">4</span> 点「<b>保存到看板</b>」，视频数据和扫描结果同时写入数据库<br>
+            <span class="manual-badge" style="background:rgba(232,136,74,.12);color:var(--accent);border-color:rgba(232,136,74,.3);">5</span> 回看板刷新，视频卡片上即显示三要素徽章
+          </div>
+        </div>
+
+        <div class="manual-card">
+          <div class="manual-card-title">⚙️ 关键词配置</div>
+          <div class="manual-card-desc">
+            在插件「关键词」区域添加要检测的词（空格分隔可批量添加）<br>
+            在「三要素（勾选3个）」中选择最重要的3个词作为必须带齐的要素<br>
+            设置「最多扫描评论数」（默认200条）<br>
+            配置会自动保存，批量更新时也会读取同一套配置
+          </div>
+        </div>
+
+        <div class="manual-card">
+          <div class="manual-card-title">🔍 关键词匹配规则</div>
+          <div class="manual-card-desc">
+            支持四种匹配方式，任一命中即算：<br>
+            · <b>精确匹配</b>：评论包含完整关键词<br>
+            · <b>去空格匹配</b>：「公 众 号」→「公众号」<br>
+            · <b>模糊包含</b>：评论含关键词所有字即命中（「贵州银屑病白癜风皮肤医院」→ 命中「贵州银屑病医院」）<br>
+            · <b>拼音首字母</b>：「gzh」→ 命中「公众号」「共中号」等谐音写法
+          </div>
+        </div>
+
+        <div class="manual-card" style="border-color:rgba(201,146,26,.4);background:rgba(201,146,26,.06);">
+          <div class="manual-card-title" style="color:var(--gold);">🔄 批量更新 + 批量扫描</div>
+          <div class="manual-card-desc">
+            <span class="manual-badge gold">1</span> 在插件中点击「<b>批量更新</b>」打开批量更新页面<br>
+            <span class="manual-badge gold">2</span> 选择要更新的文件夹和日期范围<br>
+            <span class="manual-badge gold">3</span> 开启「<b>同时扫描评论三要素</b>」开关（需先在主界面配置关键词）<br>
+            <span class="manual-badge gold">4</span> 点击「开始批量更新」，插件逐条访问视频页面，自动刷新数据并扫描评论<br>
+            <span class="manual-badge gold">5</span> 每条视频完成后显示更新状态和三要素结果（✓ 3/3 或 ✗ 1/3）<br><br>
+            <b>注意：</b>批量更新期间请勿关闭浏览器，等待全部完成后再操作。
+          </div>
         </div>
       </div>
 
       <!-- 数据分析 -->
       <div class="manual-section" id="manual-stats">
         <h3><span>📊</span> 数据分析</h3>
-        <p>点击项目列表中任意项目的 <b>📊 数据分析</b> 按钮，进入该项目的深度分析面板。</p>
+        <p>点击数据总览页面中任意项目的分析区域，进入该项目的深度分析面板。</p>
         <div class="manual-card">
           <div class="manual-card-title">📈 图表分析</div>
-          <div class="manual-card-desc">切换播放/点赞/评论/收藏/转发/时长图表，直观查看各数据项的趋势和分布。</div>
+          <div class="manual-card-desc">切换播放 / 点赞 / 评论 / 收藏 / 转发图表，直观查看各数据项的趋势和分布。视频数量 ≥ 10 条时分析结果更准确。</div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">🏥 线索分析</div>
@@ -5837,17 +5905,21 @@ checkLogin();
         </div>
         <div class="manual-card">
           <div class="manual-card-title">📅 周期分析 / 深度分析</div>
-          <div class="manual-card-desc">基于多周/多月历史数据，输出综合转化率、效率评级、瓶颈识别和优先优化方向建议。</div>
+          <div class="manual-card-desc">基于多周 / 多月历史数据，输出综合转化率、效率评级、瓶颈识别和优先优化方向建议。</div>
+        </div>
+        <div class="manual-card">
+          <div class="manual-card-title">🏆 全局视频排名</div>
+          <div class="manual-card-desc">侧边栏「视频排名」功能可跨项目查看 TOP 50 视频，支持按点赞 / 播放 / 评论 / 转发 / 收藏五个维度切换。</div>
         </div>
       </div>
 
       <!-- 用户权限 -->
       <div class="manual-section" id="manual-user">
         <h3><span>👥</span> 用户权限管理</h3>
-        <p>管理员可通过侧边栏底部「👥 用户管理」按钮管理系统用户。</p>
+        <p>管理员可通过设置菜单中的「用户管理」管理系统用户。</p>
         <div class="manual-step">
           <div class="manual-step-num">1</div>
-          <div class="manual-step-content"><b>添加员工</b>：填写用户名、密码，选择绑定文件夹，设置角色为「员工」。</div>
+          <div class="manual-step-content"><b>添加员工</b>：填写用户名、密码，选择绑定文件夹，角色设为「员工」。</div>
         </div>
         <div class="manual-step">
           <div class="manual-step-num">2</div>
@@ -5855,14 +5927,14 @@ checkLogin();
         </div>
         <div class="manual-step">
           <div class="manual-step-num">3</div>
-          <div class="manual-step-content"><b>删除员工</b>：删除员工账号后，该员工上传的视频「上传者」标签自动清空，视频数据保留。</div>
+          <div class="manual-step-content"><b>删除员工</b>：删除员工账号后，该员工上传的视频「上传者」标签自动清空，视频数据本身保留不删除。</div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">🔒 员工视图特性</div>
           <div class="manual-card-desc">
             员工登录后进入专属视图，只能看到所属文件夹内容。<br>
-            支持：视频搜索、视频上传标注、切换项目查看数据分析。<br>
-            不支持：项目管理、文件夹管理、CSV导出、用户管理。
+            <b>支持：</b>视频搜索、视频数据录入（含评论三要素扫描）、切换项目查看。<br>
+            <b>不支持：</b>项目管理、文件夹管理、CSV 导出、用户管理、全局视频排名。
           </div>
         </div>
       </div>
@@ -5871,60 +5943,30 @@ checkLogin();
       <div class="manual-section" id="manual-tips">
         <h3><span>💡</span> 使用技巧</h3>
         <div class="manual-card">
+          <div class="manual-card-title">🎨 主题配色</div>
+          <div class="manual-card-desc">点击侧边栏设置 → 「主题配色」，可切换暖橙 / 深海蓝 / 薄荷绿 / 玫瑰红 / 紫罗兰 / 极夜深色六套主题，偏好自动保存。</div>
+        </div>
+        <div class="manual-card">
           <div class="manual-card-title">🌙 深色模式</div>
-          <div class="manual-card-desc">点击左上角 <b>🌙</b> 按钮切换深色/浅色模式，偏好设置自动保存，下次打开自动恢复。</div>
+          <div class="manual-card-desc">点击设置菜单中「深色 / 浅色模式」切换，或直接点击侧边栏月亮图标，偏好设置自动保存。</div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">🔄 数据刷新</div>
-          <div class="manual-card-desc">顶部栏 <b>↺</b> 按钮手动刷新当前项目数据。建议在多人协作录入数据后手动刷新以获取最新状态。</div>
+          <div class="manual-card-desc">顶部栏 <b>↺</b> 按钮手动刷新数据。多人协作时，建议他人录入后手动刷新获取最新状态。插件保存后也需刷新才能看到三要素徽章。</div>
         </div>
         <div class="manual-card">
-          <div class="manual-card-title">📌 切换项目/文件夹时的注意事项</div>
-          <div class="manual-card-desc">切换项目或文件夹时，搜索框会自动清空，避免旧搜索词干扰新内容的展示。</div>
-        </div>
-        <div class="manual-card">
-          <div class="manual-card-title">📊 图表最佳实践</div>
-          <div class="manual-card-desc">建议在视频数量 ≥ 10 条后再查看趋势分析，数据量越大分析结果越准确。线索分析需先录入至少一条周/月线索记录。</div>
+          <div class="manual-card-title">📌 搜索与筛选</div>
+          <div class="manual-card-desc">切换项目或文件夹时，搜索框自动清空，避免旧搜索词干扰新内容展示。筛选状态（违规/推广/正常）切换项目后同样重置。</div>
         </div>
         <div class="manual-card">
           <div class="manual-card-title">🚪 多设备使用</div>
           <div class="manual-card-desc">系统支持多设备同时在线，数据云端同步。登录信息保存在浏览器 sessionStorage，关闭标签页后需重新登录。</div>
         </div>
-        <div class="manual-card" style="border-color:rgba(74,158,173,.4);background:rgba(74,158,173,.06);">
-          <div class="manual-card-title" style="color:var(--cyan);">🧩 浏览器插件 · 一键导入抖音数据</div>
-          <div class="manual-card-desc">
-            配合团队专属浏览器插件，可直接从抖音页面抓取视频数据并导入看板，无需手动填写。<br><br>
-            <b>使用步骤：</b><br>
-            <span class="manual-badge cyan">1</span> 在浏览器中打开抖音，正常搜索话题或刷视频，进入目标视频页面<br>
-            <span class="manual-badge cyan">2</span> 点击浏览器右上角的<b>插件图标</b>，插件自动读取当前页面的视频数据<br>
-            <span class="manual-badge cyan">3</span> 插件同时<b>截图当前画面</b>作为视频封面<br>
-            <span class="manual-badge cyan">4</span> 点赞、收藏、评论、转发数据<b>自动填入</b>，确认后一键导入数据库<br>
-            <span class="manual-badge cyan">5</span> 回到看板，数据即刻在视频卡片上显示<br><br>
-            <b>适用场景：</b>批量录入竞品视频数据、快速追踪热门话题下的视频表现。
-          </div>
-        </div>
-        <div class="manual-card" style="border-color:rgba(201,146,26,.4);background:rgba(201,146,26,.06);">
-          <div class="manual-card-title" style="color:var(--gold);">🔄 批量更新功能</div>
-          <div class="manual-card-desc">
-            对已录入看板的视频，可使用批量更新功能一次性刷新所有数据指标，无需逐条手动编辑。<br><br>
-            <b>使用步骤：</b><br>
-            <span class="manual-badge gold">1</span> 在看板中选择需要更新的项目或文件夹<br>
-            <span class="manual-badge gold">2</span> 打开插件，插件会识别看板中已有的视频列表<br>
-            <span class="manual-badge gold">3</span> 点击插件中的<b>「批量更新」</b>按钮<br>
-            <span class="manual-badge gold">4</span> 插件自动逐条访问各视频页面，抓取最新的点赞、收藏、评论、转发数<br>
-            <span class="manual-badge gold">5</span> 全部抓取完成后，数据<b>同步写入数据库</b>，看板数据自动更新<br><br>
-            <b>注意：</b>批量更新期间请勿关闭浏览器或插件窗口，等待完成提示后再操作。
-          </div>
-        </div>
         <div class="manual-card" style="border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.06);">
           <div class="manual-card-title" style="color:#a78bfa;">💬 Chatbox 文案助手</div>
           <div class="manual-card-desc">
-            点击侧边栏（或顶部栏）的 <b style="color:#a78bfa;">💬 Chatbox 文案助手</b> 按钮，可在新标签页打开 AI 文案工具。<br>
-            首次使用需在设置中配置 API：<br>
-            <b>① 点击右上角设置 → 模型提供商 → 添加自定义</b><br>
-            <b>② API Mode</b> 选 <b>OpenAI API Compatible</b><br>
-            <b>③ 填入团队提供的 API Key 和 API Host</b><br>
-            <b>④ 点击 Fetch 获取模型列表，选择模型后即可使用</b><br>
+            点击设置菜单中的「Chatbox 文案助手」链接，可在新标签页打开 AI 文案工具。<br>
+            首次使用需在 Chatbox 设置中配置 API Key，联系管理员获取团队 API Key 和 Host 地址。<br>
             适用场景：视频文案撰写、标题优化、评论回复、推广话术生成等。
           </div>
         </div>
