@@ -1058,6 +1058,19 @@ canvas{max-width:100%;}
     <!-- 过滤 chips -->
     <div class="tb-right" style="flex-shrink:0;gap:4px;">
       <button class="fchip on" id="fc-all" onclick="setFilter('all',this)">全部</button>
+      <!-- 日期筛选 -->
+      <div class="tb-icon-wrap" style="position:relative;">
+        <button class="fchip" id="fc-date" style="display:flex;align-items:center;gap:4px;" onclick="toggleDatePicker()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="fc-date-label">日期</span>
+        </button>
+        <span class="tb-tip">按日期筛选</span>
+        <div id="datePicker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:300;min-width:200px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">按日期筛选</div>
+          <input type="date" id="datePickerInput" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--s2);color:var(--text);outline:none;" oninput="applyDateFilter(this.value)"/>
+          <button onclick="clearDateFilter()" style="margin-top:8px;width:100%;padding:6px;border:none;border-radius:7px;background:var(--s3);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;">清除筛选</button>
+        </div>
+      </div>
       <div class="tb-icon-wrap">
         <button class="fchip" id="fc-violation" onclick="setFilter('violation',this)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1877,7 +1890,7 @@ function selectNavFolder(folderId){
   document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
   S.curFolder = folderId;
   S.curAcc = 'all';
-  S.page = 0; S.searchQuery = ''; S.filter = 'all';
+  S.page = 0; S.searchQuery = ''; S.filter = 'all'; S.dateFilter = '';
   const gs = document.getElementById('globalSearch'); if(gs) gs.value='';
   // 重置过滤器 chip 高亮
   document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));
@@ -2159,6 +2172,8 @@ function renderGrid(){
   if(S.filter==='violation')vids=vids.filter(v=>v.violation);
   else if(S.filter==='promo')vids=vids.filter(v=>v.promo);
   else if(S.filter==='normal')vids=vids.filter(v=>!v.violation&&!v.promo);
+  // 日期筛选
+  if(S.dateFilter) vids=vids.filter(v=>v.date===S.dateFilter);
 
   // 搜索过滤
   if(S.searchQuery){
@@ -2319,6 +2334,50 @@ async function deleteFolder(id,name){
     toast('✓ 已删除文件夹');
   });
 }
+
+function toggleDatePicker(){
+  const dp = document.getElementById('datePicker');
+  if(!dp) return;
+  dp.style.display = dp.style.display==='none' ? 'block' : 'none';
+}
+
+function applyDateFilter(val){
+  S.dateFilter = val || '';
+  S.page = 0;
+  const label = document.getElementById('fc-date-label');
+  const btn   = document.getElementById('fc-date');
+  if(val){
+    if(label) label.textContent = val.slice(5); // 显示MM-DD
+    if(btn)   btn.classList.add('on');
+  } else {
+    if(label) label.textContent = '日期';
+    if(btn)   btn.classList.remove('on');
+  }
+  document.getElementById('datePicker').style.display='none';
+  renderGrid();
+}
+
+function clearDateFilter(){
+  S.dateFilter = '';
+  S.page = 0;
+  const label = document.getElementById('fc-date-label');
+  const btn   = document.getElementById('fc-date');
+  if(label) label.textContent = '日期';
+  if(btn)   btn.classList.remove('on');
+  const inp = document.getElementById('datePickerInput');
+  if(inp) inp.value = '';
+  document.getElementById('datePicker').style.display='none';
+  renderGrid();
+}
+
+// 点击外部关闭日期选择器
+document.addEventListener('click', function(e){
+  const dp = document.getElementById('datePicker');
+  if(dp && dp.style.display!=='none' && !e.target.closest('#fc-date') && !e.target.closest('#datePicker')){
+    dp.style.display='none';
+  }
+});
+
 function setFilter(f,btn){S.filter=f;S.page=0;document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderGrid();}
 
 let _searchTimer;
@@ -4628,7 +4687,18 @@ async function loadUserList(){
           <div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${folderLabel} · 密码: ${u.password}</div>
         </div>
         <button onclick="editUserFolders('${u.id}','${folderIdsJson}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--accent);cursor:pointer;font-family:inherit;flex-shrink:0;">编辑</button>
+        <button onclick="togglePluginPwd('${u.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--cyan);cursor:pointer;font-family:inherit;flex-shrink:0;">改密</button>
         <button onclick="deleteUser('${u.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--orange);cursor:pointer;font-family:inherit;flex-shrink:0;">删除</button>
+      </div>
+      <!-- 插件密码修改面板 -->
+      <div id="pwd-panel-${u.id}" style="display:none;padding:10px 12px 12px;border-top:1px solid var(--border);background:var(--s2);">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:8px;">🔑 修改插件登录密码</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="pwd-input-${u.id}" placeholder="新密码" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:12px;background:var(--s1);color:var(--text);font-family:inherit;outline:none;"/>
+          <button onclick="savePluginPwd('${u.id}')" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;">保存</button>
+          <button onclick="document.getElementById('pwd-panel-${u.id}').style.display='none'" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">取消</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;">当前密码（哈希）: ${u.password?u.password.slice(0,16)+'…':'未设置'}</div>
       </div>
       <!-- 编辑面板（默认隐藏） -->
       <div id="edit-panel-${u.id}" style="display:none;padding:10px 12px 12px;border-top:1px solid var(--border);background:var(--s2);">
@@ -4647,6 +4717,26 @@ async function loadUserList(){
       </div>
     </div>`;
   }).join('');
+}
+
+function togglePluginPwd(uid){
+  // 关掉所有面板
+  document.querySelectorAll('[id^="pwd-panel-"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('[id^="edit-panel-"]').forEach(el=>el.style.display='none');
+  const panel = document.getElementById('pwd-panel-'+uid);
+  if(panel) panel.style.display = panel.style.display==='none'?'block':'none';
+}
+
+async function savePluginPwd(uid){
+  const inp = document.getElementById('pwd-input-'+uid);
+  const pwd = inp ? inp.value.trim() : '';
+  if(!pwd){ toast('请输入新密码','err'); return; }
+  const hashed = await sha256hex(pwd);
+  await sbFetch('/rest/v1/users?id=eq.'+uid, 'PATCH', { password: hashed });
+  toast('✓ 密码已更新');
+  document.getElementById('pwd-panel-'+uid).style.display='none';
+  if(inp) inp.value='';
+  loadUserList();
 }
 
 function editUserFolders(uid, folderIdsJson){
@@ -4683,7 +4773,8 @@ async function createUser(){
   if(!checked.length){ toast('请至少选择一个文件夹','err'); return; }
   const id = 'u'+Date.now();
   // folder_id 存第一个（兼容旧逻辑），folder_ids 存全部
-  const res = await sbFetch('/rest/v1/users','POST',[{id, username:name, password:pass, folder_id:checked[0], folder_ids:JSON.stringify(checked), role:'user'}]);
+  const hashedPwd = await sha256hex(pass);
+  const res = await sbFetch('/rest/v1/users','POST',[{id, username:name, password:hashedPwd, folder_id:checked[0], folder_ids:JSON.stringify(checked), role:'user'}]);
   toast('✓ 用户已创建');
   document.getElementById('nu-name').value='';
   document.getElementById('nu-pass').value='';
