@@ -434,9 +434,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .ctag.ok{background:rgba(14,14,12,.38);color:rgba(255,255,255,.85);}
 .ctag.u{background:rgba(38,95,195,.75);color:#fff;}
 
-/* 删除按钮（hover 显） */
+/* 三要素角标（封面右上角） */
+.three-corner{
+  position:absolute;top:6px;right:6px;z-index:6;
+  padding:2px 6px;border-radius:5px;
+  font-size:9px;font-weight:800;line-height:1.5;
+  backdrop-filter:blur(4px);pointer-events:none;
+}
+.three-corner-ok{background:rgba(30,160,80,.82);color:#fff;}
+.three-corner-fail{background:rgba(200,50,40,.82);color:#fff;}
+
+/* 上传人 */
+.card-uploader{
+  font-size:9px;color:var(--text3);
+  display:flex;align-items:center;gap:3px;
+  margin-top:-1px;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+
+/* 删除按钮（hover 显，左上角） */
 .cib-del{
-  position:absolute;top:6px;right:6px;z-index:10;
+  position:absolute;top:6px;left:6px;z-index:10;
   width:22px;height:22px;border-radius:6px;
   border:none;background:rgba(14,12,10,.5);
   color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;
@@ -446,9 +464,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .vcard:hover .cib-del{opacity:1;}
 .cib-del:hover{background:rgba(195,45,35,.85)!important;color:#fff;}
 
-/* 多选框 */
+/* 多选框（左上角，覆盖删除按钮位置） */
 .card-checkbox{
-  position:absolute;top:6px;right:6px;z-index:11;
+  position:absolute;top:6px;left:6px;z-index:11;
   width:18px;height:18px;border-radius:5px;
   background:rgba(255,255,255,.92);border:2px solid rgba(255,255,255,.8);
   display:none;align-items:center;justify-content:center;
@@ -1358,15 +1376,8 @@ canvas{max-width:100%;}
 
       <!-- BIG DATA INPUTS -->
       <div>
-        <div class="dg-hint" style="text-align:left;margin-bottom:6px;color:var(--text2);font-size:11px;">对照右侧视频，填入数据 →</div>
+        <div class="dg-hint" style="text-align:left;margin-bottom:6px;color:var(--text2);font-size:11px;">对照右侧视频，填入互动数据 →</div>
         <div class="data-grid">
-          <div class="dg-item">
-            <div class="dg-icon pl">▶</div>
-            <div style="flex:1;">
-              <div class="dg-label">播放量</div>
-              <input class="dg-input" id="f-play" type="number" placeholder="0" min="0"/>
-            </div>
-          </div>
           <div class="dg-item">
             <div class="dg-icon lk">❤</div>
             <div style="flex:1;">
@@ -1388,16 +1399,16 @@ canvas{max-width:100%;}
               <input class="dg-input" id="f-coll" type="number" placeholder="0" min="0"/>
             </div>
           </div>
-          <div class="dg-row">
+          <div class="dg-item">
+            <div class="dg-icon pl">↗</div>
             <div style="flex:1;">
-              <div class="dg-label">↗ 转发数</div>
+              <div class="dg-label">转发数</div>
               <input class="dg-input" id="f-share" type="number" placeholder="0" min="0"/>
             </div>
-            <div style="flex:1;"></div>
           </div>
         </div>
       </div>
-
+      <input type="hidden" id="f-play"/>
       <input type="hidden" id="f-dur"/>
       <input type="hidden" id="f-thumb"/>
 
@@ -2429,12 +2440,20 @@ function renderGrid(){
     if(isRisk)       badgesHtml+='<span class="cb cb-risk">⚠ Risk</span>';
     if(v.violation)  badgesHtml+='<span class="cb cb-violation">✕ Violation</span>';
     if(v.promo)      badgesHtml+='<span class="cb cb-promoted">★ Promoted</span>';
-    if(threeBadge)   badgesHtml+=threeBadge;
+    // 三要素徽章（右上角浮层）
+    let threeCorner='';
+    if(scan&&scan.hasThree){
+      threeCorner=scan.allFound
+        ?`<span class="three-corner three-corner-ok">✓${scan.foundCnt}/${scan.threeTotal}</span>`
+        :`<span class="three-corner three-corner-fail">✗${scan.foundCnt}/${scan.threeTotal}</span>`;
+    }
+    const uploaderRow=v.uploadedBy?`<div class="card-uploader">👤 ${v.uploadedBy}</div>`:'';
     return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.03}s;" oncontextmenu="event.preventDefault();showOvCardCtxMenu(event,'${v.accId}')">
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-play"><div class="cthumb-play-btn"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1.5L9.5 6.5L1 11.5V1.5Z" fill="rgba(20,18,16,.75)" stroke="rgba(20,18,16,.1)" stroke-width=".5"/></svg></div></div>
         ${v.dur?`<div class="cdur">${v.dur}</div>`:''}
+        ${threeCorner}
         <div class="card-checkbox"></div>
         <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')">🗑</button>
       </div>
@@ -2447,6 +2466,7 @@ function renderGrid(){
         </div>
         <div class="card-badges-row">${badgesHtml}</div>
         <div class="cmeta"><div class="cdot" style="background:${a.color}"></div><div class="cacc">${a.name}</div><div class="cdt">${v.date||''}</div></div>
+        ${uploaderRow}
       </div>
     </div>`;
   }).join('');
