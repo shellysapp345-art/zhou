@@ -7514,6 +7514,8 @@ var petRoot = document.getElementById('petRoot');
  */
 function petShow(){ petRoot.classList.add('pet-visible'); }
 function petHide(){ petRoot.classList.remove('pet-visible'); }
+window.petShow = petShow;
+window.petHide = petHide;
 
 // petShow/petHide 由 showAdminApp / showUserApp 直接调用
 
