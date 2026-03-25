@@ -7451,9 +7451,10 @@ var A = {
    §2  API CONFIG  ← fill your key here
 ═══════════════════════════════════════════════ */
 var API = {
-  provider : 'anthropic',          // 'anthropic' | 'openai'
-  apiKey   : '',                   // ← paste your key, or use petConfigKey()
-  model    : 'claude-sonnet-4-20250514'
+  provider : 'openai',
+  apiKey   : '',
+  baseURL  : '',
+  model    : 'gpt-4o-mini'
 };
 
 var QUICK = {
@@ -7486,21 +7487,15 @@ async function callAI(msg,hist){
   var ctx=getCtx(), sp=QUICK[msg], prompt=sp?sp(ctx):msg;
   var msgs=hist.slice(-8).map(function(h){return{role:h.role,content:h.content};});
   msgs.push({role:'user',content:prompt});
-  if(API.provider==='openai'){
-    var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
-      body:JSON.stringify({model:API.model,max_tokens:400,
-        messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return (await r.json()).choices[0].message.content||'—';
-  } else {
-    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:API.model,max_tokens:400,
-        system:SYS+'\n数据:\n'+ctx, messages:msgs})});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return (await r.json()).content.find(function(c){return c.type==='text';}).text||'—';
-  }
+  // OpenAI 兼容格式（官方 / 中转均走此分支）
+  var base = (API.baseURL||' ').trim().replace(/\/+$/, '');
+  var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  var r=await fetch(url,{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
+    body:JSON.stringify({model:API.model,max_tokens:400,
+      messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return (await r.json()).choices[0].message.content||'—';
 }
 
 /* ═══════════════════════════════════════════════
@@ -7791,15 +7786,23 @@ window.petSend = async function(){
 };
 
 window.petConfigKey = function(){
-  var k=prompt('输入 API Key:\nAnthropic: sk-ant-...\nOpenAI: sk-...',API.apiKey||'');
+  var k=prompt('① API Key（必填）\n例：sk-xxxx 或中转服务的 key',API.apiKey||'');
   if(k===null) return;
-  API.apiKey=k.trim();
-  if(API.apiKey){
-    API.provider = API.apiKey.startsWith('sk-ant') ? 'anthropic' : 'openai';
-    var h=document.getElementById('petApiHint');
-    if(h) h.innerHTML='✓ Key 已配置 · '+API.provider+' <a onclick="petConfigKey()">修改</a>';
-    addMsg('bot','Key 配置成功！现在可以问我数据问题了 ✓');
+  k=k.trim(); if(!k) return;
+  var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
+  if(b===null) return;
+  API.apiKey=k; API.baseURL=(b||' ').trim(); API.provider='openai';
+  // 根据 key 前缀自动识别模型
+  if(!API.baseURL && k.startsWith('sk-ant')) {
+    API.model='claude-sonnet-4-20250514';
+    addMsg('bot','⚠️ 注意：Anthropic 官方 key 需要科学上网才能访问，建议使用中转地址。');
+  } else {
+    if(!API.model || API.model==='claude-sonnet-4-20250514') API.model='gpt-4o-mini';
   }
+  var h=document.getElementById('petApiHint');
+  var label = API.baseURL ? ('中转: '+API.baseURL.replace('https://','').split('/')[0]) : 'OpenAI 官方';
+  if(h) h.innerHTML='✓ '+label+' <a onclick="petConfigKey()">修改</a>';
+  addMsg('bot','Key 配置成功！模型: '+API.model+'，现在可以问我数据问题了 ✓');
 };
 
 function setDis(d){
