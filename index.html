@@ -7678,14 +7678,7 @@ char.addEventListener('contextmenu',function(e){
 ═══════════════════════════════════════════════ */
 var _dragOX=0, _dragOY=0;  // cursor offset from petEl top-left at drag start
 
-// One-time: convert right/bottom → left/top so drag math is simple
-(function(){
-  var r=petEl.getBoundingClientRect();
-  petEl.style.left=''; petEl.style.top='';
-  petEl.style.right  = (window.innerWidth  - r.right)  + 'px';
-  petEl.style.bottom = (window.innerHeight - r.bottom) + 'px';
-  // Switch to left/top on first drag start to avoid layout shift
-})();
+// 定位由 CSS 控制：bottom:24px; right:24px（拖拽时在 onDragStart 切换为 left/top）
 
 function getXY(e){
   return e.touches
