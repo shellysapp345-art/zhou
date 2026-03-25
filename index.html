@@ -7602,14 +7602,157 @@ var isDrag     = false;
 var petEl      = document.getElementById('petRoot');
 var notifTimer = null;
 
-// ── Left click → browser history back ──
+/* ─────────────────────────────────────────
+   APP-LEVEL NAVIGATION STACK
+   Tracks view snapshots so left-click
+   goes back inside the SPA only.
+───────────────────────────────────────── */
+var NAV_STACK = [];       // array of state snapshots
+var NAV_IGNORE = false;   // prevent recording during a pop
+
+/** Snapshot current app navigation state */
+function navSnapshot(){
+  if(typeof S === 'undefined') return null;
+  return {
+    curAcc    : S.curAcc,
+    curFolder : S.curFolder,
+    view      : S.view,
+    filter    : S.filter,
+    page      : S.page,
+    searchQuery: S.searchQuery,
+    // overview pane visible?
+    overviewVisible: (function(){
+      var p = document.getElementById('overviewPane');
+      return p ? p.style.display !== 'none' : false;
+    })()
+  };
+}
+
+/** Push a snapshot onto the stack (called on every nav change) */
+function navPush(){
+  if(NAV_IGNORE || typeof S === 'undefined') return;
+  var snap = navSnapshot();
+  if(!snap) return;
+  // Avoid duplicate consecutive entries
+  if(NAV_STACK.length > 0){
+    var last = NAV_STACK[NAV_STACK.length-1];
+    if(last.curAcc===snap.curAcc && last.curFolder===snap.curFolder &&
+       last.view===snap.view && last.filter===snap.filter &&
+       last.overviewVisible===snap.overviewVisible) return;
+  }
+  if(NAV_STACK.length >= 50) NAV_STACK.shift(); // cap at 50
+  NAV_STACK.push(snap);
+}
+
+/** Restore a snapshot */
+function navRestore(snap){
+  if(!snap || typeof S === 'undefined') return;
+  NAV_IGNORE = true;
+  S.curAcc      = snap.curAcc;
+  S.curFolder   = snap.curFolder;
+  S.view        = snap.view;
+  S.filter      = snap.filter;
+  S.page        = snap.page;
+  S.searchQuery = snap.searchQuery || '';
+
+  // Sync search box
+  var gs = document.getElementById('globalSearch');
+  if(gs) gs.value = S.searchQuery;
+
+  // Sync view buttons
+  ['grid','ranking','dashboard'].forEach(function(x){
+    var el = document.getElementById('vb-'+x);
+    if(el) el.classList.toggle('on', x===snap.view);
+  });
+
+  // Sync filter chips
+  document.querySelectorAll('.fchip').forEach(function(b){ b.classList.remove('on'); });
+  var fcEl = document.getElementById('fc-'+(snap.filter==='all'?'all':snap.filter));
+  if(fcEl) fcEl.classList.add('on');
+
+  // Render
+  if(typeof render === 'function') render();
+
+  // Restore overview pane if it was visible
+  if(snap.overviewVisible && typeof showOverviewPane === 'function'){
+    showOverviewPane();
+  }
+
+  NAV_IGNORE = false;
+}
+
+/** In-app back: pop the stack and restore previous state */
+function appBack(){
+  // Must have at least 2 entries (current + one previous)
+  if(NAV_STACK.length < 2){
+    petShowHomeMsg();
+    return;
+  }
+  NAV_STACK.pop(); // discard current
+  var prev = NAV_STACK[NAV_STACK.length - 1];
+  navRestore(prev);
+}
+
+/** Show a subtle "already home" hint */
+function petShowHomeMsg(){
+  showNotif('已在主页面 · 没有更多历史了');
+}
+
+// ── Hook into app navigation to record history ──
+// Wrap the main navigation functions after they're defined
+window.addEventListener('load', function(){
+  // Record initial state
+  navPush();
+
+  // Patch selAcc
+  var _selAcc = window.selAcc;
+  window.selAcc = function(){
+    var result = _selAcc && _selAcc.apply(this, arguments);
+    setTimeout(navPush, 50);
+    return result;
+  };
+
+  // Patch selectNavFolder
+  var _selectNavFolder = window.selectNavFolder;
+  window.selectNavFolder = function(){
+    var result = _selectNavFolder && _selectNavFolder.apply(this, arguments);
+    setTimeout(navPush, 50);
+    return result;
+  };
+
+  // Patch setView
+  var _setView = window.setView;
+  window.setView = function(){
+    var result = _setView && _setView.apply(this, arguments);
+    setTimeout(navPush, 50);
+    return result;
+  };
+
+  // Patch setFilter
+  var _setFilter = window.setFilter;
+  window.setFilter = function(){
+    var result = _setFilter && _setFilter.apply(this, arguments);
+    setTimeout(navPush, 50);
+    return result;
+  };
+
+  // Patch showOverviewPane
+  var _showOvPane = window.showOverviewPane;
+  window.showOverviewPane = function(){
+    var result = _showOvPane && _showOvPane.apply(this, arguments);
+    setTimeout(navPush, 50);
+    return result;
+  };
+});
+
+// ── Left click → in-app back ──
 char.addEventListener('click', function(e){
   if(isDrag) return;
   wake();
   bounce();
   setState('happy');
   setTimeout(function(){ if(state==='happy') setState('idle'); }, 1400);
-  window.history.back();
+  appBack();
 });
 
 // ── Right click → open panel, suppress context menu ──
