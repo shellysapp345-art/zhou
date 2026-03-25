@@ -4569,6 +4569,7 @@ function showAdminApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('userSearchPage').style.display='none';
   document.getElementById('mainApp').style.display='flex';
+  if(typeof petShow==='function') petShow();
   const _bu=document.getElementById('btnUserMgmt');if(_bu)_bu.style.display='block';
   const _su=document.getElementById('settingsUserMgmt');if(_su)_su.style.display='flex';
   // 更新侧边栏头像
@@ -4587,6 +4588,7 @@ function showUserApp(){
   document.getElementById('mainApp').style.display='none';
   const page = document.getElementById('userSearchPage');
   page.style.display='flex';
+  if(typeof petShow==='function') petShow();
   document.getElementById('userWelcome').textContent = '你好，' + currentUser.username;
   loadUserData();
 }
@@ -4690,6 +4692,7 @@ function doLogout(){
   document.getElementById('userSearchPage').style.display='none';
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
+  if(typeof petHide==='function') petHide();
 }
 
 // ══════════════════════════════════════════
@@ -7512,25 +7515,7 @@ var petRoot = document.getElementById('petRoot');
 function petShow(){ petRoot.classList.add('pet-visible'); }
 function petHide(){ petRoot.classList.remove('pet-visible'); }
 
-// Hook into existing auth functions
-var _origShowAdmin = window.showAdminApp;
-var _origShowUser  = window.showUserApp;
-var _origLogout    = window.doLogout;
-
-window.showAdminApp = function(){
-  if(_origShowAdmin) _origShowAdmin.apply(this, arguments);
-  petShow();
-};
-window.showUserApp = function(){
-  if(_origShowUser) _origShowUser.apply(this, arguments);
-  petShow();
-};
-window.doLogout = function(){
-  petHide();
-  panelOpen = false;
-  document.getElementById('petPanel').style.display = 'none';
-  if(_origLogout) _origLogout.apply(this, arguments);
-};
+// petShow/petHide 由 showAdminApp / showUserApp 直接调用
 
 // Also check on load (if session already active)
 window.addEventListener('load', function(){
