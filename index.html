@@ -7598,208 +7598,168 @@ function wake(){
    §6  CLICK / RIGHT-CLICK INTERACTIONS
 ═══════════════════════════════════════════════ */
 var panelOpen  = false;
-var isDrag     = false;
 var petEl      = document.getElementById('petRoot');
+var isDrag     = false;
 var notifTimer = null;
 
-/* ─────────────────────────────────────────
-   APP-LEVEL NAVIGATION STACK
-   Tracks view snapshots so left-click
-   goes back inside the SPA only.
-───────────────────────────────────────── */
-var NAV_STACK = [];       // array of state snapshots
-var NAV_IGNORE = false;   // prevent recording during a pop
+/* ═══════════════════════════════════════════════
+   §6A  APP-LEVEL NAVIGATION STACK
+═══════════════════════════════════════════════ */
+var NAV_STACK  = [];
+var NAV_IGNORE = false;
 
-/** Snapshot current app navigation state */
 function navSnapshot(){
-  if(typeof S === 'undefined') return null;
+  if(typeof S==='undefined') return null;
   return {
-    curAcc    : S.curAcc,
-    curFolder : S.curFolder,
-    view      : S.view,
-    filter    : S.filter,
-    page      : S.page,
-    searchQuery: S.searchQuery,
-    // overview pane visible?
-    overviewVisible: (function(){
-      var p = document.getElementById('overviewPane');
-      return p ? p.style.display !== 'none' : false;
+    curAcc:S.curAcc, curFolder:S.curFolder,
+    view:S.view, filter:S.filter, page:S.page,
+    searchQuery:S.searchQuery||'',
+    overviewVisible:(function(){
+      var p=document.getElementById('overviewPane');
+      return p?p.style.display!=='none':false;
     })()
   };
 }
-
-/** Push a snapshot onto the stack (called on every nav change) */
 function navPush(){
-  if(NAV_IGNORE || typeof S === 'undefined') return;
-  var snap = navSnapshot();
-  if(!snap) return;
-  // Avoid duplicate consecutive entries
-  if(NAV_STACK.length > 0){
-    var last = NAV_STACK[NAV_STACK.length-1];
-    if(last.curAcc===snap.curAcc && last.curFolder===snap.curFolder &&
-       last.view===snap.view && last.filter===snap.filter &&
+  if(NAV_IGNORE||typeof S==='undefined') return;
+  var snap=navSnapshot(); if(!snap) return;
+  if(NAV_STACK.length>0){
+    var last=NAV_STACK[NAV_STACK.length-1];
+    if(last.curAcc===snap.curAcc&&last.curFolder===snap.curFolder&&
+       last.view===snap.view&&last.filter===snap.filter&&
        last.overviewVisible===snap.overviewVisible) return;
   }
-  if(NAV_STACK.length >= 50) NAV_STACK.shift(); // cap at 50
+  if(NAV_STACK.length>=50) NAV_STACK.shift();
   NAV_STACK.push(snap);
 }
-
-/** Restore a snapshot */
 function navRestore(snap){
-  if(!snap || typeof S === 'undefined') return;
-  NAV_IGNORE = true;
-  S.curAcc      = snap.curAcc;
-  S.curFolder   = snap.curFolder;
-  S.view        = snap.view;
-  S.filter      = snap.filter;
-  S.page        = snap.page;
-  S.searchQuery = snap.searchQuery || '';
-
-  // Sync search box
-  var gs = document.getElementById('globalSearch');
-  if(gs) gs.value = S.searchQuery;
-
-  // Sync view buttons
+  if(!snap||typeof S==='undefined') return;
+  NAV_IGNORE=true;
+  S.curAcc=snap.curAcc; S.curFolder=snap.curFolder;
+  S.view=snap.view; S.filter=snap.filter;
+  S.page=snap.page; S.searchQuery=snap.searchQuery||'';
+  var gs=document.getElementById('globalSearch');
+  if(gs) gs.value=S.searchQuery;
   ['grid','ranking','dashboard'].forEach(function(x){
-    var el = document.getElementById('vb-'+x);
-    if(el) el.classList.toggle('on', x===snap.view);
+    var el=document.getElementById('vb-'+x);
+    if(el) el.classList.toggle('on',x===snap.view);
   });
-
-  // Sync filter chips
-  document.querySelectorAll('.fchip').forEach(function(b){ b.classList.remove('on'); });
-  var fcEl = document.getElementById('fc-'+(snap.filter==='all'?'all':snap.filter));
-  if(fcEl) fcEl.classList.add('on');
-
-  // Render
-  if(typeof render === 'function') render();
-
-  // Restore overview pane if it was visible
-  if(snap.overviewVisible && typeof showOverviewPane === 'function'){
-    showOverviewPane();
-  }
-
-  NAV_IGNORE = false;
+  document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
+  var fc=document.getElementById('fc-'+(snap.filter==='all'?'all':snap.filter));
+  if(fc) fc.classList.add('on');
+  if(typeof render==='function') render();
+  if(snap.overviewVisible&&typeof showOverviewPane==='function') showOverviewPane();
+  NAV_IGNORE=false;
 }
-
-/** In-app back: pop the stack and restore previous state */
 function appBack(){
-  // Must have at least 2 entries (current + one previous)
-  if(NAV_STACK.length < 2){
-    petShowHomeMsg();
-    return;
-  }
-  NAV_STACK.pop(); // discard current
-  var prev = NAV_STACK[NAV_STACK.length - 1];
-  navRestore(prev);
+  if(NAV_STACK.length<2){ showNotif('已在主页面 · 没有更多历史了'); return; }
+  NAV_STACK.pop();
+  navRestore(NAV_STACK[NAV_STACK.length-1]);
 }
-
-/** Show a subtle "already home" hint */
-function petShowHomeMsg(){
-  showNotif('已在主页面 · 没有更多历史了');
-}
-
-// ── Hook into app navigation to record history ──
-// Wrap the main navigation functions after they're defined
-window.addEventListener('load', function(){
-  // Record initial state
+window.addEventListener('load',function(){
   navPush();
-
-  // Patch selAcc
-  var _selAcc = window.selAcc;
-  window.selAcc = function(){
-    var result = _selAcc && _selAcc.apply(this, arguments);
-    setTimeout(navPush, 50);
-    return result;
-  };
-
-  // Patch selectNavFolder
-  var _selectNavFolder = window.selectNavFolder;
-  window.selectNavFolder = function(){
-    var result = _selectNavFolder && _selectNavFolder.apply(this, arguments);
-    setTimeout(navPush, 50);
-    return result;
-  };
-
-  // Patch setView
-  var _setView = window.setView;
-  window.setView = function(){
-    var result = _setView && _setView.apply(this, arguments);
-    setTimeout(navPush, 50);
-    return result;
-  };
-
-  // Patch setFilter
-  var _setFilter = window.setFilter;
-  window.setFilter = function(){
-    var result = _setFilter && _setFilter.apply(this, arguments);
-    setTimeout(navPush, 50);
-    return result;
-  };
-
-  // Patch showOverviewPane
-  var _showOvPane = window.showOverviewPane;
-  window.showOverviewPane = function(){
-    var result = _showOvPane && _showOvPane.apply(this, arguments);
-    setTimeout(navPush, 50);
-    return result;
-  };
+  ['selAcc','selectNavFolder','setView','setFilter','showOverviewPane'].forEach(function(fn){
+    var orig=window[fn];
+    if(!orig) return;
+    window[fn]=function(){
+      var r=orig.apply(this,arguments);
+      setTimeout(navPush,50);
+      return r;
+    };
+  });
 });
 
-// ── Left click → in-app back ──
-char.addEventListener('click', function(e){
+/* ═══════════════════════════════════════════════
+   §6B  CLICK / RIGHT-CLICK
+═══════════════════════════════════════════════ */
+char.addEventListener('click',function(e){
   if(isDrag) return;
-  wake();
-  bounce();
+  wake(); bounce();
   setState('happy');
-  setTimeout(function(){ if(state==='happy') setState('idle'); }, 1400);
+  setTimeout(function(){if(state==='happy')setState('idle');},1400);
   appBack();
 });
+char.addEventListener('contextmenu',function(e){
+  e.preventDefault(); e.stopPropagation();
+  wake(); petTogglePanel();
+});
 
-// ── Right click → open panel, suppress context menu ──
-char.addEventListener('contextmenu', function(e){
-  e.preventDefault();
-  e.stopPropagation();
+/* ═══════════════════════════════════════════════
+   §6C  DRAG — left/top absolute positioning
+   Uses pointer offset from element corner so
+   the pet always stays exactly under the cursor.
+═══════════════════════════════════════════════ */
+var _dragOX=0, _dragOY=0;  // cursor offset from petEl top-left at drag start
+
+// One-time: convert right/bottom → left/top so drag math is simple
+(function(){
+  var r=petEl.getBoundingClientRect();
+  petEl.style.left=''; petEl.style.top='';
+  petEl.style.right  = (window.innerWidth  - r.right)  + 'px';
+  petEl.style.bottom = (window.innerHeight - r.bottom) + 'px';
+  // Switch to left/top on first drag start to avoid layout shift
+})();
+
+function getXY(e){
+  return e.touches
+    ? {x:e.touches[0].clientX, y:e.touches[0].clientY}
+    : {x:e.clientX,            y:e.clientY};
+}
+
+function onDragStart(e){
+  if(e.button!==undefined&&e.button!==0) return;
   wake();
-  petTogglePanel();
-});
+  isDrag=false;
 
-// ── Drag ──
-var dx0, dy0, rr0, rb0;
-function getXY(e){ return e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
-
-char.addEventListener('mousedown', function(e){
-  if(e.button!==0) return;
-  isDrag=false; wake();
-  var p=getXY(e); dx0=p.x; dy0=p.y;
+  // Switch positioning to left/top once
   var r=petEl.getBoundingClientRect();
-  rr0=window.innerWidth-r.right; rb0=window.innerHeight-r.bottom;
-  document.addEventListener('mousemove', onDragMove);
+  petEl.style.right='auto'; petEl.style.bottom='auto';
+  petEl.style.left = r.left+'px';
+  petEl.style.top  = r.top +'px';
+
+  var p=getXY(e);
+  _dragOX = p.x - r.left;
+  _dragOY = p.y - r.top;
+
+  document.addEventListener('mousemove', onDragMove, {passive:false});
   document.addEventListener('mouseup',   onDragEnd);
-});
-char.addEventListener('touchstart', function(e){
-  isDrag=false; wake();
-  var p=getXY(e); dx0=p.x; dy0=p.y;
-  var r=petEl.getBoundingClientRect();
-  rr0=window.innerWidth-r.right; rb0=window.innerHeight-r.bottom;
   document.addEventListener('touchmove', onDragMove, {passive:false});
   document.addEventListener('touchend',  onDragEnd);
-}, {passive:true});
-
-function onDragMove(e){
-  var p=getXY(e), dx=p.x-dx0, dy=p.y-dy0;
-  if(!isDrag && (Math.abs(dx)>5||Math.abs(dy)>5)) isDrag=true;
-  if(!isDrag) return;
-  petEl.style.right  = Math.max(8, Math.min(window.innerWidth-90,  rr0-dx))+'px';
-  petEl.style.bottom = Math.max(8, Math.min(window.innerHeight-90, rb0+dy))+'px';
   if(e.cancelable) e.preventDefault();
 }
-function onDragEnd(){
-  document.removeEventListener('mousemove',onDragMove);
-  document.removeEventListener('touchmove',onDragMove);
-  document.removeEventListener('mouseup',  onDragEnd);
-  document.removeEventListener('touchend', onDragEnd);
-  setTimeout(function(){ isDrag=false; },50);
+
+function onDragMove(e){
+  var p  = getXY(e);
+  var nx = p.x - _dragOX;
+  var ny = p.y - _dragOY;
+
+  if(!isDrag&&(Math.abs(nx-parseFloat(petEl.style.left))>4||
+               Math.abs(ny-parseFloat(petEl.style.top ))>4)){
+    isDrag=true;
+    char.style.cursor='grabbing';
+  }
+  if(!isDrag) return;
+
+  var pw=petEl.offsetWidth||100, ph=petEl.offsetHeight||120;
+  nx=Math.max(8, Math.min(window.innerWidth  - pw - 8, nx));
+  ny=Math.max(8, Math.min(window.innerHeight - ph - 8, ny));
+
+  petEl.style.left=nx+'px';
+  petEl.style.top =ny+'px';
+  if(e.cancelable) e.preventDefault();
 }
+
+function onDragEnd(){
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup',   onDragEnd);
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend',  onDragEnd);
+  char.style.cursor='pointer';
+  setTimeout(function(){isDrag=false;},50);
+}
+
+char.addEventListener('mousedown',  onDragStart);
+char.addEventListener('touchstart', onDragStart, {passive:false});
 
 // Wake on any page activity
 ['mousemove','keydown','scroll','touchstart'].forEach(function(ev){
