@@ -64,7 +64,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 /* SVG icon baseline alignment */
-.sb-exp svg,.sb-add svg,.sb-stats-bar svg,.sb-live svg,
 .tb-right svg,.vbtn svg,.btn svg,.fchip svg,
 button svg, a svg { vertical-align:middle; flex-shrink:0; }
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;min-height:100vh;}
@@ -181,10 +180,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .ndm-item.on{ background:var(--accent-light);color:var(--accent);font-weight:600; }
 .ndm-sep{ height:1px;background:var(--border);margin:4px 0; }
 
-/* 隐藏旧侧边栏元素 */
-.sb-stats-bar,.sb-lbl,.acc-list,.sb-add,.sb-exp,.sb-live,
-.sb-name,.sb-sub,.aci-info,.aci-badge,.aci-actions{display:none!important;}
-.sb-stats,.sbs,.sbs-n,.sbs-v{display:none;}
+/* 旧侧边栏元素已删除 */
 .c-red{color:#f07060;}.c-cyan{color:#60c0d0;}.c-gold{color:#e0b040;}.c-green{color:#50c080;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
@@ -229,9 +225,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    批量操作弹窗
    ══════════════════════════════════════════ */
-#batchModal{position:fixed;inset:0;z-index:9300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#batchModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);}
 #batchModal.open{display:flex;}
-#batchBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(94vw,520px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+#batchBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,520px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
 
 /* ══════════════════════════════════════════
    视频卡片多选模式
@@ -276,9 +272,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    快捷编辑弹窗（单击视频卡片）
    ══════════════════════════════════════════ */
-#quickEditModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);}
+#quickEditModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);}
 #quickEditModal.open{display:flex;}
-#quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+#quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
 
 /* ══════════════════════════════════════════
    总览卡片右键菜单
@@ -292,6 +288,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   animation:ctxIn .12s ease;
 }
 #ovCardCtxMenu.show{display:block;}
+/* #cardCtxMenu shares ctx-menu styles */
 
 /* ══════════════════════════════════════════
    顶栏精简
@@ -448,11 +445,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   font-size:11px;font-weight:600;color:var(--text);
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
 }
-.card-acct-date-row{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-top:1px;
-}
-.card-acct-date{font-size:9px;color:var(--text3);}
+.card-acct-date{font-size:9px;color:var(--text3);margin-top:1px;}
 .card-uploader-tag{font-size:9px;color:var(--text3);}
 
 /* 封面右上角状态浮层（Risk / Violation / Promoted 才显示） */
@@ -504,14 +497,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .vgrid.list .vcard{
   aspect-ratio:auto;
   display:flex;flex-direction:row;
-  height:76px;
+  height:72px;
   border-radius:12px;overflow:hidden;
   flex-direction:unset;
 }
 .vgrid.list .cthumb{
   position:relative;
   width:116px;flex-shrink:0;
-  aspect-ratio:auto;height:76px;
+  aspect-ratio:auto;height:72px;
   overflow:hidden;
 }
 .vgrid.list .cthumb-play{display:none;}
@@ -519,12 +512,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* 列表主体区 */
 .vgrid.list .card-info{
   flex:1;min-width:0;
-  padding:9px 12px;
-  display:flex;flex-direction:column;justify-content:center;
-  gap:4px;
+  padding:8px 12px;
+  display:flex;flex-direction:row;align-items:center;
+  gap:10px;
   border-left:1px solid var(--border);
 }
 .vgrid.list .card-stats-row{display:none;}
+.vgrid.list .card-uploader-tag{display:none;}
 /* 账号行 */
 .vgrid.list .card-acct{gap:6px;}
 .vgrid.list .card-acct-avatar{width:22px;height:22px;font-size:9px;}
@@ -536,47 +530,86 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   padding:2px 8px;font-size:9px;
   align-self:flex-start;
 }
-/* 右侧数字区 */
-.vgrid.list .list-stats{
-  display:flex;flex-direction:column;justify-content:center;
-  gap:5px;
-  padding:0 14px;
-  border-left:1px solid var(--border);
-  background:var(--s2);
-  min-width:100px;flex-shrink:0;
+/* 列表行内统计 */
+.list-stats-inline{
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+  padding:0 14px;border-left:1px solid var(--border);
 }
-.vgrid.list .list-stat-item{
-  display:flex;align-items:center;gap:6px;
+.lsi{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text);font-family:var(--mono);white-space:nowrap;}
+.lsi-ic{font-size:10px;color:var(--text3);}
+/* 列表更多按钮 */
+.list-more-btn{
+  flex-shrink:0;width:28px;height:100%;border:none;border-left:1px solid var(--border);
+  background:transparent;color:var(--text3);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s;
 }
-.vgrid.list .list-stat-icon{font-size:11px;color:var(--text3);width:14px;text-align:center;}
-.vgrid.list .list-stat-val{font-size:11px;font-weight:700;color:var(--text);font-family:var(--mono);}
+.list-more-btn:hover{background:var(--s2);color:var(--text);}
+/* 列表info区改为横向 */
+.vgrid.list .list-info{flex-direction:row;align-items:center;gap:12px;padding:0 12px;}
 /* 封面右上角浮层在列表也显示 */
 .vgrid.list .thumb-status{font-size:7px;padding:2px 5px;top:5px;right:5px;}
 /* 删除按钮 */
-.vgrid.list .cib-del{
-  position:relative;top:auto;left:auto;
-  opacity:0;width:28px;height:100%;border-radius:0;
-  border-left:1px solid var(--border);
-  background:transparent;color:var(--text3);
-  flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font-size:13px;transition:background .12s,opacity .15s;
-}
-.vgrid.list .vcard:hover .cib-del{opacity:1;}
-.vgrid.list .cib-del:hover{background:rgba(224,74,56,.08)!important;color:var(--red);}
+/* list del btn moved to ctx menu */
 .vgrid.list .vcard:hover{transform:translateY(-1px);}
 .vgrid.list .card-checkbox{top:50%;left:8px;transform:translateY(-50%);}
+/* ══════════════════════════════════════════
+   列表视图 — 真正表格布局补丁
+   ══════════════════════════════════════════ */
+/* 列表卡片删除按钮改由ctx菜单访问 */
+.vgrid.list .cib-del { display:none !important; }
+
+/* 列表info区改横向布局 */
+.vgrid.list .card-info {
+  flex-direction:row;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
+  flex:1;
+  min-width:0;
+}
+.vgrid.list .card-status-pill { flex-shrink:0; }
+
+/* ══════════════════════════════════════════
+   统一 UI 细节补丁
+   ══════════════════════════════════════════ */
+/* 按钮高度统一 */
+.btn { height:32px; }
+.btn-primary { height:32px; }
+
+/* 所有小图标按钮统一尺寸 */
+.tb-ibtn { width:30px; height:30px; }
+.vbtn { width:28px; height:28px; }
+
+/* 统一 modal 关闭按钮 */
+.mclose, .dd-close {
+  width:28px; height:28px; border-radius:8px;
+  border:none; background:var(--s3); color:var(--text2);
+  cursor:pointer; font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .12s, color .12s;
+  flex-shrink:0;
+}
+.mclose:hover, .dd-close:hover { background:var(--border2); color:var(--text); }
+
+/* 统一 modal header 背景 */
+#batchModal .mhead,
+#quickEditModal > div > div:first-child {
+  background: var(--s2);
+}
+
+/* 卡片 hover 统一 */
+.vcard:hover { box-shadow:0 6px 20px rgba(0,0,0,.09); transform:translateY(-2px); }
+.vgrid.list .vcard:hover { transform:translateY(-1px); box-shadow:0 2px 10px rgba(0,0,0,.07); }
+
+/* chip 统一样式 */
+.fchip { height:28px; display:inline-flex; align-items:center; }
 
 
-/* 旧兼容类隐藏 */
-.cbody,.cstats,.cfoot,.cbtns,.cib,.cs,.cthumb-ov,.play-btn{display:none!important;}
 
-.empty{grid-column:1/-1;text-align:center;padding:60px 20px;}
-.empty-icon{font-size:32px;opacity:.2;margin-bottom:10px;}
-.empty-t{font-size:14px;color:var(--text2);margin-bottom:4px;}
-.empty-s{font-size:12px;color:var(--text3);}
 
-.empty{grid-column:1/-1;text-align:center;padding:80px 20px;}
-.empty-icon{font-size:36px;opacity:.2;margin-bottom:12px;}
+.empty{grid-column:1/-1;text-align:center;padding:72px 20px;}
+.empty-icon{font-size:34px;opacity:.2;margin-bottom:12px;}
 .empty-t{font-size:14px;color:var(--text2);margin-bottom:5px;}
 .empty-s{font-size:12px;color:var(--text3);}
 
@@ -1136,15 +1169,6 @@ canvas{max-width:100%;}
 </div>
 
 <div class="wrap" id="mainApp" style="display:none;">
-<!-- 隐藏旧侧边栏兼容数据节点 -->
-<div id="accColumn" style="display:none;">
-  <div style="display:none;" id="sb-total-wrap"><b id="sb-total">0</b></div>
-  <div style="display:none;" id="sb-viol-wrap"><b id="sb-viol">0</b></div>
-  <div style="display:none;" id="sb-likes-wrap"><b id="sb-likes">0</b></div>
-  <div style="display:none;" id="sb-promo-wrap"><b id="sb-promo">0</b></div>
-  <div id="accList" style="display:none;"></div>
-</div>
-
 <!-- ══ 精简图标侧边栏 ══ -->
 <nav class="sidebar" id="iconSidebar">
   <div class="sb-logo-icon" onclick="sbNavTo('overview')" title="数据总览">
@@ -1179,8 +1203,6 @@ canvas{max-width:100%;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="sb-tip">设置</span>
   </button>
-  <!-- 隐藏数据 -->
-  <div style="display:none;"><b id="sb-total">0</b><b id="sb-viol">0</b><b id="sb-likes">0</b><span id="sbUserInitial"></span></div>
   <button class="sb-icon-btn" id="btnUserMgmt" style="display:none;" onclick="openUserMgmt()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
     <span class="sb-tip">用户管理</span>
@@ -2422,27 +2444,24 @@ function renderGrid(){
       else if(isRiskL){  lPillClass='csp-risk';     lPillIcon='⚠';lPillText='RISK';     }
       else{              lPillClass='csp-normal';   lPillIcon='✓';lPillText='NORMAL';   }
       const lAvatar=a.name?a.name[0].toUpperCase():'?';
-      return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.02}s;" oncontextmenu="event.preventDefault();showOvCardCtxMenu(event,'${v.accId}')">
+      return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.02}s;" onclick="openDetailDrawer('${v.id}')" oncontextmenu="event.preventDefault();showCtxMenu(event,'${v.id}')">
         <div class="cthumb">${thumbHTML(v)}${lThumbStatus}${v.dur?`<div class="cdur">${v.dur}</div>`:''}<div class="card-checkbox"></div></div>
         <div class="card-info">
-          <div class="card-status-pill ${lPillClass}">${lPillIcon} ${lPillText}</div>
-          <div class="card-acct">
-            <div class="card-acct-avatar" style="background:${a.color}">${lAvatar}</div>
-            <div class="card-acct-info">
-              <div class="card-acct-name">${a.name}</div>
-              <div class="card-acct-date-row">
-                <span class="card-acct-date">${v.date||''}</span>
-                ${v.uploadedBy?`<span class="card-uploader-tag">👤 ${v.uploadedBy}</span>`:''}
-              </div>
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+            <div class="card-acct-avatar" style="background:${a.color};width:22px;height:22px;font-size:9px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">${lAvatar}</div>
+            <div style="min-width:0;">
+              <div class="card-acct-name" style="font-size:12px;">${a.name}</div>
+              <div class="card-acct-date" style="font-size:10px;color:var(--text3);">${v.date||''}</div>
             </div>
           </div>
+          <div class="card-status-pill ${lPillClass}" style="flex-shrink:0;margin-left:auto;">${lPillIcon} ${lPillText}</div>
         </div>
-        <div class="list-stats">
-          <div class="list-stat-item"><span class="list-stat-icon">▶</span><span class="list-stat-val">${fmt(v.play)}</span></div>
-          <div class="list-stat-item"><span class="list-stat-icon">♡</span><span class="list-stat-val">${fmt(v.likes)}</span></div>
-          <div class="list-stat-item"><span class="list-stat-icon">○</span><span class="list-stat-val">${fmt(v.comm)}</span></div>
+        <div class="list-stats-inline">
+          <span class="lsi"><span class="lsi-ic">▶</span>${fmt(v.play)}</span>
+          <span class="lsi"><span class="lsi-ic">♡</span>${fmt(v.likes)}</span>
+          <span class="lsi"><span class="lsi-ic">○</span>${fmt(v.comm)}</span>
         </div>
-        <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')">🗑</button>
+        <button class="list-more-btn" onclick="event.stopPropagation();showCtxMenu(event,'${v.id}')">⋯</button>
       </div>`;
     }
 
@@ -2465,13 +2484,14 @@ function renderGrid(){
 
     const avatarLetter=a.name?a.name[0].toUpperCase():'?';
 
-    return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.03}s;" oncontextmenu="event.preventDefault();showOvCardCtxMenu(event,'${v.accId}')">
+    return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.03}s;" onclick="openDetailDrawer('${v.id}')" oncontextmenu="event.preventDefault();showCtxMenu(event,'${v.id}')">
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-play"><div class="cthumb-play-btn"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1.5L9.5 6.5L1 11.5V1.5Z" fill="rgba(20,18,16,.75)" stroke="rgba(20,18,16,.1)" stroke-width=".5"/></svg></div></div>
         ${v.dur?`<div class="cdur">${v.dur}</div>`:''}
         ${thumbStatusHtml}
         <div class="card-checkbox"></div>
+        <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
       </div>
       <div class="card-info">
         <div class="card-stats-row">
@@ -2484,15 +2504,11 @@ function renderGrid(){
           <div class="card-acct-avatar" style="background:${a.color}">${avatarLetter}</div>
           <div class="card-acct-info">
             <div class="card-acct-name">${a.name}</div>
-            <div class="card-acct-date-row">
-              <span class="card-acct-date">${v.date||''}</span>
-            </div>
-            </div>
+            <div class="card-acct-date">${v.date||''}</div>
           </div>
         </div>
       </div>
     </div>`;
-  }).join('');
 }
 
 // ══════════════════════
@@ -3015,11 +3031,17 @@ function openDetailDrawer(vid){
       "</div>"+
     "</div>"+
     (v.title?"<div class=\"dd-section\"><div class=\"dd-label\">标题</div><div style=\"font-size:13px;color:var(--text);line-height:1.5;\">"+v.title+"</div></div>":"")+
-    (v.url?"<div class=\"dd-section\"><div class=\"dd-label\">链接</div><a href=\""+v.url+"\" target=\"_blank\" style=\"font-size:12px;color:var(--accent);word-break:break-all;\">"+v.url+"</a></div>":"");
+    (v.url?"<div class=\"dd-section\"><div class=\"dd-label\">链接</div><a href=\""+v.url+"\" target=\"_blank\" style=\"font-size:12px;color:var(--accent);word-break:break-all;\">"+v.url+"</a></div>":"")+
+    ((v.uploadedBy||v.douyin_id||v.author)?"<div class=\"dd-section\"><div class=\"dd-label\">其他信息</div>"+
+      (v.uploadedBy?"<div class=\"dd-info-row\"><span style=\"font-size:11px;color:var(--text3);width:60px;flex-shrink:0;\">上传人</span><span style=\"font-size:12px;color:var(--text);\">"+ v.uploadedBy+"</span></div>":"")+
+      (v.author?"<div class=\"dd-info-row\"><span style=\"font-size:11px;color:var(--text3);width:60px;flex-shrink:0;\">作者</span><span style=\"font-size:12px;color:var(--text);\">"+v.author+"</span></div>":"")+
+      (v.douyin_id?"<div class=\"dd-info-row\"><span style=\"font-size:11px;color:var(--text3);width:60px;flex-shrink:0;\">抖音号</span><span style=\"font-size:12px;color:var(--text);font-family:var(--mono);\">"+v.douyin_id+"</span></div>":"")+
+    "</div>":"");
   const acts=document.getElementById("ddActions");
   acts.innerHTML=
-    "<button class=\"btn btn-primary\" style=\"flex:1;padding:9px;font-size:13px;\" onclick=\"closeDetailDrawer();editV(\x27"+vid+"\x27)\">✏ 编辑</button>"+
-    "<button class=\"btn btn-ghost\" style=\"padding:9px 14px;font-size:13px;\" onclick=\"closeDetailDrawer();delV(\x27"+vid+"\x27)\">🗑 删除</button>";
+    (v.url?"<a href=\""+v.url+"\" target=\"_blank\" class=\"btn btn-ghost\" style=\"padding:9px 12px;font-size:12px;text-decoration:none;\">↗ 打开抖音</a>":"")+
+    "<button class=\"btn btn-ghost\" style=\"padding:9px 14px;font-size:13px;\" onclick=\"closeDetailDrawer();openQuickEdit(\x27"+vid+"\x27)\">✏ 编辑</button>"+
+    "<button class=\"btn btn-ghost\" style=\"padding:9px 14px;font-size:13px;color:var(--red);border-color:rgba(224,74,56,.3);\" onclick=\"closeDetailDrawer();delV(\x27"+vid+"\x27)\">🗑 删除</button>";
   document.getElementById("detailDrawerBg").classList.add("open");
 }
 function closeDetailDrawer(){
@@ -5933,6 +5955,37 @@ function switchAccDetailTab(tab){
 // ══════════════════════════════════════════
 let _qeVidId = null;
 
+
+// ══════════════════════════════════════════
+// 统一右键菜单（视频卡片）
+// ══════════════════════════════════════════
+let _ctxVidId = null;
+let _cardCtxMenu = null;
+
+function showCtxMenu(e, vidId) {
+  _ctxVidId = vidId;
+  // Create menu if not exist
+  if (!_cardCtxMenu) {
+    _cardCtxMenu = document.createElement('div');
+    _cardCtxMenu.className = 'ctx-menu';
+    _cardCtxMenu.id = 'cardCtxMenu';
+    _cardCtxMenu.innerHTML = `
+      <div class="ctx-item" onclick="openDetailDrawer(_ctxVidId)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 查看详情</div>
+      <div class="ctx-item" onclick="openQuickEdit(_ctxVidId)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 快速编辑</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item danger" onclick="delV(_ctxVidId)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> 删除</div>
+    `;
+    document.body.appendChild(_cardCtxMenu);
+  }
+  document.querySelectorAll('.ctx-menu.show').forEach(m => m.classList.remove('show'));
+  _cardCtxMenu.style.left = e.clientX + 'px';
+  _cardCtxMenu.style.top  = e.clientY + 'px';
+  _cardCtxMenu.classList.add('show');
+  setTimeout(() => {
+    document.addEventListener('click', () => _cardCtxMenu.classList.remove('show'), {once:true});
+  }, 0);
+}
+
 function openQuickEdit(vidId){
   _qeVidId = vidId;
   const v = S.videos.find(x=>x.id===vidId);
@@ -6090,14 +6143,16 @@ function batchDelete(){
 let _ovCtxAccId = null;
 
 function showOvCardCtxMenu(e, accId){
-  e.preventDefault(); e.stopPropagation();
+  // Deprecated: use showCtxMenu for video cards
+  // For overview account cards, show account context menu
   _ovCtxAccId = accId;
   const menu = document.getElementById('ovCardCtxMenu');
+  if(!menu) return;
+  document.querySelectorAll('.ctx-menu.show, #ovCardCtxMenu.show').forEach(m=>m.classList.remove('show'));
+  menu.style.left = e.clientX + 'px';
+  menu.style.top  = e.clientY + 'px';
   menu.classList.add('show');
-  const x = Math.min(e.clientX, window.innerWidth - 180);
-  const y = Math.min(e.clientY, window.innerHeight - 150);
-  menu.style.left = x+'px'; menu.style.top = y+'px';
-  setTimeout(()=>document.addEventListener('click', hideOvCardCtx, {once:true}), 0);
+  setTimeout(() => { document.addEventListener('click', () => menu.classList.remove('show'), {once:true}); }, 0);
 }
 function hideOvCardCtx(){ document.getElementById('ovCardCtxMenu').classList.remove('show'); }
 function ovCtxChart(){ hideOvCardCtx(); if(_ovCtxAccId) openChartModal(S.accounts.find(a=>a.id===_ovCtxAccId)?.folderId, 'line'); }
@@ -6428,15 +6483,15 @@ checkLogin();
           <div class="manual-card-title">🖥️ 界面结构</div>
           <div class="manual-card-desc">
             <b>左侧边栏</b> — 图标导航，点击可展开项目/账号列表、视频排名、导出工具<br>
-            <b>主内容区</b> — 视频卡片展示，支持宫格 / 缩略 / 列表三种视图<br>
+            <b>主内容区</b> — 视频卡片展示，支持宫格 / 列表 / 排名 / 看板多种视图<br>
             <b>顶部栏</b> — 搜索、状态筛选、视图切换、刷新、添加视频
           </div>
         </div>
         <div class="manual-card">
-          <div class="manual-card-title">👤 双角色说明</div>
+          <div class="manual-card-title">👤 使用角色</div>
           <div class="manual-card-desc">
-            <span class="manual-badge">管理员</span> 拥有全部功能：增删项目/视频/用户，数据分析，CSV 导出，视频排名<br>
-            <span class="manual-badge green">员工</span> 仅可查看所属文件夹内项目和视频，可搜索、上传视频和查看评论三要素
+            <span class="manual-badge">管理员</span> 拥有全部功能：增删项目/视频，数据分析，CSV 导出，视频排名<br>
+            多用户权限系统即将上线，敬请期待
           </div>
         </div>
         <div class="manual-card">
@@ -6503,7 +6558,7 @@ checkLogin();
           <div class="manual-card-desc">
             顶部搜索框：按<b>视频标题</b>实时过滤<br>
             筛选按钮：<span class="manual-badge">全部</span> <span class="manual-badge gold">⚠ 违规</span> <span class="manual-badge">📢 推广</span> <span class="manual-badge green">✓ 正常</span><br>
-            视图切换：<b>⊞ 宫格</b> / <b>⊡ 缩略</b> / <b>☰ 列表</b>
+            视图切换：<b>⊞ 宫格</b> / <b>☰ 列表</b>
           </div>
         </div>
         <div class="manual-card">
@@ -6599,31 +6654,21 @@ checkLogin();
 
       <!-- 用户权限 -->
       <div class="manual-section" id="manual-user">
-        <h3><span>👥</span> 用户权限管理</h3>
-        <p>管理员可通过设置菜单中的「用户管理」管理系统用户。</p>
-        <div class="manual-step">
-          <div class="manual-step-num">1</div>
-          <div class="manual-step-content"><b>添加员工</b>：填写用户名、密码，选择绑定文件夹，角色设为「员工」。</div>
-        </div>
-        <div class="manual-step">
-          <div class="manual-step-num">2</div>
-          <div class="manual-step-content"><b>文件夹绑定</b>：员工只能查看其绑定文件夹内的项目和视频，实现数据隔离。</div>
-        </div>
-        <div class="manual-step">
-          <div class="manual-step-num">3</div>
-          <div class="manual-step-content"><b>删除员工</b>：删除员工账号后，该员工上传的视频「上传者」标签自动清空，视频数据本身保留不删除。</div>
+        <h3><span>👥</span> 用户与权限</h3>
+        <div class="manual-card" style="border-color:rgba(232,136,74,.35);background:rgba(232,136,74,.06);">
+          <div class="manual-card-title" style="color:var(--accent);">🚧 即将上线</div>
+          <div class="manual-card-desc">用户权限管理功能正在开发中，将支持按文件夹隔离权限、分配角色、查看操作日志等。</div>
         </div>
         <div class="manual-card">
-          <div class="manual-card-title">🔒 员工视图特性</div>
+          <div class="manual-card-title">当前支持</div>
           <div class="manual-card-desc">
-            员工登录后进入专属视图，只能看到所属文件夹内容。<br>
-            <b>支持：</b>视频搜索、视频数据录入（含评论三要素扫描）、切换项目查看。<br>
-            <b>不支持：</b>项目管理、文件夹管理、CSV 导出、用户管理、全局视频排名。
+            <b>管理员账号</b>：拥有全部功能——增删项目/视频，数据分析，CSV 导出，视频排名<br>
+            <b>文件夹分组</b>：可用于提前组织项目，便于后续权限隔离
           </div>
         </div>
       </div>
 
-      <!-- 使用技巧 -->
+            <!-- 使用技巧 -->
       <div class="manual-section" id="manual-tips">
         <h3><span>💡</span> 使用技巧</h3>
         <div class="manual-card">
@@ -6877,11 +6922,11 @@ function switchManualTab(section, el){
 <!-- ══ 快捷编辑弹窗（单击卡片） ══ -->
 <div id="quickEditModal" onclick="if(event.target===this)closeQuickEdit()">
 <div id="quickEditBox" onclick="event.stopPropagation()">
-  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:14px;font-weight:700;color:var(--text);" id="qeTitle">快捷编辑</div>
-    <div style="display:flex;gap:6px;">
-      <button onclick="openFullEdit()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--s2);color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font);">完整编辑</button>
-      <button onclick="closeQuickEdit()" style="width:26px;height:26px;border-radius:6px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+  <div class="mhead" style="background:var(--s2);">
+    <span class="mhead-t" id="qeTitle">快捷编辑</span>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button onclick="openFullEdit()" class="btn btn-ghost" style="padding:5px 12px;font-size:11px;height:28px;">完整编辑</button>
+      <button onclick="closeQuickEdit()" class="mclose">✕</button>
     </div>
   </div>
   <div style="padding:16px 18px;display:flex;flex-direction:column;gap:11px;" id="qeBody">
@@ -6897,12 +6942,12 @@ function switchManualTab(section, el){
 <!-- ══ 批量操作弹窗 ══ -->
 <div id="batchModal" onclick="if(event.target===this)closeBatchModal()">
 <div id="batchBox" onclick="event.stopPropagation()">
-  <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+  <div class="mhead" style="background:var(--s2);">
     <div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);" id="batchTitle">批量操作</div>
+      <div class="mhead-t" id="batchTitle">批量操作</div>
       <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="batchSubtitle">已选 0 条视频</div>
     </div>
-    <button onclick="closeBatchModal()" style="width:26px;height:26px;border-radius:6px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="closeBatchModal()" class="mclose">✕</button>
   </div>
   <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
     <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;">批量修改状态</div>
