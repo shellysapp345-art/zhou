@@ -7457,12 +7457,15 @@ var API = {
   provider : 'openai',
   apiKey   : '',
   baseURL  : '',
-  model    : 'gpt-4o-mini'
+  model    : 'deepseek-chat'
 };
 // 从localStorage恢复API配置
 try{
   var saved=localStorage.getItem('pet_api');
-  if(saved){var o=JSON.parse(saved);API.apiKey=o.apiKey||'';API.baseURL=o.baseURL||'';API.model=o.model||'gpt-4o-mini';API.provider=o.provider||'openai';}
+  if(saved){var o=JSON.parse(saved);API.apiKey=o.apiKey||'';API.baseURL=o.baseURL||'';API.model=o.model||'deepseek-chat';API.provider=o.provider||'openai';
+    // 自动迁移：gpt-4o-mini在很多中转不可用，换默认
+    if(API.model==='gpt-4o-mini'){API.model='deepseek-chat';try{localStorage.setItem('pet_api',JSON.stringify(API));}catch(e){}}
+  }
 }catch(e){}
 
 var QUICK = {
@@ -7516,9 +7519,14 @@ async function callAI(msg,hist){
       body:JSON.stringify({model:API.model,max_tokens:400,
         messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
     if(!r.ok){
-      var errBody=''; try{var ej=await r.json();errBody=JSON.stringify(ej);}catch(e){}
+      var errBody=''; try{var ej=await r.json();errBody=JSON.stringify(ej);}catch(e){try{errBody=await r.text();}catch(e2){}}
       if(r.status===404) throw new Error('❌ 404 地址不存在\n请求地址: '+url+'\n\n💡 检查你的中转BaseURL是否正确，点下方「修改」重新配置');
       if(r.status===401) throw new Error('❌ 401 认证失败\nAPI Key无效或过期，请重新配置');
+      if(r.status===503){
+        var isModelErr=errBody.indexOf('model_not_found')>=0||errBody.indexOf('无可用渠道')>=0;
+        if(isModelErr) throw new Error('❌ 模型不可用：'+API.model+'\n\n你的中转服务不支持这个模型。\n点下方「修改」→ 第③步换个模型试试\n推荐：deepseek-chat / gpt-3.5-turbo');
+        throw new Error('❌ 503 服务不可用\n请求地址: '+url+'\n模型: '+API.model+'\n\n服务器返回: '+(errBody||'无详情'));
+      }
       throw new Error('HTTP '+r.status+(errBody?' '+errBody:''));
     }
     var data=await r.json();
@@ -7825,11 +7833,11 @@ window.petConfigKey = function(){
   k=k.trim(); if(!k) return;
   var b=prompt('② 中转 BaseURL（必填，填你的中转服务地址）\n例：https://api.302.ai\n或：https://api.302.ai/v1\n\n（直接填域名即可，不需要加 /chat/completions）',API.baseURL||'');
   if(b===null) return;
-  var m=prompt('③ 模型名（选填，留空则自动选择）\n常用：gpt-4o-mini / gpt-4o / gpt-3.5-turbo / deepseek-chat\n当前：'+(API.model||'gpt-4o-mini'),API.model||'');
+  var m=prompt('③ 模型名（选填，留空则自动选择）\n常用：deepseek-chat / gpt-3.5-turbo / gpt-4o / claude-3-haiku\n\n⚠️ 填你中转服务支持的模型名，不确定就问服务商\n当前：'+(API.model||'deepseek-chat'),API.model||'');
   API.apiKey=k; API.baseURL=(b||'').trim(); API.provider='openai';
   if(m&&m.trim()) API.model=m.trim();
   else if(!API.baseURL && k.startsWith('sk-ant')) API.model='claude-sonnet-4-20250514';
-  else if(!API.model) API.model='gpt-4o-mini';
+  else if(!API.model) API.model='deepseek-chat';
   // 保存到localStorage
   try{localStorage.setItem('pet_api',JSON.stringify({apiKey:API.apiKey,baseURL:API.baseURL,model:API.model,provider:API.provider}));}catch(e){}
   _petUpdateHint();
