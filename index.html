@@ -7497,15 +7497,29 @@ async function callAI(msg,hist){
   msgs.push({role:'user',content:prompt});
   // OpenAI 兼容格式（官方 / 中转均走此分支）
   var base = (API.baseURL||'').trim().replace(/\/+$/, '');
-  var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  var url;
+  if(!base){
+    url='https://api.openai.com/v1/chat/completions';
+  }else if(base.indexOf('/chat/completions')>=0){
+    // 用户填了完整路径，直接用
+    url=base;
+  }else if(base.indexOf('/v1')>=0){
+    // 用户填了带/v1的地址，只补后半段
+    url=base+'/chat/completions';
+  }else{
+    // 只填了域名，补完整路径
+    url=base+'/v1/chat/completions';
+  }
   try{
     var r=await fetch(url,{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
       body:JSON.stringify({model:API.model,max_tokens:400,
         messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
     if(!r.ok){
-      var errBody=''; try{errBody=JSON.stringify(await r.json());}catch(e){}
-      throw new Error('HTTP '+r.status+(errBody?' - '+errBody:''));
+      var errBody=''; try{var ej=await r.json();errBody=JSON.stringify(ej);}catch(e){}
+      if(r.status===404) throw new Error('❌ 404 地址不存在\n请求地址: '+url+'\n\n💡 检查你的中转BaseURL是否正确，点下方「修改」重新配置');
+      if(r.status===401) throw new Error('❌ 401 认证失败\nAPI Key无效或过期，请重新配置');
+      throw new Error('HTTP '+r.status+(errBody?' '+errBody:''));
     }
     var data=await r.json();
     if(data.choices&&data.choices[0])return data.choices[0].message.content||'—';
@@ -7773,7 +7787,7 @@ function petTogglePanel(){
   dot.style.display = 'none';
   petHideNotif();
   if(panelOpen && history.length===0){
-    addMsg('bot','你好！右键点我可以随时呼出面板 👋 有什么运营问题都可以问我。');
+    addMsg('bot','你好！右键点我可以随时呼出面板 👋\n\n' + (API.apiKey ? '已配置 API Key，直接问我问题吧！' : '先点下方「点此设置」配置 API Key，就能问我运营问题了。'));
   }
   if(panelOpen) setTimeout(function(){ document.getElementById('petInput').focus(); },80);
 }
@@ -7809,20 +7823,20 @@ window.petConfigKey = function(){
   var k=prompt('① API Key（必填）\n例：sk-xxxx 或中转服务的 key',API.apiKey||'');
   if(k===null) return;
   k=k.trim(); if(!k) return;
-  var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
+  var b=prompt('② 中转 BaseURL（必填，填你的中转服务地址）\n例：https://api.302.ai\n或：https://api.302.ai/v1\n\n（直接填域名即可，不需要加 /chat/completions）',API.baseURL||'');
   if(b===null) return;
+  var m=prompt('③ 模型名（选填，留空则自动选择）\n常用：gpt-4o-mini / gpt-4o / gpt-3.5-turbo / deepseek-chat\n当前：'+(API.model||'gpt-4o-mini'),API.model||'');
   API.apiKey=k; API.baseURL=(b||'').trim(); API.provider='openai';
-  // 根据 key 前缀自动识别模型
-  if(!API.baseURL && k.startsWith('sk-ant')) {
-    API.model='claude-sonnet-4-20250514';
-    addMsg('bot','⚠️ 注意：Anthropic 官方 key 需要科学上网才能访问，建议使用中转地址。');
-  } else {
-    if(!API.model || API.model==='claude-sonnet-4-20250514') API.model='gpt-4o-mini';
-  }
+  if(m&&m.trim()) API.model=m.trim();
+  else if(!API.baseURL && k.startsWith('sk-ant')) API.model='claude-sonnet-4-20250514';
+  else if(!API.model) API.model='gpt-4o-mini';
   // 保存到localStorage
   try{localStorage.setItem('pet_api',JSON.stringify({apiKey:API.apiKey,baseURL:API.baseURL,model:API.model,provider:API.provider}));}catch(e){}
   _petUpdateHint();
-  addMsg('bot','✅ Key 配置成功！模型: '+API.model+'，现在可以问我数据问题了');
+  // 拼出最终URL让用户确认
+  var base2=(API.baseURL||'').replace(/\/+$/,'');
+  var finalUrl=!base2?'https://api.openai.com/v1/chat/completions':base2.indexOf('/chat/completions')>=0?base2:base2.indexOf('/v1')>=0?base2+'/chat/completions':base2+'/v1/chat/completions';
+  addMsg('bot','✅ 配置成功！\n模型: '+API.model+'\n地址: '+finalUrl+'\n\n现在可以问我数据问题了');
 };
 
 function _petUpdateHint(){
