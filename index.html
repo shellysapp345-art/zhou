@@ -7227,6 +7227,9 @@ function switchManualTab(section, el){
   box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
+  position:absolute;
+  bottom:calc(100% + 10px);
+  right:0;
 }
 @keyframes panelIn{
   from{ opacity:0; transform:translateY(10px) scale(.96); }
@@ -7456,6 +7459,11 @@ var API = {
   baseURL  : '',
   model    : 'gpt-4o-mini'
 };
+// 从localStorage恢复API配置
+try{
+  var saved=localStorage.getItem('pet_api');
+  if(saved){var o=JSON.parse(saved);API.apiKey=o.apiKey||'';API.baseURL=o.baseURL||'';API.model=o.model||'gpt-4o-mini';API.provider=o.provider||'openai';}
+}catch(e){}
 
 var QUICK = {
   '今日数据总结'    : function(c){ return '根据数据给出今日运营总结：整体评级（优/良/差）、关键问题、一句建议。\n\n'+c; },
@@ -7488,14 +7496,26 @@ async function callAI(msg,hist){
   var msgs=hist.slice(-8).map(function(h){return{role:h.role,content:h.content};});
   msgs.push({role:'user',content:prompt});
   // OpenAI 兼容格式（官方 / 中转均走此分支）
-  var base = (API.baseURL||' ').trim().replace(/\/+$/, '');
+  var base = (API.baseURL||'').trim().replace(/\/+$/, '');
   var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-  var r=await fetch(url,{method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
-    body:JSON.stringify({model:API.model,max_tokens:400,
-      messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
-  if(!r.ok) throw new Error('HTTP '+r.status);
-  return (await r.json()).choices[0].message.content||'—';
+  try{
+    var r=await fetch(url,{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
+      body:JSON.stringify({model:API.model,max_tokens:400,
+        messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
+    if(!r.ok){
+      var errBody=''; try{errBody=JSON.stringify(await r.json());}catch(e){}
+      throw new Error('HTTP '+r.status+(errBody?' - '+errBody:''));
+    }
+    var data=await r.json();
+    if(data.choices&&data.choices[0])return data.choices[0].message.content||'—';
+    return '返回格式异常：'+JSON.stringify(data).slice(0,200);
+  }catch(e){
+    if(e.message.indexOf('Failed to fetch')>=0||e.message.indexOf('NetworkError')>=0){
+      return '❌ 网络错误：无法连接到 '+url.split('/v1')[0]+'\n可能原因：需要科学上网 / 中转地址错误 / CORS限制\n\n💡 建议使用支持CORS的中转地址';
+    }
+    throw e;
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -7753,7 +7773,7 @@ function petTogglePanel(){
   dot.style.display = 'none';
   petHideNotif();
   if(panelOpen && history.length===0){
-    addMsg('bot','你好！右键点我可以随时呼出面板 👋 配置 API Key 后可以问我任何运营问题。');
+    addMsg('bot','你好！右键点我可以随时呼出面板 👋 有什么运营问题都可以问我。');
   }
   if(panelOpen) setTimeout(function(){ document.getElementById('petInput').focus(); },80);
 }
@@ -7791,7 +7811,7 @@ window.petConfigKey = function(){
   k=k.trim(); if(!k) return;
   var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
-  API.apiKey=k; API.baseURL=(b||' ').trim(); API.provider='openai';
+  API.apiKey=k; API.baseURL=(b||'').trim(); API.provider='openai';
   // 根据 key 前缀自动识别模型
   if(!API.baseURL && k.startsWith('sk-ant')) {
     API.model='claude-sonnet-4-20250514';
@@ -7799,11 +7819,26 @@ window.petConfigKey = function(){
   } else {
     if(!API.model || API.model==='claude-sonnet-4-20250514') API.model='gpt-4o-mini';
   }
-  var h=document.getElementById('petApiHint');
-  var label = API.baseURL ? ('中转: '+API.baseURL.replace('https://','').split('/')[0]) : 'OpenAI 官方';
-  if(h) h.innerHTML='✓ '+label+' <a onclick="petConfigKey()">修改</a>';
-  addMsg('bot','Key 配置成功！模型: '+API.model+'，现在可以问我数据问题了 ✓');
+  // 保存到localStorage
+  try{localStorage.setItem('pet_api',JSON.stringify({apiKey:API.apiKey,baseURL:API.baseURL,model:API.model,provider:API.provider}));}catch(e){}
+  _petUpdateHint();
+  addMsg('bot','✅ Key 配置成功！模型: '+API.model+'，现在可以问我数据问题了');
 };
+
+function _petUpdateHint(){
+  var h=document.getElementById('petApiHint');if(!h)return;
+  h.style.display='block';
+  if(API.apiKey){
+    var label=API.baseURL?('中转: '+API.baseURL.replace('https://','').split('/')[0]):'OpenAI 官方';
+    h.innerHTML='✓ '+label+' · '+API.model+' <a onclick="petConfigKey()">修改</a>';
+    h.style.color='#10b981';
+  }else{
+    h.innerHTML='需配置 API Key 才能使用 AI 分析 &nbsp;<a onclick="petConfigKey()">点此设置</a>';
+    h.style.color='';
+  }
+}
+// 页面加载时更新hint状态
+setTimeout(_petUpdateHint,500);
 
 function setDis(d){
   var b=document.getElementById('petSend'), i=document.getElementById('petInput');
