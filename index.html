@@ -2445,7 +2445,7 @@ function renderGrid(){
       else{              lPillClass='csp-normal';   lPillIcon='✓';lPillText='NORMAL';   }
       const lAvatar=a.name?a.name[0].toUpperCase():'?';
       return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.02}s;" onclick="openDetailDrawer('${v.id}')" oncontextmenu="event.preventDefault();showCtxMenu(event,'${v.id}')">
-        <div class="cthumb">${thumbHTML(v)}${lThumbStatus}${v.dur?`<div class="cdur">${v.dur}</div>`:''}<div class="card-checkbox"></div></div>
+        <div class="cthumb">${thumbHTML(v)}${lThumbStatus}${v.dur?('<div class="cdur">'+v.dur+'</div>'):''}<div class="card-checkbox"></div></div>
         <div class="card-info">
           <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
             <div class="card-acct-avatar" style="background:${a.color};width:22px;height:22px;font-size:9px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">${lAvatar}</div>
@@ -2488,7 +2488,7 @@ function renderGrid(){
       <div class="cthumb">
         ${thumbHTML(v)}
         <div class="cthumb-play"><div class="cthumb-play-btn"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1.5L9.5 6.5L1 11.5V1.5Z" fill="rgba(20,18,16,.75)" stroke="rgba(20,18,16,.1)" stroke-width=".5"/></svg></div></div>
-        ${v.dur?`<div class="cdur">${v.dur}</div>`:''}
+        ${v.dur?('<div class="cdur">'+v.dur+'</div>'):''}
         ${thumbStatusHtml}
         <div class="card-checkbox"></div>
         <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
@@ -2509,6 +2509,7 @@ function renderGrid(){
         </div>
       </div>
     </div>`;
+  }).join('');
 }
 
 // ══════════════════════
