@@ -293,12 +293,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    顶栏精简
    ══════════════════════════════════════════ */
-.topbar-compact{
-  background:var(--s1);border-bottom:1px solid var(--border);
-  padding:8px 16px;display:flex;align-items:center;gap:8px;
-  position:sticky;top:0;z-index:50;
-  box-shadow:0 1px 0 var(--border);
-}
 /* 顶栏图标按钮 */
 .tb-ibtn{
   width:30px;height:30px;border-radius:8px;
@@ -338,11 +332,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .vbtn.on{background:var(--text);border-color:var(--text);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12);}
 .vbtn:hover:not(.on){background:var(--s2);}
 
+/* ── KPI STATS BAR ── */
+.kpi-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:12px 0 8px;}
+.kpi-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;transition:all .15s;}
+.kpi-card:hover{border-color:var(--border2);box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.kpi-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.3px;}
+.kpi-value{font-size:22px;font-weight:800;color:var(--text);font-family:var(--mono);line-height:1.1;}
+.kpi-card.kpi-accent .kpi-value{color:var(--accent);}
+.kpi-card.kpi-red .kpi-value{color:var(--red);}
+.kpi-card.kpi-green .kpi-value{color:var(--green);}
+.kpi-card.kpi-gold .kpi-value{color:var(--gold);}
+
 /* ── GRID ── */
 .grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;display:flex;flex-direction:column;}
 #overviewPane{flex:1;min-height:0;overflow:hidden;padding:0;margin:-18px -20px -48px;}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
-.vgrid.compact{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
 .vgrid.list{grid-template-columns:1fr;gap:6px;}
 
 /* ── CARD ── */
@@ -626,21 +630,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .vgrid.list .card-checkbox{top:50%;left:8px;transform:translateY(-50%);}
 .vgrid.list .three-corner{bottom:auto;top:5px;left:5px;}
 
-/* ══ COMPACT VIEW ══ */
-.vgrid.compact{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;}
-.vgrid.compact .card-info{padding:6px 8px 8px;gap:4px;}
-.vgrid.compact .card-stats-row{gap:0;justify-content:space-between;}
-.vgrid.compact .csr-icon{font-size:10px;}
-.vgrid.compact .csr-val{font-size:10px;}
-/* compact pill — 只显示图标+文字但更小 */
-.vgrid.compact .card-status-pill{padding:2px 7px;font-size:8px;gap:3px;}
-/* compact 账号区 */
-.vgrid.compact .card-acct-avatar{width:20px;height:20px;font-size:8px;}
-.vgrid.compact .card-acct-name{font-size:10px;}
-.vgrid.compact .card-acct-date{font-size:8px;}
-.vgrid.compact .card-uploader-tag{font-size:8px;}
-.vgrid.compact .cthumb-play-btn{width:26px;height:26px;}
-.vgrid.compact .cdur{font-size:7px;}
 
 /* 旧兼容类隐藏 */
 .cbody,.cstats,.cfoot,.cbtns,.cib,.cs,.cthumb-ov,.play-btn{display:none!important;}
@@ -1309,22 +1298,13 @@ canvas{max-width:100%;}
         </div>
       </div>
       <div class="tb-icon-wrap">
-        <button class="fchip" id="fc-violation" onclick="setFilter('violation',this)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </button>
-        <span class="tb-tip">违规视频</span>
+        <button class="fchip" id="fc-violation" onclick="setFilter('violation',this)">违规</button>
       </div>
       <div class="tb-icon-wrap">
-        <button class="fchip" id="fc-promo" onclick="setFilter('promo',this)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
-        </button>
-        <span class="tb-tip">推广中</span>
+        <button class="fchip" id="fc-promo" onclick="setFilter('promo',this)">推广</button>
       </div>
       <div class="tb-icon-wrap">
-        <button class="fchip" id="fc-normal" onclick="setFilter('normal',this)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-        <span class="tb-tip">正常视频</span>
+        <button class="fchip" id="fc-normal" onclick="setFilter('normal',this)">正常</button>
       </div>
 
       <!-- 视图切换 -->
@@ -1366,6 +1346,7 @@ canvas{max-width:100%;}
   </div>
   <div class="grid-wrap">
     <div id="overviewPane" style="display:none;padding:4px 0;"></div>
+    <div id="kpiBar" class="kpi-bar" style="display:none;"></div>
     <div class="vgrid" id="vgrid"></div>
   </div>
 </div>
@@ -1779,7 +1760,6 @@ canvas{max-width:100%;}
       <div style="display:flex;gap:3px;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:3px;">
         <button id="uvb-grid" onclick="setUserView('grid')" title="宫格视图" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
         <button id="uvb-list" onclick="setUserView('list')" title="列表视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
-        <button id="uvb-compact" onclick="setUserView('compact')" title="紧凑视图" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:all .18s;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/><rect x="3" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="17" y="10" width="4" height="4"/><rect x="3" y="17" width="4" height="4"/><rect x="10" y="17" width="4" height="4"/><rect x="17" y="17" width="4" height="4"/></svg></button>
       </div>
       <button onclick="openUserManual()" title="使用教程" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></button>
       <button onclick="doLogout()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
@@ -2374,8 +2354,8 @@ function renderGrid(){
   const grid=document.getElementById('vgrid');
 
   // 看板 / 排名视图 — 接管整个 grid-wrap
-  if(S.view==='dashboard'){ renderDashboard(); return; }
-  if(S.view==='ranking'){   renderRanking();   return; }
+  if(S.view==='dashboard'){ const kb=document.getElementById('kpiBar');if(kb)kb.style.display='none'; renderDashboard(); return; }
+  if(S.view==='ranking'){   const kb=document.getElementById('kpiBar');if(kb)kb.style.display='none'; renderRanking();   return; }
 
   // 确保 vgrid 可见
   if(grid && grid.style.display==='none') grid.style.display='';
@@ -2417,9 +2397,29 @@ function renderGrid(){
   const label=folder?folder.name:(acc?acc.name:'全部项目');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
 
-  grid.className='vgrid'+(S.view==='compact'?' compact':S.view==='list'?' list':'');
+  grid.className='vgrid'+(S.view==='list'?' list':'');
+
+  // ── KPI Stats Bar ──
+  const kpiBar=document.getElementById('kpiBar');
+  if(kpiBar){
+    const totalPlay=vids.reduce((s,v)=>s+(v.play||0),0);
+    const totalLikes=vids.reduce((s,v)=>s+v.likes,0);
+    const totalComm=vids.reduce((s,v)=>s+v.comm,0);
+    const violCount=vids.filter(v=>v.violation).length;
+    const promoCount=vids.filter(v=>v.promo).length;
+    kpiBar.style.display='grid';
+    kpiBar.innerHTML=`
+      <div class="kpi-card"><div class="kpi-label">视频总数</div><div class="kpi-value">${vids.length}</div></div>
+      <div class="kpi-card kpi-accent"><div class="kpi-label">总播放</div><div class="kpi-value">${fmt(totalPlay)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">总点赞</div><div class="kpi-value">${fmt(totalLikes)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">总评论</div><div class="kpi-value">${fmt(totalComm)}</div></div>
+      ${violCount?`<div class="kpi-card kpi-red"><div class="kpi-label">违规</div><div class="kpi-value">${violCount}</div></div>`:''}
+      ${promoCount?`<div class="kpi-card kpi-gold"><div class="kpi-label">推广中</div><div class="kpi-value">${promoCount}</div></div>`:''}
+    `;
+  }
 
   if(!vids.length){
+    const kpiBar2=document.getElementById('kpiBar');if(kpiBar2)kpiBar2.style.display='none';
     grid.innerHTML=`<div class="empty"><div class="empty-icon">🎬</div><div class="empty-t">暂无视频</div><div class="empty-s">点右上角「＋ 添加视频」</div></div>`;
     return;
   }
@@ -2514,10 +2514,9 @@ function renderGrid(){
           </div>
         </div>
         <div class="list-stats">
+          <div class="list-stat-item"><span class="list-stat-icon">▶</span><span class="list-stat-val">${fmt(v.play)}</span></div>
           <div class="list-stat-item"><span class="list-stat-icon">♡</span><span class="list-stat-val">${fmt(v.likes)}</span></div>
           <div class="list-stat-item"><span class="list-stat-icon">○</span><span class="list-stat-val">${fmt(v.comm)}</span></div>
-          <div class="list-stat-item"><span class="list-stat-icon">☆</span><span class="list-stat-val">${fmt(v.coll)}</span></div>
-          <div class="list-stat-item"><span class="list-stat-icon">⊕</span><span class="list-stat-val">${fmt(v.share||0)}</span></div>
         </div>
         <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')">🗑</button>
       </div>`;
@@ -2556,16 +2555,13 @@ function renderGrid(){
         <div class="cthumb-play"><div class="cthumb-play-btn"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1.5L9.5 6.5L1 11.5V1.5Z" fill="rgba(20,18,16,.75)" stroke="rgba(20,18,16,.1)" stroke-width=".5"/></svg></div></div>
         ${v.dur?`<div class="cdur">${v.dur}</div>`:''}
         ${thumbStatusHtml}
-        ${threeCornerHtml}
         <div class="card-checkbox"></div>
-        <button class="cib-del" onclick="event.stopPropagation();delV('${v.id}')">🗑</button>
       </div>
       <div class="card-info">
         <div class="card-stats-row">
+          <span class="csr-item"><span class="csr-icon">▶</span><span class="csr-val">${fmt(v.play)}</span></span>
           <span class="csr-item"><span class="csr-icon">♡</span><span class="csr-val">${fmt(v.likes)}</span></span>
           <span class="csr-item"><span class="csr-icon">○</span><span class="csr-val">${fmt(v.comm)}</span></span>
-          <span class="csr-item"><span class="csr-icon">☆</span><span class="csr-val">${fmt(v.coll)}</span></span>
-          <span class="csr-item"><span class="csr-icon">⊕</span><span class="csr-val">${fmt(v.share||0)}</span></span>
         </div>
         <div class="card-status-pill ${pillClass}">${pillIcon} ${pillText}</div>
         <div class="card-acct">
@@ -2574,7 +2570,7 @@ function renderGrid(){
             <div class="card-acct-name">${a.name}</div>
             <div class="card-acct-date-row">
               <span class="card-acct-date">${v.date||''}</span>
-              ${v.uploadedBy?`<span class="card-uploader-tag">👤 ${v.uploadedBy}</span>`:''}
+            </div>
             </div>
           </div>
         </div>
@@ -4480,12 +4476,12 @@ function calcDeepAnalysis(){
 }
 
 // ── USER PAGE VIEW MODE ──
-let userViewMode = 'grid'; // grid | list | compact
+let userViewMode = 'grid'; // grid | list
 
 function setUserView(mode) {
   userViewMode = mode;
   // 更新按钮状态
-  ['grid','list','compact'].forEach(m => {
+  ['grid','list'].forEach(m => {
     const btn = document.getElementById('uvb-'+m);
     if (!btn) return;
     if (m === mode) {
@@ -5168,9 +5164,7 @@ function renderUserSearchResults(folderId){
     if(accVids.length){
       const gridStyle = userViewMode === 'list'
         ? 'display:flex;flex-direction:column;gap:6px;'
-        : userViewMode === 'compact'
-          ? 'display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;'
-          : 'display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;';
+        : 'display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;';
 
       html += `<div style="padding:12px 14px;">
         <div style="font-size:10px;color:var(--text3);margin-bottom:10px;font-weight:600;letter-spacing:.5px;">点击任意视频卡片即可查看和编辑 →</div>
@@ -5223,7 +5217,7 @@ function renderUserSearchResults(folderId){
             </div>
           </div>`;
         } else {
-          const isCompact = userViewMode==='compact';
+          const isCompact = false;
           const maxVal = Math.max(v.play, v.likes, v.comm, v.coll);
           html += `<div data-uvid="${v.id}"
             style="background:var(--s1);border:1px solid ${bc};border-radius:14px;overflow:hidden;cursor:pointer;transition:all .22s;box-shadow:0 1px 4px rgba(0,0,0,.04);"
@@ -7227,9 +7221,6 @@ function switchManualTab(section, el){
   box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
-  position:absolute;
-  bottom:calc(100% + 10px);
-  right:0;
 }
 @keyframes panelIn{
   from{ opacity:0; transform:translateY(10px) scale(.96); }
@@ -7457,16 +7448,8 @@ var API = {
   provider : 'openai',
   apiKey   : '',
   baseURL  : '',
-  model    : 'deepseek-chat'
+  model    : 'gpt-4o-mini'
 };
-// 从localStorage恢复API配置
-try{
-  var saved=localStorage.getItem('pet_api');
-  if(saved){var o=JSON.parse(saved);API.apiKey=o.apiKey||'';API.baseURL=o.baseURL||'';API.model=o.model||'deepseek-chat';API.provider=o.provider||'openai';
-    // 自动迁移：gpt-4o-mini在很多中转不可用，换默认
-    if(API.model==='gpt-4o-mini'){API.model='deepseek-chat';try{localStorage.setItem('pet_api',JSON.stringify(API));}catch(e){}}
-  }
-}catch(e){}
 
 var QUICK = {
   '今日数据总结'    : function(c){ return '根据数据给出今日运营总结：整体评级（优/良/差）、关键问题、一句建议。\n\n'+c; },
@@ -7499,45 +7482,14 @@ async function callAI(msg,hist){
   var msgs=hist.slice(-8).map(function(h){return{role:h.role,content:h.content};});
   msgs.push({role:'user',content:prompt});
   // OpenAI 兼容格式（官方 / 中转均走此分支）
-  var base = (API.baseURL||'').trim().replace(/\/+$/, '');
-  var url;
-  if(!base){
-    url='https://api.openai.com/v1/chat/completions';
-  }else if(base.indexOf('/chat/completions')>=0){
-    // 用户填了完整路径，直接用
-    url=base;
-  }else if(base.indexOf('/v1')>=0){
-    // 用户填了带/v1的地址，只补后半段
-    url=base+'/chat/completions';
-  }else{
-    // 只填了域名，补完整路径
-    url=base+'/v1/chat/completions';
-  }
-  try{
-    var r=await fetch(url,{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
-      body:JSON.stringify({model:API.model,max_tokens:400,
-        messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
-    if(!r.ok){
-      var errBody=''; try{var ej=await r.json();errBody=JSON.stringify(ej);}catch(e){try{errBody=await r.text();}catch(e2){}}
-      if(r.status===404) throw new Error('❌ 404 地址不存在\n请求地址: '+url+'\n\n💡 检查你的中转BaseURL是否正确，点下方「修改」重新配置');
-      if(r.status===401) throw new Error('❌ 401 认证失败\nAPI Key无效或过期，请重新配置');
-      if(r.status===503){
-        var isModelErr=errBody.indexOf('model_not_found')>=0||errBody.indexOf('无可用渠道')>=0;
-        if(isModelErr) throw new Error('❌ 模型不可用：'+API.model+'\n\n你的中转服务不支持这个模型。\n点下方「修改」→ 第③步换个模型试试\n推荐：deepseek-chat / gpt-3.5-turbo');
-        throw new Error('❌ 503 服务不可用\n请求地址: '+url+'\n模型: '+API.model+'\n\n服务器返回: '+(errBody||'无详情'));
-      }
-      throw new Error('HTTP '+r.status+(errBody?' '+errBody:''));
-    }
-    var data=await r.json();
-    if(data.choices&&data.choices[0])return data.choices[0].message.content||'—';
-    return '返回格式异常：'+JSON.stringify(data).slice(0,200);
-  }catch(e){
-    if(e.message.indexOf('Failed to fetch')>=0||e.message.indexOf('NetworkError')>=0){
-      return '❌ 网络错误：无法连接到 '+url.split('/v1')[0]+'\n可能原因：需要科学上网 / 中转地址错误 / CORS限制\n\n💡 建议使用支持CORS的中转地址';
-    }
-    throw e;
-  }
+  var base = (API.baseURL||' ').trim().replace(/\/+$/, '');
+  var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  var r=await fetch(url,{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
+    body:JSON.stringify({model:API.model,max_tokens:400,
+      messages:[{role:'system',content:SYS+'\n数据:\n'+ctx}].concat(msgs)})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return (await r.json()).choices[0].message.content||'—';
 }
 
 /* ═══════════════════════════════════════════════
@@ -7795,7 +7747,7 @@ function petTogglePanel(){
   dot.style.display = 'none';
   petHideNotif();
   if(panelOpen && history.length===0){
-    addMsg('bot','你好！右键点我可以随时呼出面板 👋\n\n' + (API.apiKey ? '已配置 API Key，直接问我问题吧！' : '先点下方「点此设置」配置 API Key，就能问我运营问题了。'));
+    addMsg('bot','你好！右键点我可以随时呼出面板 👋 配置 API Key 后可以问我任何运营问题。');
   }
   if(panelOpen) setTimeout(function(){ document.getElementById('petInput').focus(); },80);
 }
@@ -7831,36 +7783,21 @@ window.petConfigKey = function(){
   var k=prompt('① API Key（必填）\n例：sk-xxxx 或中转服务的 key',API.apiKey||'');
   if(k===null) return;
   k=k.trim(); if(!k) return;
-  var b=prompt('② 中转 BaseURL（必填，填你的中转服务地址）\n例：https://api.302.ai\n或：https://api.302.ai/v1\n\n（直接填域名即可，不需要加 /chat/completions）',API.baseURL||'');
+  var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
-  var m=prompt('③ 模型名（选填，留空则自动选择）\n常用：deepseek-chat / gpt-3.5-turbo / gpt-4o / claude-3-haiku\n\n⚠️ 填你中转服务支持的模型名，不确定就问服务商\n当前：'+(API.model||'deepseek-chat'),API.model||'');
-  API.apiKey=k; API.baseURL=(b||'').trim(); API.provider='openai';
-  if(m&&m.trim()) API.model=m.trim();
-  else if(!API.baseURL && k.startsWith('sk-ant')) API.model='claude-sonnet-4-20250514';
-  else if(!API.model) API.model='deepseek-chat';
-  // 保存到localStorage
-  try{localStorage.setItem('pet_api',JSON.stringify({apiKey:API.apiKey,baseURL:API.baseURL,model:API.model,provider:API.provider}));}catch(e){}
-  _petUpdateHint();
-  // 拼出最终URL让用户确认
-  var base2=(API.baseURL||'').replace(/\/+$/,'');
-  var finalUrl=!base2?'https://api.openai.com/v1/chat/completions':base2.indexOf('/chat/completions')>=0?base2:base2.indexOf('/v1')>=0?base2+'/chat/completions':base2+'/v1/chat/completions';
-  addMsg('bot','✅ 配置成功！\n模型: '+API.model+'\n地址: '+finalUrl+'\n\n现在可以问我数据问题了');
-};
-
-function _petUpdateHint(){
-  var h=document.getElementById('petApiHint');if(!h)return;
-  h.style.display='block';
-  if(API.apiKey){
-    var label=API.baseURL?('中转: '+API.baseURL.replace('https://','').split('/')[0]):'OpenAI 官方';
-    h.innerHTML='✓ '+label+' · '+API.model+' <a onclick="petConfigKey()">修改</a>';
-    h.style.color='#10b981';
-  }else{
-    h.innerHTML='需配置 API Key 才能使用 AI 分析 &nbsp;<a onclick="petConfigKey()">点此设置</a>';
-    h.style.color='';
+  API.apiKey=k; API.baseURL=(b||' ').trim(); API.provider='openai';
+  // 根据 key 前缀自动识别模型
+  if(!API.baseURL && k.startsWith('sk-ant')) {
+    API.model='claude-sonnet-4-20250514';
+    addMsg('bot','⚠️ 注意：Anthropic 官方 key 需要科学上网才能访问，建议使用中转地址。');
+  } else {
+    if(!API.model || API.model==='claude-sonnet-4-20250514') API.model='gpt-4o-mini';
   }
-}
-// 页面加载时更新hint状态
-setTimeout(_petUpdateHint,500);
+  var h=document.getElementById('petApiHint');
+  var label = API.baseURL ? ('中转: '+API.baseURL.replace('https://','').split('/')[0]) : 'OpenAI 官方';
+  if(h) h.innerHTML='✓ '+label+' <a onclick="petConfigKey()">修改</a>';
+  addMsg('bot','Key 配置成功！模型: '+API.model+'，现在可以问我数据问题了 ✓');
+};
 
 function setDis(d){
   var b=document.getElementById('petSend'), i=document.getElementById('petInput');
