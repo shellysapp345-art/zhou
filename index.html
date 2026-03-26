@@ -573,10 +573,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    统一 UI 细节补丁
    ══════════════════════════════════════════ */
-/* 按钮高度统一 */
-.btn { height:32px; }
-.btn-primary { height:32px; }
-
 /* 所有小图标按钮统一尺寸 */
 .tb-ibtn { width:30px; height:30px; }
 .vbtn { width:28px; height:28px; }
@@ -1213,7 +1209,6 @@ canvas{max-width:100%;}
     <span class="sb-tip">退出登录</span>
   </button>
 </nav>
-</div>
 
 <!-- 主内容 -->
 <div class="main" style="flex:1;min-width:0;">
@@ -7240,6 +7235,8 @@ function switchManualTab(section, el){
   box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
+  position:fixed;
+  z-index:100000;
 }
 @keyframes panelIn{
   from{ opacity:0; transform:translateY(10px) scale(.96); }
@@ -7762,7 +7759,31 @@ var history = [];
 
 function petTogglePanel(){
   panelOpen = !panelOpen;
-  panel.style.display = panelOpen ? 'flex' : 'none';
+  if(panelOpen){
+    panel.style.display = 'flex';
+    // 计算面板位置：始终在桌宠上方，靠右对齐，防止超出屏幕
+    var r = petEl.getBoundingClientRect();
+    var panelW = 300, panelH = 460, gap = 10;
+    var left = r.right - panelW;
+    var top  = r.top - panelH - gap;
+    // 防止超出左边界
+    if(left < 8) left = 8;
+    // 防止超出顶部：改为在桌宠右侧弹出
+    if(top < 8){
+      left = r.right + gap;
+      top  = Math.max(8, r.bottom - panelH);
+      // 防止超出右边界
+      if(left + panelW > window.innerWidth - 8){
+        left = r.left - panelW - gap;
+      }
+    }
+    panel.style.left = left + 'px';
+    panel.style.top  = top  + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  } else {
+    panel.style.display = 'none';
+  }
   dot.style.display = 'none';
   petHideNotif();
   if(panelOpen && history.length===0){
