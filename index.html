@@ -68,7 +68,7 @@
 button svg, a svg { vertical-align:middle; flex-shrink:0; }
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;min-height:100vh;}
 
-.wrap{display:flex;min-height:100vh;}
+.wrap{display:flex;height:100vh;overflow:hidden;}
 
 /* ══════════════════════════════════════════
    ICON SIDEBAR — Claude 风格极简图标栏
@@ -306,7 +306,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .tb-ibtn svg{width:14px;height:14px;}
 
 /* ── MAIN ── */
-.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;overflow:hidden;}
 .topbar{
   background:var(--s1);
   border-bottom:1px solid var(--border);
@@ -344,8 +344,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .kpi-card.kpi-gold .kpi-value{color:var(--gold);}
 
 /* ── GRID ── */
-.grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;display:flex;flex-direction:column;}
-#overviewPane{flex:1;min-height:0;overflow:hidden;padding:0;margin:-18px -20px -48px;}
+.grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
+#overviewPane{flex:1;min-height:0;overflow:auto;padding:0;}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
 .vgrid.list{grid-template-columns:1fr;gap:6px;}
 
@@ -7761,26 +7761,20 @@ function petTogglePanel(){
   panelOpen = !panelOpen;
   if(panelOpen){
     panel.style.display = 'flex';
-    // 计算面板位置：始终在桌宠上方，靠右对齐，防止超出屏幕
+    // 计算面板位置：紧贴桌宠上方，右对齐
     var r = petEl.getBoundingClientRect();
-    var panelW = 300, panelH = 460, gap = 10;
+    var panelW = 300;
+    var gap = 8;
+    // 右对齐桌宠右边缘
     var left = r.right - panelW;
-    var top  = r.top - panelH - gap;
-    // 防止超出左边界
     if(left < 8) left = 8;
-    // 防止超出顶部：改为在桌宠右侧弹出
-    if(top < 8){
-      left = r.right + gap;
-      top  = Math.max(8, r.bottom - panelH);
-      // 防止超出右边界
-      if(left + panelW > window.innerWidth - 8){
-        left = r.left - panelW - gap;
-      }
-    }
-    panel.style.left = left + 'px';
-    panel.style.top  = top  + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
+    // 显示在桌宠上方
+    var top = r.top - gap;
+    // 用 bottom 定位更稳定（不需要知道 panelH）
+    panel.style.left   = left + 'px';
+    panel.style.bottom = (window.innerHeight - r.top + gap) + 'px';
+    panel.style.top    = 'auto';
+    panel.style.right  = 'auto';
   } else {
     panel.style.display = 'none';
   }
