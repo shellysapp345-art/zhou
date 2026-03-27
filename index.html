@@ -4559,28 +4559,46 @@ async function doLogin(){
   const p = document.getElementById('loginPass').value;
   if(!u || !p){ toast('请填写账号和密码','err'); return; }
 
-  // 统一走 Supabase 验证，密码 SHA-256 哈希后对比
-  const hashed = await sha256hex(p);
-  const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
-  if(res && res.length && res[0].password === hashed){
-    const row = res[0];
-    currentUser = { username: row.username, role: row.role };
-    if(row.role === 'superadmin'){
-      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-      showSuperAdminApp();
-    } else if(row.role === 'admin'){
-      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-      showAdminApp();
-    } else {
-      currentUser.folder_id = row.folder_id;
-      currentUser.folder_ids = row.folder_ids || '[]';
-      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-      showUserApp();
+  const btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled=true; btn.querySelector('span').textContent='登录中...'; }
+
+  try{
+    // 统一走 Supabase 验证，密码 SHA-256 哈希后对比
+    const hashed = await sha256hex(p);
+    const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
+
+    // 检查 Supabase 是否返回了错误对象（RLS / 权限问题）
+    if(res && res.code && res.message){
+      console.error('Supabase 错误:', res);
+      toast('服务器错误：'+res.message, 'err');
+      return;
     }
-  } else {
-    const err = document.getElementById('loginErr');
-    err.classList.add('show');
-    setTimeout(()=>err.classList.remove('show'), 2500);
+
+    if(res && res.length && res[0].password === hashed){
+      const row = res[0];
+      currentUser = { username: row.username, role: row.role };
+      if(row.role === 'superadmin'){
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showSuperAdminApp();
+      } else if(row.role === 'admin'){
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showAdminApp();
+      } else {
+        currentUser.folder_id = row.folder_id;
+        currentUser.folder_ids = row.folder_ids || '[]';
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showUserApp();
+      }
+    } else {
+      const err = document.getElementById('loginErr');
+      err.classList.add('show');
+      setTimeout(()=>err.classList.remove('show'), 2500);
+    }
+  } catch(e){
+    console.error('登录失败:', e);
+    toast('网络错误，请检查网络连接后重试', 'err');
+  } finally {
+    if(btn){ btn.disabled=false; btn.querySelector('span').textContent='登录'; }
   }
 }
 
