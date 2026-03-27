@@ -2328,6 +2328,13 @@ function selectNavFolder(folderId){
   // 重置过滤器 chip 高亮
   document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));
   const fcAll = document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');
+  // 确保切换到内容页侧边栏高亮
+  document.querySelectorAll('.sb-nav-item').forEach(b=>b.classList.remove('active'));
+  const contentBtn = document.getElementById('sb-nav-content');
+  if(contentBtn) contentBtn.classList.add('active');
+  // 确保 vgrid 可见
+  const grid = document.getElementById('vgrid');
+  if(grid) grid.style.display = '';
   hideOverviewPane();
   render();
 }
@@ -2337,6 +2344,13 @@ function selectNavAcc(accId){
   S.curAcc = accId;
   S.page = 0; S.searchQuery = '';
   const gs = document.getElementById('globalSearch'); if(gs) gs.value='';
+  // 确保切换到内容页侧边栏高亮
+  document.querySelectorAll('.sb-nav-item').forEach(b=>b.classList.remove('active'));
+  const contentBtn = document.getElementById('sb-nav-content');
+  if(contentBtn) contentBtn.classList.add('active');
+  // 确保 vgrid 可见
+  const grid = document.getElementById('vgrid');
+  if(grid) grid.style.display = '';
   hideOverviewPane();
   render();
 }
@@ -3814,7 +3828,7 @@ function renderLineChart(accs, vids){
           beginAtZero:true,
           ticks:{callback:v=>v+'%', font:{size:11}},
           grid:{color:_cGrid},
-          title:{display:true, text:'互动率（点赞+评论+收藏 / 播放量）', font:{size:10}, color:_cText2}
+          title:{display:true, text:'互动量（点赞+评论+收藏）', font:{size:10}, color:_cText2}
         },
         y:{grid:{display:false}, ticks:{font:{size:12}}}
       }
@@ -4627,7 +4641,6 @@ function calcDeepAnalysis(){
   ];
   const t2=[
     {label:'需发布视频',value:totVisit>0?(totCount/totVisit).toFixed(1)+'条':'—'},
-    {label:'需播放量',value:totVisit>0?fmt(Math.round(totPlay/totVisit)):'—'},
     {label:'需点赞',value:totVisit>0?fmt(Math.round(totLikes/totVisit)):'—'},
     {label:'需评论',value:totVisit>0?fmt(Math.round(totComm/totVisit)):'—'},
     {label:'需转发',value:totVisit>0?fmt(Math.round(totShare/totVisit)):'—'},
@@ -4655,7 +4668,7 @@ function calcDeepAnalysis(){
   const scoreShare=sharePerV>0?avg(totShare)/sharePerV:999;
   const scoreVid=vidPerV>0?avg(totCount)/vidPerV:999;
   const minScore=Math.min(scorePlay,scoreLikes,scoreComm,scoreShare,scoreVid);
-  let bottleneck='播放量';
+  let bottleneck='互动质量';
   if(minScore===scoreVid) bottleneck='视频发布数量';
   else if(minScore===scoreLikes) bottleneck='点赞互动';
   else if(minScore===scoreComm) bottleneck='评论互动';
@@ -5002,7 +5015,6 @@ function openStatDetail(type){
     titleEl.textContent = '视频详情';
     subEl.textContent   = '各账号统计';
     const totalLikes = allVids.reduce((s,v)=>s+v.likes,0);
-    const avg = allVids.length>0?Math.round(totalPlay/allVids.length):0;
     const topVids = [...allVids].sort((a,b)=>(b.play||0)-(a.play||0)).slice(0,5);
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
     </div>`;
@@ -5023,8 +5035,7 @@ function openStatDetail(type){
     titleEl.textContent = '总线索数详情';
     subEl.textContent   = '各账号线索排行 · 录入记录';
     const totalLead = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
-    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
-    const cvRate = totalPlay>0?(totalLead/totalPlay*100).toFixed(3):'0.000';
+    const cvRate = '—'; // play not tracked
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       ${rowCard('总线索数', fmt(totalLead), 'var(--green)', '历史累计')}
     </div>`;
@@ -5050,9 +5061,8 @@ function openStatDetail(type){
   } else if(type==='cvr'){
     titleEl.textContent = '转化率详情';
     subEl.textContent   = '各账号转化率对比 · 效率分析';
-    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
     const totalLead = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
-    const cvRate = totalPlay>0?(totalLead/totalPlay*100).toFixed(3):'0.000';
+    const cvRate = totalLead>0 ? (totalLead/allVids.length*100).toFixed(3) : '0.000'; // play removed
 
     html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
       ${rowCard('整体转化率', cvRate+'%', '#e8742a')}
@@ -5061,7 +5071,7 @@ function openStatDetail(type){
     html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:4px;letter-spacing:.4px;">▸ 各账号转化率排行</div>`;
     html += allAccs.map(a=>{
       const vids  = allVids.filter(v=>v.accId===a.id);
-      const play  = vids.reduce((s,v)=>s+(v.play||0),0);
+      // play removed
       const leads = getLeadCount(a.id);
       const cvr   = '—';
       const maxCvr = Math.max(...allAccs.map(x=>{ const p=allVids.filter(v=>v.accId===x.id).reduce((s,v)=>s+(v.play||0),0); const l=getLeadCount(x.id); return p>0?l/p*100:0; }), 0.001);
@@ -5115,9 +5125,8 @@ function openStatDetail(type){
     subEl.textContent   = '违规 · 推广 · 低互动视频';
     const violVids = allVids.filter(v=>v.violation);
     const promoVids = allVids.filter(v=>v.promo);
-    const totalPlay = allVids.reduce((s,v)=>s+(v.play||0),0);
-    const avgLikeRate = totalPlay>0?allVids.reduce((s,v)=>s+v.likes,0)/totalPlay:0;
-    const lowVids = allVids.filter(v=>(v.play||0)>500 && v.play>0 && v.likes/v.play < avgLikeRate*0.3);
+    const avgLikes = allVids.length>0 ? allVids.reduce((s,v)=>s+v.likes,0)/allVids.length : 0;
+    const lowVids = allVids.filter(v=>v.likes < avgLikes*0.3 && allVids.length>3);
     html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
       ${rowCard('违规视频', violVids.length+'条', '#e04a38')}
       ${rowCard('推广中', promoVids.length+'条', '#c49020')}
@@ -5384,7 +5393,7 @@ function renderUserSearchResults(folderId){
 
   accs.forEach(acc=>{
     const accVids = S.videos.filter(v=>v.accId===acc.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    const totalPlay  = accVids.reduce((s,v)=>s+v.play,0);
+    // play removed
     const totalLikes = accVids.reduce((s,v)=>s+v.likes,0);
     const totalComm  = accVids.reduce((s,v)=>s+v.comm,0);
 
@@ -5397,7 +5406,6 @@ function renderUserSearchResults(folderId){
           <div style="font-size:14px;font-weight:700;margin-bottom:3px;">${acc.name}</div>
           <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);font-family:var(--mono);">
             <span>📹 ${accVids.length}条</span>
-            <span>▶ ${fmt(totalPlay)}</span>
             <span>❤ ${fmt(totalLikes)}</span>
             <span>💬 ${fmt(totalComm)}</span>
           </div>
@@ -5681,6 +5689,9 @@ let _ovView = 'table';
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
+  // Hide KPI bar and pagination when on overview
+  var kb = document.getElementById('kpiBar'); if(kb) kb.style.display='none';
+  var pg = document.getElementById('pagination'); if(pg) pg.innerHTML='';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
   renderOverviewPane();
@@ -6106,7 +6117,7 @@ function openAccDetail(accId){
   const acc = S.accounts.find(a=>a.id===accId);
   if(!acc) return;
   const vids = S.videos.filter(v=>v.accId===accId);
-  const totalPlay  = vids.reduce((s,v)=>s+(v.play||0),0);
+  // play removed
   const totalLikes = vids.reduce((s,v)=>s+v.likes,0);
   const totalComm  = vids.reduce((s,v)=>s+v.comm,0);
   const totalColl  = vids.reduce((s,v)=>s+v.coll,0);
@@ -6118,7 +6129,6 @@ function openAccDetail(accId){
   // 摘要卡片
   const cards = [
     {label:'视频数', val:vids.length, color:acc.color||'#e8742a'},
-    {label:'总播放', val:fmt(totalPlay), color:'#7050a8'},
     {label:'总点赞', val:fmt(totalLikes), color:'#e04a38'},
     {label:'线索数', val:visitCount, color:'#2a8ca0'},
   ];
@@ -6221,7 +6231,7 @@ function openQuickEdit(vidId){
       <textarea id="qe-title" style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;resize:vertical;height:70px;transition:border-color .12s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${v.title||''}</textarea>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      ${[['播放量','qe-play',v.play],['点赞数','qe-likes',v.likes],['评论数','qe-comm',v.comm],['收藏数','qe-coll',v.coll]].map(([l,id,val])=>`
+      ${[['点赞数','qe-likes',v.likes],['评论数','qe-comm',v.comm],['收藏数','qe-coll',v.coll]].map(([l,id,val])=>`
         <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;transition:border-color .12s;" onfocusin="this.style.borderColor='var(--accent)'" onfocusout="this.style.borderColor='var(--border)'">
           <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">${l}</div>
           <input id="${id}" type="number" value="${val||0}" style="background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-weight:600;font-family:var(--mono);width:100%;"/>
@@ -6388,11 +6398,11 @@ function ovCtxCopyData(){
   const acc = S.accounts.find(a=>a.id===_ovCtxAccId);
   if(!acc) return;
   const vids = S.videos.filter(v=>v.accId===_ovCtxAccId);
-  const totalPlay  = vids.reduce((s,v)=>s+(v.play||0),0);
+  // play removed
   const totalLikes = vids.reduce((s,v)=>s+v.likes,0);
   const totalComm  = vids.reduce((s,v)=>s+v.comm,0);
   const totalColl  = vids.reduce((s,v)=>s+v.coll,0);
-  const text = `${acc.name}\n视频数：${vids.length}\n播放量：${fmt(totalPlay)}\n点赞数：${fmt(totalLikes)}\n评论数：${fmt(totalComm)}\n收藏数：${fmt(totalColl)}`;
+  const text = `${acc.name}\n视频数：${vids.length}\n点赞数：${fmt(totalLikes)}\n评论数：${fmt(totalComm)}\n收藏数：${fmt(totalColl)}`;
   navigator.clipboard?.writeText(text).then(()=>toast('✓ 已复制')).catch(()=>toast('复制失败','err'));
 }
 
@@ -7366,7 +7376,7 @@ function switchManualTab(section, el){
         </div>
         <div style="display:flex;gap:10px;margin-bottom:7px;align-items:flex-start;">
           <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.6;">填写播放量、点赞、评论、收藏、转发数，选择发布日期，勾选是否违规或推广。</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.6;">填写点赞、评论、收藏、转发数，选择发布日期，勾选是否违规或推广。</div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
@@ -7767,6 +7777,8 @@ function switchManualTab(section, el){
   width:82px;                   /* §5-size: adjust here */
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  isolation:isolate;
+  background:transparent;
 }
 
 /* Face-left: mirror the image */
@@ -7776,6 +7788,11 @@ function switchManualTab(section, el){
   transform:scaleX(-1);         /* face left */
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.14));
   transform-origin:center bottom;
+  image-rendering:auto;
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+  mix-blend-mode:normal;
+  isolation:isolate;
 }
 
 /* Idle float */
