@@ -206,7 +206,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    主题自定义弹窗
    ══════════════════════════════════════════ */
-#themeModal{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#themeModal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
 #themeModal.open{display:flex;}
 #themeBox{background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(94vw,560px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
 .theme-swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0;}
@@ -218,14 +218,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    账号详情弹窗（图表模式）
    ══════════════════════════════════════════ */
-#accDetailModal{position:fixed;inset:0;z-index:9200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#accDetailModal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);}
 #accDetailModal.open{display:flex;}
 #accDetailBox{background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(95vw,780px);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
 
 /* ══════════════════════════════════════════
    批量操作弹窗
    ══════════════════════════════════════════ */
-#batchModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);}
+#batchModal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);}
 #batchModal.open{display:flex;}
 #batchBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,520px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
 
@@ -272,9 +272,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ══════════════════════════════════════════
    快捷编辑弹窗（单击视频卡片）
    ══════════════════════════════════════════ */
-#quickEditModal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);}
+#quickEditModal{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);margin:0;padding:0;}
 #quickEditModal.open{display:flex;}
-#quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;}
+#quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;margin:auto;position:relative;}
 
 /* ══════════════════════════════════════════
    总览卡片右键菜单
@@ -1210,6 +1210,12 @@ canvas{max-width:100%;}
     <span class="sb-tip">退出登录</span>
   </button>
 </nav>
+
+<!-- 文件夹/账号下拉菜单 -->
+<div class="nav-dropdown-menu" id="folderMenu" style="position:fixed;z-index:9100;">
+  <div class="ndm-header">项目 / 账号</div>
+  <div id="folderMenuItems"></div>
+</div>
 
 <!-- 主内容 -->
 <div class="main" style="flex:1;min-width:0;">
