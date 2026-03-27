@@ -2631,7 +2631,7 @@ function renderGrid(){
     vids=S.videos.filter(v=>folderAccIds.includes(v.accId));
     if(ptEl) ptEl.textContent = (S.folders||[]).find(f=>String(f.id)===String(S.curFolder))?.name||'文件夹';
   } else {
-    vids=(!S.curAcc||S.curAcc==='all')?S.videos:S.videos.filter(v=>v.accId===S.curAcc);
+    vids=(!S.curAcc||S.curAcc==='all')?S.videos:S.videos.filter(v=>String(v.accId)===String(S.curAcc));
   }
   if(S.filter==='violation')vids=vids.filter(v=>v.violation);
   else if(S.filter==='promo')vids=vids.filter(v=>v.promo);
@@ -2857,7 +2857,22 @@ function renderGrid(){
 // ══════════════════════
 // ACTIONS
 // ══════════════════════
-function selAcc(id){S.curAcc=id;S.curFolder=null;S.page=0;S.searchQuery='';const gs=document.getElementById('globalSearch');if(gs)gs.value='';hideOverviewPane();render();}
+function selAcc(id){
+  // Find real account id from S.accounts to avoid string/number mismatch
+  var acc = S.accounts.find(function(a){ return String(a.id)===String(id); });
+  S.curAcc = acc ? acc.id : id;
+  S.curFolder=null;S.page=0;S.searchQuery='';
+  var gs=document.getElementById('globalSearch');if(gs)gs.value='';
+  // Restore topbar
+  var tf=document.getElementById('topbarFilters');if(tf)tf.style.visibility='';
+  var ts=document.getElementById('topbarSearch');if(ts)ts.style.visibility='';
+  var ov=document.getElementById('overviewPane');if(ov)ov.style.display='none';
+  var grid=document.getElementById('vgrid');if(grid)grid.style.display='';
+  // Switch to content nav
+  document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
+  var cb=document.getElementById('sb-nav-content');if(cb)cb.classList.add('active');
+  render();
+}
 
 async function addFolder(){
   const name=prompt('文件夹名称：');
@@ -5024,7 +5039,78 @@ function openStatDetail(type){
 
   let html = '';
 
-  if(type==='play'){
+  // ── 视频总数 ──
+  if(type==='vid'){
+    titleEl.textContent = '视频总数详情';
+    subEl.textContent   = '各账号视频分布';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      ${rowCard('视频总数', fmt(allVids.length), '#7050a8', '已录入')}
+      ${rowCard('账号数', allAccs.length+'个', '#7050a8', '参与统计')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:.4px;">▸ 各账号视频数</div>`;
+    html += accRankList(a=>allVids.filter(v=>String(v.accId)===String(a.id)).length, '#7050a8', '条');
+    // 最近5条视频
+    const recentVids = [...allVids].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5);
+    if(recentVids.length){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:8px;margin-bottom:6px;letter-spacing:.4px;">▸ 最近录入视频</div>`;
+      html += recentVids.map(v=>{
+        const a = S.accounts.find(x=>String(x.id)===String(v.accId))||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--s2);border-radius:9px;cursor:pointer;margin-bottom:6px;" onclick="closeStatDetail();selAcc('${a.id}')">
+          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name} · ${v.date||''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+  // ── 总点赞 ──
+  } else if(type==='likes'){
+    titleEl.textContent = '点赞数详情';
+    subEl.textContent   = '各账号点赞分布 · Top视频';
+    const totalLikes = allVids.reduce((s,v)=>s+v.likes,0);
+    const likePerVid = allVids.length>0?Math.round(totalLikes/allVids.length):0;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      ${rowCard('总点赞', fmt(totalLikes), '#e04a38', '累计')}
+      ${rowCard('单视频均点赞', fmt(likePerVid), '#e04a38', '点赞÷视频数')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:.4px;">▸ 各账号点赞排行</div>`;
+    html += accRankList(a=>allVids.filter(v=>String(v.accId)===String(a.id)).reduce((s,v)=>s+v.likes,0), '#e04a38');
+    const topLiked = [...allVids].sort((a,b)=>b.likes-a.likes).slice(0,5);
+    if(topLiked.length){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:8px;margin-bottom:6px;letter-spacing:.4px;">▸ 点赞 Top 5 视频</div>`;
+      html += topLiked.map(v=>{
+        const a = S.accounts.find(x=>String(x.id)===String(v.accId))||{name:'未知',color:'#999'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--s2);border-radius:9px;cursor:pointer;margin-bottom:6px;" onclick="closeStatDetail();selAcc('${a.id}')">
+          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px;">${a.name} · ${v.date||''}</div>
+          </div>
+          <span style="font-size:15px;font-weight:800;color:#e04a38;font-family:var(--mono);flex-shrink:0;">♡${fmt(v.likes)}</span>
+        </div>`;
+      }).join('');
+    }
+
+  // ── 单视频均线索 ──
+  } else if(type==='leadpervid'){
+    titleEl.textContent = '单视频均线索详情';
+    subEl.textContent   = '线索产出效率分析';
+    const totalLead = allAccs.reduce((s,a)=>s+getLeadCount(a.id),0);
+    const leadPerVid = allVids.length>0?(totalLead/allVids.length).toFixed(2):'0';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      ${rowCard('单视频均线索', leadPerVid+'条', '#e8742a', '线索÷视频数')}
+      ${rowCard('累计线索', fmt(totalLead), '#e8742a', '历史总计')}
+    </div>`;
+    html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:.4px;">▸ 各账号单视频均线索</div>`;
+    html += accRankList(a=>{
+      const cnt=allVids.filter(v=>String(v.accId)===String(a.id)).length;
+      return cnt>0?(getLeadCount(a.id)/cnt):0;
+    }, '#e8742a');
+
+  // ── 以下为旧 play 相关（保留结构但不展示） ──
+  } else if(type==='play'){
     titleEl.textContent = '视频详情';
     subEl.textContent   = '各账号统计';
     const totalLikes = allVids.reduce((s,v)=>s+v.likes,0);
@@ -5791,18 +5877,6 @@ function renderOverviewPane(){
   ];
   const maxEngage = Math.max(...engageSteps.map(s=>s.val), 1);
 
-  // ══ 账号效率排名（转化率排序）══
-  const accRank = allAccs.map(a=>{
-    const avids = S.videos.filter(v=>v.accId===a.id);
-    const leads = getLeadCount(a.id);
-    const likes = avids.reduce((s,v)=>s+v.likes,0);
-    const comm  = avids.reduce((s,v)=>s+v.comm,0);
-    const eff   = avids.length>0?(leads/avids.length):0;
-    return { id:a.id, name:a.name, color:a.color||'#b87f5a',
-      vidCnt:avids.length, leads, likes, comm, eff,
-      abn:avids.filter(v=>v.violation||v.promo).length };
-  }).sort((a,b)=>b.eff-a.eff);
-  const maxLikes = Math.max(...accRank.map(d=>d.likes),1);
 
   // ══ 异常智能识别（不依赖播放量） ══
   const avgLikes = totalVid>0 ? totalLikes/totalVid : 0;
@@ -5977,52 +6051,6 @@ function renderOverviewPane(){
                 </div>`).join('')}
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- ④ 账号效率排名 -->
-      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
-          <span>账号效率排名</span>
-          <span style="font-size:10px;color:var(--text3);">按转化率排序</span>
-        </div>
-        <!-- 表头 -->
-        <div style="display:grid;grid-template-columns:24px 1fr 60px 70px 60px 80px 60px;gap:8px;padding:0 4px 9px;border-bottom:1px solid var(--border);">
-          ${['#','账号','视频数','线索','点赞','单视频线索','异常'].map(h=>
-            `<span style="font-size:11px;font-weight:700;color:var(--text3);text-align:${h==='账号'?'left':'center'};letter-spacing:.3px;">${h}</span>`
-          ).join('')}
-        </div>
-        <!-- 数据行 -->
-        <div style="display:flex;flex-direction:column;gap:0;">
-          ${accRank.map((a,i)=>{
-            const isTop = i===0 && a.eff>0;
-            const isLow = i===accRank.length-1 && accRank.length>1 && a.vidCnt>0 && a.eff<(accRank[0].eff||1)*0.3;
-            const likesPct = Math.max(2, Math.round(a.likes/maxLikes*100));
-            return `<div onclick="selAcc('${a.id}')"
-              style="display:grid;grid-template-columns:24px 1fr 60px 70px 60px 80px 60px;
-                     gap:8px;padding:10px 4px;border-bottom:1px solid var(--border);
-                     cursor:pointer;transition:background .1s;align-items:center;
-                     background:${isTop?'rgba(46,140,84,.04)':isLow?'rgba(224,74,56,.03)':'transparent'};"
-              onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='${isTop?'rgba(46,140,84,.04)':isLow?'rgba(224,74,56,.03)':'transparent'}'">
-              <span style="font-size:12px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:center;">${i+1}</span>
-              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
-                <div style="width:22px;height:22px;border-radius:6px;background:${a.color};flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-                  <span style="font-size:10px;font-weight:700;color:#fff;">${a.name[0]}</span>
-                </div>
-                <span style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.name}</span>
-                ${isTop?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(46,140,84,.12);color:var(--green);font-weight:700;flex-shrink:0;">TOP</span>`:''}
-                ${isLow?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(224,74,56,.12);color:var(--red);font-weight:700;flex-shrink:0;">末位</span>`:''}
-              </div>
-              <span style="font-size:13px;color:var(--text2);text-align:center;">${a.vidCnt}</span>
-              <span style="font-size:12px;font-weight:600;color:${a.leads>0?'#2e8c54':'var(--text3)'};text-align:center;">${a.leads}</span>
-              <div style="display:flex;flex-direction:column;gap:2px;">
-                <span style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono);text-align:center;">${fmt(a.likes)}</span>
-                <div style="height:3px;background:var(--s3);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${likesPct}%;background:#e04a38;border-radius:99px;"></div></div>
-              </div>
-              <span style="font-size:13px;color:${a.eff>0?'var(--accent)':'var(--text3)'};font-family:var(--mono);font-weight:700;text-align:center;">${a.eff.toFixed(2)}</span>
-              <span style="font-size:11px;text-align:center;color:${a.abn?'var(--red)':'var(--text3)'};">${a.abn?'⚠'+a.abn:'—'}</span>
-            </div>`;
-          }).join('')}
         </div>
       </div>
 
