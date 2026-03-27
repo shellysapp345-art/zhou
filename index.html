@@ -1061,6 +1061,7 @@ canvas{max-width:100%;}
     </div>
     <div class="login-err" id="loginErr">账号或密码错误，请重试</div>
     <button class="login-btn" id="loginBtn"><span>登录</span></button>
+    <div id="loginDebug" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(0,0,0,.06);border-radius:8px;font-size:11px;color:#555;font-family:monospace;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;"></div>
   </div>
 </div>
 
@@ -4557,47 +4558,73 @@ async function sha256hex(str) {
 async function doLogin(){
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
+  const dbg = document.getElementById('loginDebug');
+
+  function showDbg(msg){ dbg.style.display='block'; dbg.textContent=msg; }
+
   if(!u || !p){ toast('请填写账号和密码','err'); return; }
 
   const btn = document.getElementById('loginBtn');
-  if(btn){ btn.disabled=true; btn.querySelector('span').textContent='登录中...'; }
+  if(btn){ btn.disabled=true; btn.querySelector('span').textContent='登录中…'; }
 
   try{
-    // 统一走 Supabase 验证，密码 SHA-256 哈希后对比
     const hashed = await sha256hex(p);
-    const res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
+    showDbg('① 正在查询账号：' + u + '\n② SHA-256(密码) = ' + hashed.slice(0,16) + '…');
 
-    // 检查 Supabase 是否返回了错误对象（RLS / 权限问题）
-    if(res && res.code && res.message){
-      console.error('Supabase 错误:', res);
-      toast('服务器错误：'+res.message, 'err');
+    let res;
+    try{
+      res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
+    }catch(netErr){
+      showDbg('✗ 网络请求失败：' + netErr.message + '\n请检查 Supabase 项目是否正常运行。');
       return;
     }
 
-    if(res && res.length && res[0].password === hashed){
-      const row = res[0];
-      currentUser = { username: row.username, role: row.role };
-      if(row.role === 'superadmin'){
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showSuperAdminApp();
-      } else if(row.role === 'admin'){
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showAdminApp();
-      } else {
-        currentUser.folder_id = row.folder_id;
-        currentUser.folder_ids = row.folder_ids || '[]';
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showUserApp();
-      }
-    } else {
+    // Supabase 返回错误对象（如 RLS 权限被拒）
+    if(res && !Array.isArray(res) && res.code){
+      showDbg('✗ Supabase 返回错误：\ncode=' + res.code + '\nmessage=' + res.message + '\nhint=' + (res.hint||'无') + '\n\n→ 可能原因：users 表开启了 RLS，需在 Supabase 后台添加匿名查询策略。');
+      return;
+    }
+
+    if(!res || !Array.isArray(res)){
+      showDbg('✗ 意外返回值：' + JSON.stringify(res) + '\n\n→ 请检查 Supabase 项目配置。');
+      return;
+    }
+
+    if(res.length === 0){
+      showDbg('✗ 未找到账号 "' + u + '"\n返回结果：空数组 []\n\n→ 可能原因：\n  1. 账号名不存在\n  2. users 表 RLS 开启，匿名 key 无法读取\n     → 去 Supabase → Authentication → Policies → users 表，添加 SELECT 策略允许 anon 角色');
       const err = document.getElementById('loginErr');
       err.classList.add('show');
-      setTimeout(()=>err.classList.remove('show'), 2500);
+      setTimeout(()=>err.classList.remove('show'), 3000);
+      return;
     }
-  } catch(e){
-    console.error('登录失败:', e);
-    toast('网络错误，请检查网络连接后重试', 'err');
-  } finally {
+
+    const row = res[0];
+    if(row.password !== hashed){
+      showDbg('✗ 密码不匹配\n输入密码的 SHA-256 = ' + hashed.slice(0,16) + '…\n数据库存储的 hash = ' + (row.password||'(空)').slice(0,16) + '…\n\n→ 可能原因：\n  数据库里的密码不是用 SHA-256 哈希存储的，\n  需要用正确的 hash 值更新数据库。');
+      const err = document.getElementById('loginErr');
+      err.classList.add('show');
+      setTimeout(()=>err.classList.remove('show'), 3000);
+      return;
+    }
+
+    // 登录成功
+    dbg.style.display='none';
+    currentUser = { username: row.username, role: row.role };
+    if(row.role === 'superadmin'){
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showSuperAdminApp();
+    } else if(row.role === 'admin'){
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showAdminApp();
+    } else {
+      currentUser.folder_id = row.folder_id;
+      currentUser.folder_ids = row.folder_ids || '[]';
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showUserApp();
+    }
+  }catch(e){
+    showDbg('✗ 未知错误：' + e.message);
+  }finally{
     if(btn){ btn.disabled=false; btn.querySelector('span').textContent='登录'; }
   }
 }
