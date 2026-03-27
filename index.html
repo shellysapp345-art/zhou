@@ -5896,12 +5896,6 @@ function renderOverviewPane(){
 
   // ══ 经营结论自动生成 ══
   const conclusions = [];
-  const topAcc  = accRank[0];
-  const lastAcc = accRank[accRank.length-1];
-  if(topAcc && topAcc.eff>0)
-    conclusions.push({ icon:'🏆', color:'var(--green)', text:`线索产出最强：${topAcc.name}，单视频均产线索 ${topAcc.eff.toFixed(2)} 条，点赞 ${fmt(topAcc.likes)}` });
-  if(lastAcc && accRank.length>1 && lastAcc.vidCnt>0 && lastAcc.eff<topAcc.eff*0.3)
-    conclusions.push({ icon:'⚠️', color:'#e04a38', text:`线索产出最弱：${lastAcc.name}，单视频均产 ${lastAcc.eff.toFixed(2)} 条，建议复盘内容策略` });
   if(totalLead===0 && totalVid>0)
     conclusions.push({ icon:'💡', color:'#c49020', text:`历史线索为0，建议完善线索录入数据以便评估内容效果` });
   else if(totalLead>0)
