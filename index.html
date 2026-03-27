@@ -2439,7 +2439,7 @@ function renderSidebar(){
       const folderAccs = S.accounts.filter(a=>String(a.folderId)===String(f.id));
       const folderVids = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId));
       const isFExpanded = S.expandedFolders.has(f.id);
-      const isFActive = S.curFolder===f.id;
+      const isFActive = String(S.curFolder)===String(f.id);
       const isSelected = S.selectedFolders.has(f.id);
 
       const fDiv = document.createElement('div');
@@ -2586,7 +2586,7 @@ function renderAccItem(a, container, indented){
 
 function renderGrid(){
   const acc=S.accounts.find(a=>a.id===S.curAcc);
-  const folder=(S.folders||[]).find(f=>f.id===S.curFolder);
+  const folder=(S.folders||[]).find(f=>String(f.id)===String(S.curFolder));
   const ptEl=document.getElementById('pageTitle');
   const grid=document.getElementById('vgrid');
 
@@ -6658,17 +6658,23 @@ function switchPage(page){
   } else if(page==='content'){
     if(typeof hideOverviewPane==='function') hideOverviewPane();
     var gs=document.getElementById('globalSearch'); if(gs)gs.value='';
-    if(typeof S!=='undefined'){S.filter='all';S.page=0;S.searchQuery='';}
+    if(typeof S!=='undefined'){
+      S.filter='all';S.page=0;S.searchQuery='';
+      // 如果没有选中账号或文件夹，默认显示全部
+      if(!S.curAcc && !S.curFolder) S.curAcc='all';
+    }
     document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
     var fcAll=document.getElementById('fc-all'); if(fcAll)fcAll.classList.add('on');
     if(typeof render==='function') render();
   } else if(page==='alert'){
     if(typeof hideOverviewPane==='function') hideOverviewPane();
-    if(typeof S!=='undefined'){S.filter='violation';S.page=0;}
+    if(typeof S!=='undefined'){
+      S.filter='violation';S.page=0;
+      if(!S.curAcc && !S.curFolder) S.curAcc='all';
+    }
     document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
     var vb=document.getElementById('fc-violation'); if(vb)vb.classList.add('on');
     if(typeof render==='function') render();
-    if(typeof openAlertModal==='function') openAlertModal();
   } else if(page==='analytics'){
     if(typeof hideOverviewPane==='function') hideOverviewPane();
     if(typeof setView==='function') setView('detail');
@@ -7777,8 +7783,8 @@ function switchManualTab(section, el){
   width:82px;                   /* §5-size: adjust here */
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  isolation:isolate;
-  background:transparent;
+  /* shadow on container, not on img, to avoid PNG transparency issues */
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));
 }
 
 /* Face-left: mirror the image */
@@ -7786,13 +7792,9 @@ function switchManualTab(section, el){
   width:100%;
   display:block;
   transform:scaleX(-1);         /* face left */
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.14));
   transform-origin:center bottom;
-  image-rendering:auto;
-  -webkit-backface-visibility:hidden;
-  backface-visibility:hidden;
-  mix-blend-mode:normal;
-  isolation:isolate;
+  image-rendering:crisp-edges;
+  /* No filter — drop-shadow causes PNG white pixels to appear transparent */
 }
 
 /* Idle float */
