@@ -2320,39 +2320,51 @@ function renderNavDropdowns(){
 }
 
 function selectNavFolder(folderId){
-  document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
-  S.curFolder = folderId;
-  S.curAcc = 'all';
-  S.page = 0; S.searchQuery = ''; S.filter = 'all'; S.dateFilter = '';
-  const gs = document.getElementById('globalSearch'); if(gs) gs.value='';
-  // 重置过滤器 chip 高亮
-  document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));
-  const fcAll = document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');
-  // 确保切换到内容页侧边栏高亮
-  document.querySelectorAll('.sb-nav-item').forEach(b=>b.classList.remove('active'));
-  const contentBtn = document.getElementById('sb-nav-content');
-  if(contentBtn) contentBtn.classList.add('active');
-  // 确保 vgrid 可见
-  const grid = document.getElementById('vgrid');
-  if(grid) grid.style.display = '';
-  hideOverviewPane();
-  render();
+  try {
+    document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
+    // Store as the same type Supabase returns (coerce to match)
+    var fi = S.folders.find(function(f){ return String(f.id)===String(folderId); });
+    S.curFolder = fi ? fi.id : folderId; // use actual id type from data
+    S.curAcc = null; // null means "all in folder"
+    S.page = 0; S.searchQuery = ''; S.filter = 'all'; S.dateFilter = '';
+    var gs = document.getElementById('globalSearch'); if(gs) gs.value='';
+    // 重置过滤器 chip 高亮
+    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
+    var fcAll = document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');
+    // 切换到内容页
+    document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
+    var contentBtn = document.getElementById('sb-nav-content');
+    if(contentBtn) contentBtn.classList.add('active');
+    // 确保 vgrid 可见，隐藏总览
+    var grid = document.getElementById('vgrid');
+    if(grid) grid.style.display = '';
+    var ov = document.getElementById('overviewPane');
+    if(ov) ov.style.display = 'none';
+    // 恢复顶栏
+    var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='';
+    var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='';
+    render();
+  } catch(e){ console.error('selectNavFolder error:', e); }
 }
 
 function selectNavAcc(accId){
-  document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
-  S.curAcc = accId;
-  S.page = 0; S.searchQuery = '';
-  const gs = document.getElementById('globalSearch'); if(gs) gs.value='';
-  // 确保切换到内容页侧边栏高亮
-  document.querySelectorAll('.sb-nav-item').forEach(b=>b.classList.remove('active'));
-  const contentBtn = document.getElementById('sb-nav-content');
-  if(contentBtn) contentBtn.classList.add('active');
-  // 确保 vgrid 可见
-  const grid = document.getElementById('vgrid');
-  if(grid) grid.style.display = '';
-  hideOverviewPane();
-  render();
+  try {
+    document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
+    S.curAcc = accId;
+    S.curFolder = null;
+    S.page = 0; S.searchQuery = '';
+    var gs = document.getElementById('globalSearch'); if(gs) gs.value='';
+    document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
+    var contentBtn = document.getElementById('sb-nav-content');
+    if(contentBtn) contentBtn.classList.add('active');
+    var grid = document.getElementById('vgrid');
+    if(grid) grid.style.display = '';
+    var ov = document.getElementById('overviewPane');
+    if(ov) ov.style.display = 'none';
+    var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='';
+    var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='';
+    render();
+  } catch(e){ console.error('selectNavAcc error:', e); }
 }
 
 // ══════════════════════
@@ -2617,6 +2629,7 @@ function renderGrid(){
   if(S.curFolder){
     const folderAccIds=S.accounts.filter(a=>String(a.folderId)===String(S.curFolder)).map(a=>a.id);
     vids=S.videos.filter(v=>folderAccIds.includes(v.accId));
+    if(ptEl) ptEl.textContent = (S.folders||[]).find(f=>String(f.id)===String(S.curFolder))?.name||'文件夹';
   } else {
     vids=(!S.curAcc||S.curAcc==='all')?S.videos:S.videos.filter(v=>v.accId===S.curAcc);
   }
@@ -5692,6 +5705,10 @@ function showOverviewPane(){
   // Hide KPI bar and pagination when on overview
   var kb = document.getElementById('kpiBar'); if(kb) kb.style.display='none';
   var pg = document.getElementById('pagination'); if(pg) pg.innerHTML='';
+  // Hide content-only topbar elements on overview page
+  var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='hidden';
+  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='hidden';
+  var vbWrap = document.getElementById('viewBtnWrap'); if(vbWrap) vbWrap.style.visibility='hidden';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
   renderOverviewPane();
@@ -5699,6 +5716,10 @@ function showOverviewPane(){
 function hideOverviewPane(){
   document.getElementById('overviewPane').style.display='none';
   document.getElementById('vgrid').style.display='';
+  // Restore topbar elements for content page
+  var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='';
+  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='';
+  var vbWrap = document.getElementById('viewBtnWrap'); if(vbWrap) vbWrap.style.visibility='';
 }
 function openOverview(){ showOverviewPane(); }
 function closeOverview(){ hideOverviewPane(); }
@@ -7783,8 +7804,7 @@ function switchManualTab(section, el){
   width:82px;                   /* §5-size: adjust here */
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  /* shadow on container, not on img, to avoid PNG transparency issues */
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));
+  /* No filter anywhere — any filter on ancestor causes JPEG white to look transparent */
 }
 
 /* Face-left: mirror the image */
