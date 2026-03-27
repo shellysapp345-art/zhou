@@ -1037,6 +1037,128 @@ canvas{max-width:100%;}
 /* 卡片缩略图占位 */
 .cthumb-fallback{background:var(--s3);}
 
+
+/* ══ 详情卡片视图 ══ */
+.vgrid.detail {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.vgrid.detail .vcard {
+  flex-direction: row;
+  height: auto;
+  min-height: 120px;
+  border-radius: 14px;
+}
+.vgrid.detail .cthumb {
+  width: 160px;
+  min-width: 160px;
+  aspect-ratio: 16/9;
+  border-radius: 10px 0 0 10px;
+  flex-shrink: 0;
+}
+.vgrid.detail .cthumb-play { display: none; }
+.vgrid.detail .card-info {
+  padding: 12px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  justify-content: space-between;
+}
+.vgrid.detail .card-detail-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.vgrid.detail .card-detail-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+.vgrid.detail .card-detail-pill {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.vgrid.detail .card-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.vgrid.detail .card-detail-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.vgrid.detail .card-detail-meta-text {
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.vgrid.detail .card-detail-meta-text strong {
+  color: var(--text2);
+  font-weight: 600;
+}
+.vgrid.detail .card-detail-copy {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  background: var(--s2);
+  border-radius: 7px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-style: italic;
+  border-left: 2px solid var(--border2);
+}
+.vgrid.detail .card-detail-stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.vgrid.detail .card-detail-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text3);
+}
+.vgrid.detail .card-detail-stat strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+}
+.vgrid.detail .card-detail-date {
+  font-size: 10px;
+  color: var(--text3);
+  margin-left: auto;
+}
+/* hide old elements in detail mode */
+.vgrid.detail .card-stats-row,
+.vgrid.detail .card-status-pill,
+.vgrid.detail .card-acct { display: none; }
+.vgrid.detail .cib-del { display: none !important; }
+
+/* topbar fchip tweaks */
+.fchip { font-size: 12px; padding: 4px 10px; }
 </style>
 <script src="https://cdn.staticfile.org/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
@@ -1219,83 +1341,134 @@ canvas{max-width:100%;}
 
 <!-- 主内容 -->
 <div class="main" style="flex:1;min-width:0;">
-  <!-- ══ 顶栏 ══ -->
-  <div class="topbar" style="padding:10px 20px;gap:10px;flex-wrap:nowrap;border-bottom:1px solid var(--border);">
+  <!-- ══ 顶栏（精简：筛选 + 视图） ══ -->
+  <div class="topbar" id="mainTopbar" style="padding:8px 16px;gap:8px;flex-wrap:nowrap;border-bottom:1px solid var(--border);align-items:center;min-height:48px;">
 
-    <!-- 左：标题 -->
-    <span class="tb-title" id="pageTitle" style="flex-shrink:0;">数据总览</span>
+    <!-- 页面标题（总览时显示，内容页隐藏） -->
+    <span class="tb-title" id="pageTitle" style="flex-shrink:0;font-size:14px;">数据总览</span>
 
-    <!-- 搜索 -->
-    <div style="position:relative;flex:1;max-width:280px;">
-      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="globalSearch" type="text" placeholder="搜索视频…" oninput="onGlobalSearch(this.value)"
-        style="width:100%;border:1px solid var(--border);border-radius:9px;padding:7px 12px 7px 32px;font-size:13px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;transition:all .15s;"
-        onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px rgba(232,116,42,.10)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"/>
-    </div>
-
-    <div style="flex:1;"></div>
-
-    <!-- 中：筛选标签 -->
-    <div style="display:flex;gap:3px;align-items:center;background:var(--s2);border-radius:9px;padding:3px;">
-      <button class="fchip on" id="fc-all" onclick="setFilter('all',this)">全部</button>
-      <button class="fchip" id="fc-normal" onclick="setFilter('normal',this)">正常</button>
-      <button class="fchip" id="fc-risk" onclick="setFilter('risk',this)">风险</button>
-      <button class="fchip" id="fc-violation" onclick="setFilter('violation',this)">违规</button>
-      <button class="fchip" id="fc-promo" onclick="setFilter('promo',this)">推广</button>
-    </div>
-
-    <!-- 日期筛选 -->
-    <div class="tb-icon-wrap" style="position:relative;">
-      <button class="fchip" id="fc-date" style="display:flex;align-items:center;gap:4px;" onclick="toggleDatePicker()">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span id="fc-date-label">日期</span>
-      </button>
-      <span class="tb-tip">按日期筛选</span>
-      <div id="datePicker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:300;min-width:200px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">按日期筛选</div>
-        <input type="date" id="datePickerInput" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--s2);color:var(--text);outline:none;" oninput="applyDateFilter(this.value)"/>
-        <button onclick="clearDateFilter()" style="margin-top:8px;width:100%;padding:6px;border:none;border-radius:7px;background:var(--s3);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;">清除筛选</button>
-      </div>
+    <!-- 搜索框 -->
+    <div style="position:relative;flex:1;max-width:240px;" id="topbarSearch">
+      <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="globalSearch" type="text" placeholder="搜索视频、上传人…" oninput="onGlobalSearch(this.value)"
+        style="width:100%;border:1px solid var(--border);border-radius:8px;padding:6px 10px 6px 28px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
     </div>
 
     <!-- 分隔 -->
-    <div style="width:1px;height:20px;background:var(--border);flex-shrink:0;"></div>
+    <div style="width:1px;height:18px;background:var(--border);flex-shrink:0;opacity:.6;"></div>
 
-    <!-- 右：视图切换 + 操作 -->
-    <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
-      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="宫格视图"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
-      <button class="vbtn" id="vb-ranking" onclick="setView('ranking')" title="排名"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
-      <button class="vbtn" id="vb-dashboard" onclick="setView('dashboard')" title="看板"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7M14 20h5"/></svg></button>
+    <!-- 状态筛选胶囊组 -->
+    <div id="topbarFilters" style="display:flex;gap:3px;align-items:center;background:var(--s2);border-radius:8px;padding:3px;flex-shrink:0;">
+      <button class="fchip on" id="fc-all"       onclick="setFilter('all',this)">全部</button>
+      <button class="fchip"    id="fc-normal"    onclick="setFilter('normal',this)">✓ 正常</button>
+      <button class="fchip"    id="fc-risk"      onclick="setFilter('risk',this)">⚠ 风险</button>
+      <button class="fchip"    id="fc-violation" onclick="setFilter('violation',this)">✕ 违规</button>
+      <button class="fchip"    id="fc-promo"     onclick="setFilter('promo',this)">★ 推广</button>
+    </div>
+
+    <!-- 自定义筛选组 -->
+    <div style="position:relative;flex-shrink:0;">
+      <button id="customFilterBtn" onclick="toggleCustomFilter()" style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--s1);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        <span id="customFilterLabel">自定义筛选</span>
+      </button>
+      <!-- 自定义筛选面板 -->
+      <div id="customFilterPanel" style="display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:400;background:var(--s1);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);width:300px;overflow:hidden;">
+        <div style="padding:12px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;font-weight:700;color:var(--text);">自定义筛选条件</span>
+          <button onclick="clearCustomFilter()" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">清除全部</button>
+        </div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px;">
+          <!-- 播放量范围 -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">播放量</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="number" id="cf-play-min" placeholder="最小" min="0"
+                style="flex:1;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;min-width:0;"
+                oninput="applyCustomFilter()"/>
+              <span style="font-size:11px;color:var(--text3);">—</span>
+              <input type="number" id="cf-play-max" placeholder="最大" min="0"
+                style="flex:1;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;min-width:0;"
+                oninput="applyCustomFilter()"/>
+            </div>
+          </div>
+          <!-- 点赞量范围 -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">点赞量</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="number" id="cf-like-min" placeholder="最小" min="0"
+                style="flex:1;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;min-width:0;"
+                oninput="applyCustomFilter()"/>
+              <span style="font-size:11px;color:var(--text3);">—</span>
+              <input type="number" id="cf-like-max" placeholder="最大" min="0"
+                style="flex:1;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;min-width:0;"
+                oninput="applyCustomFilter()"/>
+            </div>
+          </div>
+          <!-- 上传人 -->
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;">上传人</div>
+            <input type="text" id="cf-uploader" placeholder="输入上传人姓名…"
+              style="width:100%;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--s2);color:var(--text);font-family:inherit;outline:none;box-sizing:border-box;"
+              oninput="applyCustomFilter()"/>
+          </div>
+        </div>
+        <div style="padding:8px 14px 12px;display:flex;gap:6px;">
+          <div id="customFilterActiveCount" style="flex:1;font-size:11px;color:var(--text3);display:flex;align-items:center;"></div>
+          <button onclick="toggleCustomFilter()" style="padding:5px 14px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日期区间 -->
+    <div style="position:relative;flex-shrink:0;">
+      <button id="fc-date" onclick="toggleDatePicker()" style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--s1);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="fc-date-label">日期区间</span>
+      </button>
+      <div id="datePicker" style="display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:400;background:var(--s1);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);width:260px;overflow:hidden;">
+        <div style="padding:12px 14px 8px;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;font-weight:700;color:var(--text);">按日期范围筛选</span>
+        </div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">开始日期</div>
+            <input type="date" id="dateFrom" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit;background:var(--s2);color:var(--text);outline:none;box-sizing:border-box;" oninput="applyDateRangeFilter()"/>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">结束日期</div>
+            <input type="date" id="dateTo" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit;background:var(--s2);color:var(--text);outline:none;box-sizing:border-box;" oninput="applyDateRangeFilter()"/>
+          </div>
+        </div>
+        <div style="padding:8px 14px 12px;display:flex;gap:6px;">
+          <button onclick="clearDateFilter()" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--border);background:var(--s2);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;">清除</button>
+          <button onclick="toggleDatePicker()" style="flex:1;padding:5px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 弹性空间 -->
+    <div style="flex:1;"></div>
+
+    <!-- 视图切换：仅两种 -->
+    <div style="display:flex;gap:2px;align-items:center;background:var(--s2);border-radius:8px;padding:3px;flex-shrink:0;">
+      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="紧凑卡片" style="width:30px;height:26px;border-radius:6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </button>
+      <button class="vbtn" id="vb-detail" onclick="setView('detail')" title="详情卡片" style="width:30px;height:26px;border-radius:6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="18" height="5" rx="1"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
+      </button>
     </div>
 
     <!-- 刷新 -->
-    <div class="tb-icon-wrap">
-      <button class="tb-ibtn" id="refreshBtn" onclick="doRefresh()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      </button>
-      <span class="tb-tip">刷新</span>
-    </div>
+    <button class="tb-ibtn" id="refreshBtn" onclick="doRefresh()" title="刷新" style="flex-shrink:0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
 
-    <!-- 多选 -->
-    <div class="tb-icon-wrap">
-      <button class="tb-ibtn" id="selectModeBtn" onclick="toggleSelectMode()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      </button>
-      <span class="tb-tip">多选</span>
-    </div>
-
-    <!-- 异常监控 -->
-    <div class="tb-icon-wrap" id="alertBtnWrap">
-      <button class="tb-ibtn" id="alertTopBtn" onclick="openAlertModal()" style="position:relative;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span id="alertTopBadge" style="display:none;position:absolute;top:2px;right:2px;min-width:14px;height:14px;background:var(--red);color:#fff;font-size:8px;font-weight:800;border-radius:7px;padding:0 3px;line-height:14px;text-align:center;border:2px solid var(--bg);pointer-events:none;"></span>
-      </button>
-      <span class="tb-tip">异常监控</span>
-    </div>
-
-    <!-- 添加 -->
-    <button class="btn btn-primary" onclick="openAddModal()" style="padding:7px 16px;font-size:13px;flex-shrink:0;">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <!-- 添加按钮 -->
+    <button class="btn btn-primary" onclick="openAddModal()" style="padding:6px 14px;font-size:12px;flex-shrink:0;border-radius:8px;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       添加
     </button>
   </div>
@@ -2450,8 +2623,24 @@ function renderGrid(){
   else if(S.filter==='promo')vids=vids.filter(v=>v.promo);
   else if(S.filter==='risk')vids=vids.filter(v=>{const inter=(v.likes||0)+(v.comm||0)+(v.coll||0);return !v.violation&&v.play>5000&&inter/v.play<0.005;});
   else if(S.filter==='normal')vids=vids.filter(v=>!v.violation&&!v.promo);
-  // 日期筛选
+  // 日期筛选（区间）
   if(S.dateFilter) vids=vids.filter(v=>v.date===S.dateFilter);
+  if(S.dateFrom||S.dateTo){
+    vids=vids.filter(v=>{
+      if(!v.date) return false;
+      if(S.dateFrom && v.date<S.dateFrom) return false;
+      if(S.dateTo   && v.date>S.dateTo)   return false;
+      return true;
+    });
+  }
+  // 自定义筛选
+  if(typeof _customFilter!=='undefined'){
+    if(_customFilter.playMin!==null) vids=vids.filter(v=>(v.play||0)>=_customFilter.playMin);
+    if(_customFilter.playMax!==null) vids=vids.filter(v=>(v.play||0)<=_customFilter.playMax);
+    if(_customFilter.likeMin!==null) vids=vids.filter(v=>(v.likes||0)>=_customFilter.likeMin);
+    if(_customFilter.likeMax!==null) vids=vids.filter(v=>(v.likes||0)<=_customFilter.likeMax);
+    if(_customFilter.uploader) vids=vids.filter(v=>(v.uploadedBy||v.author||'').toLowerCase().includes(_customFilter.uploader.toLowerCase()));
+  }
 
   // 搜索过滤
   if(S.searchQuery){
@@ -2461,7 +2650,7 @@ function renderGrid(){
   const label=folder?folder.name:(acc?acc.name:'全部项目');
   if(ptEl)ptEl.innerHTML=label+` <em>${vids.length} 条视频</em>`;
 
-  grid.className='vgrid'+(S.view==='list'?' list':'');
+  grid.className='vgrid'+(S.view==='detail'?' detail':S.view==='list'?' list':'');
 
   // ── KPI Stats Bar ──
   const kpiBar=document.getElementById('kpiBar');
@@ -2528,6 +2717,50 @@ function renderGrid(){
 
   grid.innerHTML=pageVids.map((v,i)=>{
     const a=S.accounts.find(x=>x.id===v.accId)||{name:'未知',color:'#888'};
+
+    // ── 详情卡片视图 ──
+    if(S.view==='detail'){
+      const inter=(v.likes||0)+(v.comm||0)+(v.coll||0);
+      const isRisk=!v.violation&&v.play>5000&&inter/v.play<0.005;
+      let pillClass,pillIcon,pillText;
+      if(v.violation){pillClass='csp-violation';pillIcon='✕';pillText='违规';}
+      else if(v.promo){pillClass='csp-promoted';pillIcon='★';pillText='推广';}
+      else if(isRisk){pillClass='csp-risk';pillIcon='⚠';pillText='风险';}
+      else{pillClass='csp-normal';pillIcon='✓';pillText='正常';}
+      const avatarL=a.name?a.name[0].toUpperCase():'?';
+      const uploaderLine=v.uploadedBy?`<strong>${v.uploadedBy}</strong>`:'';
+      const authorLine=v.author?`· ${v.author}`:'';
+      const titleOrUrl=v.title||(v.url?'<span style="font-size:11px;color:var(--text3);">'+shortUrl(v.url)+'</span>':'（无标题）');
+      const copyLine=v.title?`<div class="card-detail-copy">${v.title}</div>`:'';
+      return`<div class="vcard" data-vid="${v.id}" style="animation-delay:${i*.02}s;" onclick="openDetailDrawer('${v.id}')" oncontextmenu="event.preventDefault();showCtxMenu(event,'${v.id}')">
+        <div class="cthumb">${thumbHTML(v)}${v.dur?('<div class="cdur">'+v.dur+'</div>'):''}
+          <div class="card-checkbox"></div>
+        </div>
+        <div class="card-info">
+          <div class="card-detail-top">
+            <div class="card-detail-title">${titleOrUrl}</div>
+            <div class="card-detail-pill ${pillClass}">${pillIcon} ${pillText}</div>
+          </div>
+          <div class="card-detail-meta">
+            <div class="card-detail-avatar" style="background:${a.color}">${avatarL}</div>
+            <div class="card-detail-meta-text">
+              <span>${a.name}</span>
+              ${uploaderLine?`<span style="color:var(--border2);">·</span><span>${uploaderLine}${authorLine}</span>`:''}
+              ${v.date?`<span style="color:var(--border2);">·</span><span>${v.date}</span>`:''}
+            </div>
+          </div>
+          ${copyLine}
+          <div class="card-detail-stats">
+            <div class="card-detail-stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg><strong>${fmt(v.play)}</strong></div>
+            <div class="card-detail-stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg><strong>${fmt(v.likes)}</strong></div>
+            <div class="card-detail-stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>${fmt(v.comm)}</strong></div>
+            <div class="card-detail-stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><strong>${fmt(v.coll||0)}</strong></div>
+            ${v.url?`<a href="${v.url}" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;font-size:10px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:3px;opacity:.8;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>打开</a>`:''}
+          </div>
+        </div>
+      </div>`;
+    }
+
     // LIST 视图 — 新设计
     if(S.view==='list'){
       const interL=(v.likes||0)+(v.comm||0)+(v.coll||0);
@@ -2659,42 +2892,22 @@ function toggleDatePicker(){
   dp.style.display = dp.style.display==='none' ? 'block' : 'none';
 }
 
-function applyDateFilter(val){
-  S.dateFilter = val || '';
-  S.page = 0;
-  const label = document.getElementById('fc-date-label');
-  const btn   = document.getElementById('fc-date');
-  if(val){
-    if(label) label.textContent = val.slice(5); // 显示MM-DD
-    if(btn)   btn.classList.add('on');
-  } else {
-    if(label) label.textContent = '日期';
-    if(btn)   btn.classList.remove('on');
-  }
-  document.getElementById('datePicker').style.display='none';
-  renderGrid();
-}
+// applyDateFilter removed - replaced by applyDateRangeFilter
 
 function clearDateFilter(){
-  S.dateFilter = '';
-  S.page = 0;
-  const label = document.getElementById('fc-date-label');
-  const btn   = document.getElementById('fc-date');
-  if(label) label.textContent = '日期';
-  if(btn)   btn.classList.remove('on');
-  const inp = document.getElementById('datePickerInput');
-  if(inp) inp.value = '';
-  document.getElementById('datePicker').style.display='none';
+  S.dateFilter=''; S.dateFrom=''; S.dateTo='';
+  S.page=0;
+  var lbl=document.getElementById('fc-date-label');
+  var btn=document.getElementById('fc-date');
+  if(lbl) lbl.textContent='日期区间';
+  if(btn){btn.style.borderColor='var(--border)';btn.style.color='var(--text2)';}
+  var df=document.getElementById('dateFrom'); if(df) df.value='';
+  var dt=document.getElementById('dateTo');   if(dt) dt.value='';
+  var dp=document.getElementById('datePicker'); if(dp) dp.style.display='none';
   renderGrid();
 }
 
-// 点击外部关闭日期选择器
-document.addEventListener('click', function(e){
-  const dp = document.getElementById('datePicker');
-  if(dp && dp.style.display!=='none' && !e.target.closest('#fc-date') && !e.target.closest('#datePicker')){
-    dp.style.display='none';
-  }
-});
+// date picker close listener removed (handled by toggleDatePicker)
 
 function setFilter(f,btn){S.filter=f;S.page=0;document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderGrid();}
 
@@ -2717,7 +2930,7 @@ function onGlobalSearch(val){
   },200);
 }
 function goPage(p){S.page=p;renderGrid();window.scrollTo(0,0);}
-function setView(v){S.view=v;['grid','ranking','dashboard'].forEach(x=>{const el=document.getElementById('vb-'+x);if(el)el.classList.toggle('on',x===v)});renderGrid();}
+function setView(v){S.view=v;['grid','detail'].forEach(x=>{const el=document.getElementById('vb-'+x);if(el)el.classList.toggle('on',x===v)});renderGrid();}
 
 // ══════════════════════════════════════════
 // 账号效率排名视图
@@ -6524,7 +6737,7 @@ function switchPage(page){
     if(typeof openAlertModal==='function') openAlertModal();
   } else if(page==='analytics'){
     if(typeof hideOverviewPane==='function') hideOverviewPane();
-    if(typeof setView==='function') setView('ranking');
+    if(typeof setView==='function') setView('detail');
   }
 }
 
@@ -6555,9 +6768,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var el=document.getElementById(id);
     if(el&&!el._masterBound){el._masterBound=true;el.addEventListener('click',fn);}
   }
-  safeOn('refreshBtn',    function(){ if(typeof doRefresh==='function')doRefresh(); });
-  safeOn('selectModeBtn', function(){ if(typeof toggleSelectMode==='function')toggleSelectMode(); });
-  safeOn('alertTopBtn',   function(){ if(typeof openAlertModal==='function')openAlertModal(); });
+  safeOn('refreshBtn', function(){ if(typeof doRefresh==='function')doRefresh(); });
 
   // 3. 登录按钮
   safeOn('loginBtn', function(){ if(typeof doLogin==='function')doLogin(); });
@@ -6826,6 +7037,62 @@ async function saCreateUser(){
   }catch(e){ toast('创建失败：'+e.message,'err'); }
 }
 
+// ══ 自定义筛选 ══
+var _customFilter = {playMin:null,playMax:null,likeMin:null,likeMax:null,uploader:''};
+
+function toggleCustomFilter(){
+  var p=document.getElementById('customFilterPanel');
+  if(!p) return;
+  var open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+}
+function applyCustomFilter(){
+  _customFilter.playMin=parseFloat(document.getElementById('cf-play-min').value)||null;
+  _customFilter.playMax=parseFloat(document.getElementById('cf-play-max').value)||null;
+  _customFilter.likeMin=parseFloat(document.getElementById('cf-like-min').value)||null;
+  _customFilter.likeMax=parseFloat(document.getElementById('cf-like-max').value)||null;
+  _customFilter.uploader=(document.getElementById('cf-uploader').value||'').trim();
+  var active=0;
+  if(_customFilter.playMin!==null||_customFilter.playMax!==null) active++;
+  if(_customFilter.likeMin!==null||_customFilter.likeMax!==null) active++;
+  if(_customFilter.uploader) active++;
+  var lbl=document.getElementById('customFilterLabel');
+  var btn=document.getElementById('customFilterBtn');
+  if(lbl) lbl.textContent=active?'筛选中 ('+active+')':'自定义筛选';
+  if(btn){btn.style.borderColor=active?'var(--accent)':'var(--border)';btn.style.color=active?'var(--accent)':'var(--text2)';}
+  S.page=0; renderGrid();
+}
+function clearCustomFilter(){
+  ['cf-play-min','cf-play-max','cf-like-min','cf-like-max','cf-uploader'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  _customFilter={playMin:null,playMax:null,likeMin:null,likeMax:null,uploader:''};
+  var lbl=document.getElementById('customFilterLabel');
+  if(lbl) lbl.textContent='自定义筛选';
+  var btn=document.getElementById('customFilterBtn');
+  if(btn){btn.style.borderColor='var(--border)';btn.style.color='var(--text2)';}
+  S.page=0; renderGrid();
+}
+
+// ══ 日期区间 ══
+function applyDateRangeFilter(){
+  var from=document.getElementById('dateFrom');
+  var to=document.getElementById('dateTo');
+  S.dateFrom=(from&&from.value)||''
+  S.dateTo=(to&&to.value)||''
+  S.dateFilter='';
+  var lbl=document.getElementById('fc-date-label');
+  var btn=document.getElementById('fc-date');
+  if(S.dateFrom||S.dateTo){
+    var txt=(S.dateFrom?S.dateFrom.slice(5):'∞')+' — '+(S.dateTo?S.dateTo.slice(5):'∞');
+    if(lbl) lbl.textContent=txt;
+    if(btn){btn.style.borderColor='var(--accent)';btn.style.color='var(--accent)';}
+  } else {
+    if(lbl) lbl.textContent='日期区间';
+    if(btn){btn.style.borderColor='var(--border)';btn.style.color='var(--text2)';}
+  }
+  S.page=0; renderGrid();
+}
 checkLogin();
 
 // ── SIDEBAR RESIZER ──
@@ -7501,9 +7768,8 @@ function switchManualTab(section, el){
       <!-- 视图切换 -->
       <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px;">视图</div>
       <div style="display:flex;gap:8px;">
-        <button onclick="setView('grid');closeSettingsModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> 宫格</button>
-        <button onclick="setView('ranking');closeSettingsModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> 排名</button>
-        <button onclick="setView('dashboard');closeSettingsModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7M14 20h5"/></svg> 看板</button>
+        <button onclick="setView('grid');closeSettingsModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> 紧凑卡片</button>
+        <button onclick="setView('detail');closeSettingsModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="18" height="5" rx="1"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg> 详情卡片</button>
       </div>
 
       <div style="height:1px;background:var(--border);margin:4px 0;"></div>
