@@ -345,7 +345,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 
 /* ── GRID ── */
 .grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
-#overviewPane{flex:1;min-height:0;overflow:auto;padding:0;}
+#overviewPane{flex:1;min-height:0;overflow-y:auto;padding:0;}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
 .vgrid.list{grid-template-columns:1fr;gap:6px;}
 
@@ -1741,6 +1741,102 @@ canvas{max-width:100%;}
     <div id="userSearchResults" style="margin-top:16px;"></div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════
+     超管页面 #superAdminPage  (role === 'superadmin')
+     功能：查看全部账号、重置密码、分配角色、系统日志入口
+     ══════════════════════════════════════════════════════ -->
+<div id="superAdminPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:9000;overflow-y:auto;">
+
+  <!-- 顶栏 -->
+  <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🛡</div>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:var(--text);">超管控制台</div>
+        <div id="superAdminWelcome" style="font-size:12px;color:var(--text3);margin-top:1px;">加载中…</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <!-- 切换到管理页（如果超管同时有 admin 权限） -->
+      <button id="superSwitchAdminBtn" onclick="switchToAdminFromSuper()" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+        🔀 切换到管理页
+      </button>
+      <button onclick="doLogout()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">退出</button>
+    </div>
+  </div>
+
+  <!-- 主体 -->
+  <div style="max-width:900px;margin:32px auto;padding:0 20px 60px;width:100%;display:flex;flex-direction:column;gap:20px;">
+
+    <!-- 统计卡片 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+      <div class="ov-card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">用户总数</div>
+        <div id="sa-total-users" style="font-size:28px;font-weight:800;color:var(--accent);font-family:var(--mono);">—</div>
+      </div>
+      <div class="ov-card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">管理员</div>
+        <div id="sa-admin-count" style="font-size:28px;font-weight:800;color:var(--cyan);font-family:var(--mono);">—</div>
+      </div>
+      <div class="ov-card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">员工账号</div>
+        <div id="sa-user-count" style="font-size:28px;font-weight:800;color:var(--green);font-family:var(--mono);">—</div>
+      </div>
+      <div class="ov-card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">超管账号</div>
+        <div id="sa-super-count" style="font-size:28px;font-weight:800;color:var(--gold);font-family:var(--mono);">—</div>
+      </div>
+    </div>
+
+    <!-- 新建用户 -->
+    <div class="ov-card">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">➕ 新建账号</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">用户名</div>
+          <input id="sa-nu-name" type="text" placeholder="登录账号" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">密码</div>
+          <input id="sa-nu-pass" type="text" placeholder="初始密码" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">角色</div>
+          <select id="sa-nu-role" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+            <option value="user">员工 (user)</option>
+            <option value="admin">管理员 (admin)</option>
+            <option value="superadmin">超管 (superadmin)</option>
+          </select>
+        </div>
+        <button onclick="saCreateUser()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">创建</button>
+      </div>
+      <!-- 员工才显示的文件夹绑定 -->
+      <div id="sa-folder-bind-wrap" style="margin-top:12px;display:none;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">绑定文件夹（员工必填）</div>
+        <div id="sa-nu-folder-list" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="ov-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">👥 所有用户</div>
+        <button onclick="saLoadUsers()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">🔄 刷新</button>
+      </div>
+      <!-- 角色筛选 tab -->
+      <div style="display:flex;gap:4px;margin-bottom:12px;">
+        <button class="fchip on" id="sa-tab-all"       onclick="saFilterUsers('all')"       >全部</button>
+        <button class="fchip"    id="sa-tab-superadmin" onclick="saFilterUsers('superadmin')">超管</button>
+        <button class="fchip"    id="sa-tab-admin"      onclick="saFilterUsers('admin')"     >管理员</button>
+        <button class="fchip"    id="sa-tab-user"       onclick="saFilterUsers('user')"      >员工</button>
+      </div>
+      <div id="sa-user-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+  </div>
+</div>
+
 
 <!-- CHART MODAL -->
 <div class="modal-bg" id="chartModal" style="align-items:stretch;padding:0;">
@@ -3249,57 +3345,7 @@ function exportCSV(){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ESC 关闭弹窗 + 点击背景关闭 —— 等 DOM 就绪再绑定
-document.addEventListener('DOMContentLoaded', function(){
-  const MODALS = ['vidModal','accModal','confirmModal','accStatsModal','userMgmtModal','chartModal','alertModal'];
-
-  // ESC key
-  document.addEventListener('keydown', function(e){
-    if(e.key !== 'Escape') return;
-    // First check alertModal (uses display style, not classList)
-    const am = document.getElementById('alertModal');
-    if(am && am.style.display !== 'none') { closeAlertModal(); return; }
-    for(let i = MODALS.length-1; i >= 0; i--){
-      const el = document.getElementById(MODALS[i]);
-      if(el && el.classList.contains('open')){
-        el.classList.remove('open');
-        break;
-      }
-    }
-  });
-
-  // 点击背景关闭
-  MODALS.forEach(function(id){
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.addEventListener('click', function(e){
-      if(e.target === el) el.classList.remove('open');
-    });
-  });
-
-  // 视频卡片点击事件委托（管理版）—— 支持多选模式和快捷编辑
-  const vgrid = document.getElementById('vgrid');
-  if(vgrid){
-    vgrid.addEventListener('click', function(e){
-      if(e.target.closest('button, a')) return;
-      const card = e.target.closest('[data-vid]');
-      if(!card) return;
-      const vid = card.getAttribute('data-vid');
-      if(_selectMode){ toggleVidSelect(vid, e); }
-      else { openDetailDrawer(vid); }
-    });
-  }
-
-  // 视频卡片点击事件委托（员工版）
-  const userResults = document.getElementById('userSearchResults');
-  if(userResults){
-    userResults.addEventListener('click', function(e){
-      if(e.target.closest('button, a')) return;
-      const card = e.target.closest('[data-uvid]');
-      if(card) openDetailDrawer(card.getAttribute('data-uvid'));
-    });
-  }
-});
+/* 修改位置8a: 已合并至底部统一 DOMContentLoaded */
 function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),2600);}
 
 function openDM(){
@@ -4506,13 +4552,7 @@ async function sha256hex(str) {
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-// ── Login event bindings ──
-document.addEventListener('DOMContentLoaded', () => {
-  const loginBtn = document.getElementById('loginBtn');
-  const loginPass = document.getElementById('loginPass');
-  if(loginBtn) loginBtn.addEventListener('click', doLogin);
-  if(loginPass) loginPass.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-});
+/* 修改位置8b: 已合并至底部统一 DOMContentLoaded */
 
 async function doLogin(){
   const u = document.getElementById('loginUser').value.trim();
@@ -4525,7 +4565,10 @@ async function doLogin(){
   if(res && res.length && res[0].password === hashed){
     const row = res[0];
     currentUser = { username: row.username, role: row.role };
-    if(row.role === 'admin'){
+    if(row.role === 'superadmin'){
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showSuperAdminApp();
+    } else if(row.role === 'admin'){
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       showAdminApp();
     } else {
@@ -4542,20 +4585,25 @@ async function doLogin(){
 }
 
 function showAdminApp(){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('userSearchPage').style.display='none';
-  document.getElementById('mainApp').style.display='flex';
+  // 修改位置9: 统一初始化顺序，确保登录后直接有内容
+  const $ = id => document.getElementById(id);
+  const loginScreen = $('loginScreen');
+  const userSearchPage = $('userSearchPage');
+  const mainApp = $('mainApp');
+  if(loginScreen) loginScreen.style.display='none';
+  if(userSearchPage) userSearchPage.style.display='none';
+  if(mainApp) mainApp.style.display='flex';
   if(typeof petShow==='function') petShow();
-  const _bu=document.getElementById('btnUserMgmt');if(_bu)_bu.style.display='block';
-  const _su=document.getElementById('settingsUserMgmt');if(_su)_su.style.display='flex';
+  const _bu=$('btnUserMgmt'); if(_bu)_bu.style.display='block';
+  const _su=$('settingsUserMgmt'); if(_su)_su.style.display='flex';
   // 更新侧边栏头像
-  const sbAvatar = document.getElementById('sbUserInitial');
-  if(sbAvatar && currentUser) sbAvatar.textContent = (currentUser.username||'管')[0].toUpperCase();
-  // 先把 overviewPane 设为可见，这样 load() 内部的 render() 会走 renderOverviewPane() 而不是空状态
-  const pane=document.getElementById('overviewPane');
-  if(pane) pane.style.display='flex';
-  const vgrid=document.getElementById('vgrid');
-  if(vgrid) vgrid.style.display='none';
+  const sbAvatar=$('sbUserInitial');
+  if(sbAvatar&&currentUser) sbAvatar.textContent=(currentUser.username||'管')[0].toUpperCase();
+  // 先激活总览页，再加载数据（load()里的render()会更新总览内容）
+  if(typeof showOverviewPane==='function') showOverviewPane();
+  // 同步侧边栏 active 状态
+  document.querySelectorAll('.sb-nav-item').forEach(b=>b.classList.remove('active'));
+  const ovBtn=$('sb-nav-overview'); if(ovBtn) ovBtn.classList.add('active');
   load();
 }
 
@@ -4663,11 +4711,13 @@ function doLogout(){
   currentUser = null;
   window._multiTabRender = null;
   window._multiTabActiveIdx = 0;
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('mainApp').style.display='none';
-  document.getElementById('userSearchPage').style.display='none';
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
+  // 隐藏所有页面
+  ['mainApp','userSearchPage','superAdminPage'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='flex';
+  var lu=document.getElementById('loginUser'); if(lu) lu.value='';
+  var lp=document.getElementById('loginPass'); if(lp) lp.value='';
   if(typeof petHide==='function') petHide();
 }
 
@@ -5029,7 +5079,8 @@ function checkLogin(){
   if(saved){
     try{
       currentUser = JSON.parse(saved);
-      if(currentUser.role==='admin') showAdminApp();
+      if(currentUser.role==='superadmin') showSuperAdminApp();
+      else if(currentUser.role==='admin') showAdminApp();
       else showUserApp();
     }catch{ sessionStorage.removeItem('currentUser'); }
   }
@@ -5430,13 +5481,8 @@ function closeOverview(){ hideOverviewPane(); }
 
 // ══ 侧边栏导航切换 ══
 function sbNavTo(page){
-  document.querySelectorAll(".sb-nav-item").forEach(b=>b.classList.remove("active"));
-  var btn=document.getElementById("sb-nav-"+page);
-  if(btn) btn.classList.add("active");
-  if(page==="overview"){ showOverviewPane(); }
-  else if(page==="content"){ hideOverviewPane(); S.filter="all"; S.page=0; render(); }
-  else if(page==="alert"){ hideOverviewPane(); S.filter="violation"; S.page=0; document.querySelectorAll(".fchip").forEach(b=>b.classList.remove("on")); var vb=document.getElementById("fc-violation"); if(vb) vb.classList.add("on"); render(); }
-  else if(page==="analytics"){ setView("ranking"); }
+  // 修改位置10: 委托给统一的 switchPage
+  if(typeof switchPage==='function') switchPage(page);
 }
 
 function _ovRows(){
@@ -6171,22 +6217,7 @@ function ovCtxCopyData(){
 // ══════════════════════════════════════════
 // 修改视频卡片点击行为（支持多选模式）
 // ══════════════════════════════════════════
-// vgrid 点击已在 DOMContentLoaded 里重新绑定
-document.addEventListener('DOMContentLoaded', function(){
-  const vgrid = document.getElementById('vgrid');
-  if(vgrid){
-    // 移除旧的事件监听，重新绑定支持多选
-    vgrid.onclick = function(e){
-      if(e.target.closest('button, a')) return;
-      const card = e.target.closest('[data-vid]');
-      if(!card) return;
-      const vid = card.getAttribute('data-vid');
-      if(_selectMode){ toggleVidSelect(vid, e); }
-      else { editV(vid); }
-    };
-    // 右键菜单绑定到视频卡片（已有contextmenu处理，这里补充卡片的）
-  }
-});
+/* 修改位置8c: 已合并至底部统一 DOMContentLoaded */
 
 // ══════════════════════════════════════════
 // 侧边栏下拉定位辅助：overviewPane上也绑右键到总览卡片
@@ -6399,6 +6430,355 @@ function bindOvPaneCtxMenu(){
 function updateSbUserAvatar(){
   const el = document.getElementById('sbUserInitial');
   if(el && currentUser) el.textContent = (currentUser.username||'管')[0].toUpperCase();
+}
+
+// ════════════════════════════════════════════════════════
+// 修改位置12: 全局应用状态 + 统一页面路由 + 统一初始化
+// ════════════════════════════════════════════════════════
+
+// ── 全局状态 ──
+const appState = {
+  currentPage: 'overview',
+  isLoggedIn: false
+};
+
+// ── 统一弹窗 ID 列表 ──
+const MODAL_IDS = [
+  'vidModal','accModal','confirmModal','accStatsModal',
+  'userMgmtModal','chartModal','settingsModal','themeModal',
+  'batchModal','quickEditModal','accDetailModal','manualModal',
+  'statDetailModal'
+];
+// style.display 控制的弹窗（非 classList）
+const DISPLAY_MODAL_IDS = ['alertModal','likesRankModal'];
+
+// ── 统一页面切换 ──
+function switchPage(page){
+  if(!page) return;
+  appState.currentPage = page;
+  // 更新侧边栏 active
+  document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
+  var navBtn = document.getElementById('sb-nav-'+page);
+  if(navBtn) navBtn.classList.add('active');
+  // 路由
+  if(page==='overview'){
+    if(typeof showOverviewPane==='function') showOverviewPane();
+  } else if(page==='content'){
+    if(typeof hideOverviewPane==='function') hideOverviewPane();
+    var gs=document.getElementById('globalSearch'); if(gs)gs.value='';
+    if(typeof S!=='undefined'){S.filter='all';S.page=0;S.searchQuery='';}
+    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
+    var fcAll=document.getElementById('fc-all'); if(fcAll)fcAll.classList.add('on');
+    if(typeof render==='function') render();
+  } else if(page==='alert'){
+    if(typeof hideOverviewPane==='function') hideOverviewPane();
+    if(typeof S!=='undefined'){S.filter='violation';S.page=0;}
+    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
+    var vb=document.getElementById('fc-violation'); if(vb)vb.classList.add('on');
+    if(typeof render==='function') render();
+    if(typeof openAlertModal==='function') openAlertModal();
+  } else if(page==='analytics'){
+    if(typeof hideOverviewPane==='function') hideOverviewPane();
+    if(typeof setView==='function') setView('ranking');
+  }
+}
+
+// ── 统一 DOMContentLoaded 初始化入口 ──
+document.addEventListener('DOMContentLoaded', function(){
+
+  // 1. 侧边栏事件委托（替代各按钮的 inline onclick 兜底）
+  var sidebar = document.getElementById('iconSidebar');
+  if(sidebar){
+    sidebar.addEventListener('click', function(e){
+      var navBtn = e.target.closest('.sb-nav-item[id^="sb-nav-"]');
+      if(navBtn){
+        var page = navBtn.id.replace('sb-nav-','');
+        if(page) switchPage(page);
+        return;
+      }
+      var folderBtn = e.target.closest('#sb-btn-folder');
+      if(folderBtn){
+        e.stopPropagation();
+        if(typeof toggleNavDropdown==='function') toggleNavDropdown('folderMenu');
+        if(typeof positionSbDropdown==='function') positionSbDropdown('folderMenu', folderBtn);
+      }
+    });
+  }
+
+  // 2. 顶栏按钮（兜底绑定，防止 inline onclick 失效）
+  function safeOn(id, fn){
+    var el=document.getElementById(id);
+    if(el&&!el._masterBound){el._masterBound=true;el.addEventListener('click',fn);}
+  }
+  safeOn('refreshBtn',    function(){ if(typeof doRefresh==='function')doRefresh(); });
+  safeOn('selectModeBtn', function(){ if(typeof toggleSelectMode==='function')toggleSelectMode(); });
+  safeOn('alertTopBtn',   function(){ if(typeof openAlertModal==='function')openAlertModal(); });
+
+  // 3. 登录按钮
+  safeOn('loginBtn', function(){ if(typeof doLogin==='function')doLogin(); });
+  var lp=document.getElementById('loginPass');
+  if(lp&&!lp._masterBound){
+    lp._masterBound=true;
+    lp.addEventListener('keydown',function(e){if(e.key==='Enter'&&typeof doLogin==='function')doLogin();});
+  }
+
+  // 4. ESC 关闭弹窗
+  document.addEventListener('keydown', function(e){
+    if(e.key!=='Escape') return;
+    // display 控制的弹窗优先
+    for(var i=0;i<DISPLAY_MODAL_IDS.length;i++){
+      var el=document.getElementById(DISPLAY_MODAL_IDS[i]);
+      if(el&&el.style.display!=='none'&&el.style.display!==''){
+        el.style.display='none'; el.classList.remove('open'); return;
+      }
+    }
+    // classList 控制的弹窗
+    for(var j=MODAL_IDS.length-1;j>=0;j--){
+      var el2=document.getElementById(MODAL_IDS[j]);
+      if(el2&&el2.classList.contains('open')){
+        el2.classList.remove('open'); return;
+      }
+    }
+  });
+
+  // 5. 点击背景关闭弹窗（classList 控制）
+  MODAL_IDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el||el._bgBound) return;
+    el._bgBound=true;
+    el.addEventListener('click',function(ev){
+      if(ev.target===el) el.classList.remove('open');
+    });
+  });
+  // display 控制的弹窗背景关闭
+  DISPLAY_MODAL_IDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el||el._bgBound) return;
+    el._bgBound=true;
+    el.addEventListener('click',function(ev){
+      if(ev.target===el){el.style.display='none';el.classList.remove('open');}
+    });
+  });
+
+  // 6. 视频卡片事件委托 — 管理版
+  var vgrid=document.getElementById('vgrid');
+  if(vgrid&&!vgrid._masterDelegate){
+    vgrid._masterDelegate=true;
+    vgrid.addEventListener('click',function(e){
+      if(e.target.closest('button,a')) return;
+      var card=e.target.closest('[data-vid]');
+      if(!card) return;
+      var vid=card.getAttribute('data-vid');
+      if(typeof _selectMode!=='undefined'&&_selectMode){
+        if(typeof toggleVidSelect==='function') toggleVidSelect(vid,e);
+      } else {
+        if(typeof openDetailDrawer==='function') openDetailDrawer(vid);
+      }
+    });
+  }
+
+  // 7. 视频卡片事件委托 — 员工版
+  var ur=document.getElementById('userSearchResults');
+  if(ur&&!ur._masterDelegate){
+    ur._masterDelegate=true;
+    ur.addEventListener('click',function(e){
+      if(e.target.closest('button,a')) return;
+      var card=e.target.closest('[data-uvid]');
+      if(card&&typeof openDetailDrawer==='function') openDetailDrawer(card.getAttribute('data-uvid'));
+    });
+  }
+
+  // 8. 点击空白处关闭侧边栏下拉菜单
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.nav-dropdown-menu')&&!e.target.closest('#sb-btn-folder')){
+      document.querySelectorAll('.nav-dropdown-menu').forEach(function(m){m.classList.remove('open');});
+    }
+  });
+
+});
+
+
+// ════════════════════════════════════════════════════════════════
+// 三层页面架构：showSuperAdminApp / showAdminApp / showUserApp
+// 新增：超管页面逻辑
+// ════════════════════════════════════════════════════════════════
+
+// ── 显示超管页 ──
+function showSuperAdminApp(){
+  // 隐藏其他页面
+  ['loginScreen','mainApp','userSearchPage'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  var saPage=document.getElementById('superAdminPage');
+  if(saPage) saPage.style.display='flex';
+  // 欢迎语
+  var welcome=document.getElementById('superAdminWelcome');
+  if(welcome&&currentUser) welcome.textContent='已登录：'+currentUser.username+' · 超管权限';
+  // 超管如果也是 admin（role 可以复合，这里按需展示切换按钮）
+  // 当前设计：superadmin 专注于用户/系统管理，不混入 admin 数据页
+  if(typeof petShow==='function') petShow();
+  saLoadUsers();
+  saLoadFolders();
+}
+
+// 超管切换到管理页（保留 currentUser，直接 showAdminApp）
+function switchToAdminFromSuper(){
+  var saPage=document.getElementById('superAdminPage');
+  if(saPage) saPage.style.display='none';
+  showAdminApp();
+}
+
+// ── 超管：加载全部用户 ──
+var _saAllUsers = [];
+var _saRoleFilter = 'all';
+
+async function saLoadUsers(){
+  var list=document.getElementById('sa-user-list');
+  if(list) list.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">加载中…</div>';
+  try{
+    var res=await sbFetch('/rest/v1/users?select=*&order=username');
+    _saAllUsers = res||[];
+    // 更新统计卡
+    var counts={superadmin:0,admin:0,user:0};
+    _saAllUsers.forEach(function(u){ if(counts[u.role]!==undefined) counts[u.role]++; });
+    var el;
+    el=document.getElementById('sa-total-users'); if(el) el.textContent=_saAllUsers.length;
+    el=document.getElementById('sa-admin-count'); if(el) el.textContent=counts.admin;
+    el=document.getElementById('sa-user-count');  if(el) el.textContent=counts.user;
+    el=document.getElementById('sa-super-count'); if(el) el.textContent=counts.superadmin;
+    saRenderUsers();
+  }catch(e){
+    if(list) list.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px 0;">加载失败：'+e.message+'</div>';
+  }
+}
+
+function saFilterUsers(role){
+  _saRoleFilter=role;
+  ['all','superadmin','admin','user'].forEach(function(r){
+    var btn=document.getElementById('sa-tab-'+r);
+    if(btn){ btn.classList.toggle('on', r===role); }
+  });
+  saRenderUsers();
+}
+
+function saRenderUsers(){
+  var list=document.getElementById('sa-user-list');
+  if(!list) return;
+  var users=_saAllUsers.filter(function(u){
+    return _saRoleFilter==='all'||u.role===_saRoleFilter;
+  });
+  if(!users.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--text3);padding:12px 0;text-align:center;">暂无用户</div>';
+    return;
+  }
+  var roleLabel={'superadmin':'超管','admin':'管理员','user':'员工'};
+  var roleColor={'superadmin':'var(--gold)','admin':'var(--cyan)','user':'var(--green)'};
+  list.innerHTML=users.map(function(u){
+    var isSelf=currentUser&&u.username===currentUser.username;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s2);border-radius:10px;">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+roleColor[u.role]+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">'+(u.username||'?')[0].toUpperCase()+'</div>'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--text);">'+u.username+(isSelf?' <span style="font-size:10px;color:var(--text3);">(当前)</span>':'')+'</div>'
+        +'<div style="font-size:11px;color:var(--text3);margin-top:1px;">'
+          +'<span style="color:'+roleColor[u.role]+';font-weight:600;">'+(roleLabel[u.role]||u.role)+'</span>'
+          +(u.folder_ids&&u.folder_ids!=='[]'?' · 文件夹: '+u.folder_ids.replace(/[\[\]"]/g,''):'')
+        +'</div>'
+      +'</div>'
+      // 角色切换 select
+      +'<select onchange="saChangeRole(''+u.id+'',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit;"'+(isSelf?' disabled title="不能修改自己的角色"':'')+'>'
+        +'<option value="user"'+(u.role==='user'?' selected':'')+'>员工</option>'
+        +'<option value="admin"'+(u.role==='admin'?' selected':'')+'>管理员</option>'
+        +'<option value="superadmin"'+(u.role==='superadmin'?' selected':'')+'>超管</option>'
+      +'</select>'
+      // 重置密码
+      +'<button onclick="saResetPassword(''+u.id+'',''+u.username+'')" style="background:var(--s3);border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;">重置密码</button>'
+      // 删除（不能删自己）
+      +'<button onclick="saDeleteUser(''+u.id+'',''+u.username+'')" style="background:transparent;border:1px solid rgba(224,74,56,.3);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;"'+(isSelf?' disabled title="不能删除自己"':'')+'>删除</button>'
+    +'</div>';
+  }).join('');
+}
+
+async function saChangeRole(userId, newRole){
+  try{
+    await sbFetch('/rest/v1/users?id=eq.'+userId,'PATCH',{role:newRole});
+    toast('✓ 角色已更新');
+    saLoadUsers();
+  }catch(e){ toast('更新失败：'+e.message,'err'); }
+}
+
+async function saResetPassword(userId, username){
+  var np=prompt('为 '+username+' 设置新密码：');
+  if(!np||!np.trim()) return;
+  try{
+    var hashed=await sha256hex(np.trim());
+    await sbFetch('/rest/v1/users?id=eq.'+userId,'PATCH',{password:hashed});
+    toast('✓ 密码已重置');
+  }catch(e){ toast('重置失败：'+e.message,'err'); }
+}
+
+async function saDeleteUser(userId, username){
+  if(!confirm('确认删除用户「'+username+'」？此操作不可撤销。')) return;
+  try{
+    await sbFetch('/rest/v1/users?id=eq.'+userId,'DELETE');
+    toast('✓ 用户已删除');
+    saLoadUsers();
+  }catch(e){ toast('删除失败：'+e.message,'err'); }
+}
+
+// ── 超管：加载文件夹（供新建用户绑定）──
+var _saFolders=[];
+async function saLoadFolders(){
+  try{
+    var res=await sbFetch('/rest/v1/folders?select=*&order=sort_order');
+    _saFolders=res||[];
+    var fl=document.getElementById('sa-nu-folder-list');
+    if(fl){
+      fl.innerHTML=_saFolders.length
+        ? _saFolders.map(function(f){
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;">'
+              +'<input type="checkbox" value="'+f.id+'"/> '+f.name+'</label>';
+          }).join('')
+        : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
+    }
+  }catch(e){}
+}
+
+// 新建用户时根据角色显示/隐藏文件夹绑定区
+document.addEventListener('change', function(e){
+  if(e.target&&e.target.id==='sa-nu-role'){
+    var wrap=document.getElementById('sa-folder-bind-wrap');
+    if(wrap) wrap.style.display=e.target.value==='user'?'block':'none';
+  }
+});
+
+async function saCreateUser(){
+  var name=(document.getElementById('sa-nu-name')||{}).value||'';
+  var pass=(document.getElementById('sa-nu-pass')||{}).value||'';
+  var role=(document.getElementById('sa-nu-role')||{}).value||'user';
+  name=name.trim(); pass=pass.trim();
+  if(!name||!pass){ toast('请填写用户名和密码','err'); return; }
+  var folderIds=[];
+  if(role==='user'){
+    folderIds=[...document.querySelectorAll('#sa-nu-folder-list input[type=checkbox]:checked')].map(function(cb){return cb.value;});
+    if(!folderIds.length){ toast('员工账号请至少绑定一个文件夹','err'); return; }
+  }
+  try{
+    var hashed=await sha256hex(pass);
+    var newUser={
+      id:'u'+Date.now(),
+      username:name,
+      password:hashed,
+      role:role,
+      folder_id:folderIds[0]||null,
+      folder_ids:JSON.stringify(folderIds)
+    };
+    await sbFetch('/rest/v1/users','POST',[newUser]);
+    toast('✓ 账号已创建');
+    var nn=document.getElementById('sa-nu-name'); if(nn) nn.value='';
+    var np=document.getElementById('sa-nu-pass'); if(np) np.value='';
+    document.querySelectorAll('#sa-nu-folder-list input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+    saLoadUsers();
+  }catch(e){ toast('创建失败：'+e.message,'err'); }
 }
 
 checkLogin();
@@ -7235,7 +7615,7 @@ function switchManualTab(section, el){
   box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
-  position:fixed;
+  position:fixed;   /* 修改位置7: 脱离flex流，独立定位 */
   z-index:100000;
 }
 @keyframes panelIn{
@@ -7758,21 +8138,19 @@ var panel   = document.getElementById('petPanel');
 var history = [];
 
 function petTogglePanel(){
+  // 修改位置11: panel已改为position:fixed，动态计算位置使其贴近桌宠
   panelOpen = !panelOpen;
   if(panelOpen){
     panel.style.display = 'flex';
-    // 计算面板位置：紧贴桌宠上方，右对齐
     var r = petEl.getBoundingClientRect();
-    var panelW = 300;
-    var gap = 8;
-    // 右对齐桌宠右边缘
+    var panelW = 300, gap = 8;
     var left = r.right - panelW;
     if(left < 8) left = 8;
-    // 显示在桌宠上方
-    var top = r.top - gap;
-    // 用 bottom 定位更稳定（不需要知道 panelH）
+    if(left + panelW > window.innerWidth - 8) left = window.innerWidth - panelW - 8;
+    var bottom = window.innerHeight - r.top + gap;
+    if(bottom > window.innerHeight - 40) bottom = window.innerHeight - 40;
     panel.style.left   = left + 'px';
-    panel.style.bottom = (window.innerHeight - r.top + gap) + 'px';
+    panel.style.bottom = bottom + 'px';
     panel.style.top    = 'auto';
     panel.style.right  = 'auto';
   } else {
