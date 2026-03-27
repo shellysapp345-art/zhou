@@ -1060,8 +1060,8 @@ canvas{max-width:100%;}
       <input class="login-input" id="loginPass" type="password" placeholder="密码" autocomplete="current-password"/>
     </div>
     <div class="login-err" id="loginErr">账号或密码错误，请重试</div>
-    <button class="login-btn" id="loginBtn"><span>登录</span></button>
-    <div id="loginDebug" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(0,0,0,.06);border-radius:8px;font-size:11px;color:#555;font-family:monospace;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()"><span>登录</span></button>
+    <div id="loginDebug" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(0,0,0,.08);border-radius:8px;font-size:11px;color:#333;font-family:monospace;line-height:1.7;white-space:pre-wrap;word-break:break-all;max-height:180px;overflow-y:auto;text-align:left;"></div>
   </div>
 </div>
 
@@ -4556,59 +4556,62 @@ async function sha256hex(str) {
 /* 修改位置8b: 已合并至底部统一 DOMContentLoaded */
 
 async function doLogin(){
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value;
-  const dbg = document.getElementById('loginDebug');
+  var dbg = document.getElementById('loginDebug');
+  function log(msg){ if(dbg){dbg.style.display='block'; dbg.textContent+=msg+'\n';} }
+  if(dbg) dbg.textContent='';
 
-  function showDbg(msg){ dbg.style.display='block'; dbg.textContent=msg; }
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  log('▶ doLogin 已触发');
+  log('账号: ' + (u||'(空)'));
 
-  if(!u || !p){ toast('请填写账号和密码','err'); return; }
+  if(!u || !p){ log('✗ 账号或密码为空'); toast('请填写账号和密码','err'); return; }
 
-  const btn = document.getElementById('loginBtn');
+  var btn = document.getElementById('loginBtn');
   if(btn){ btn.disabled=true; btn.querySelector('span').textContent='登录中…'; }
 
   try{
-    const hashed = await sha256hex(p);
-    showDbg('① 正在查询账号：' + u + '\n② SHA-256(密码) = ' + hashed.slice(0,16) + '…');
+    log('① 计算密码哈希…');
+    var hashed = await sha256hex(p);
+    log('② hash前16位: ' + hashed.slice(0,16) + '…');
+    log('③ 请求 Supabase…');
 
-    let res;
+    var res;
     try{
       res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
     }catch(netErr){
-      showDbg('✗ 网络请求失败：' + netErr.message + '\n请检查 Supabase 项目是否正常运行。');
+      log('✗ 网络错误: ' + netErr.message);
       return;
     }
 
-    // Supabase 返回错误对象（如 RLS 权限被拒）
-    if(res && !Array.isArray(res) && res.code){
-      showDbg('✗ Supabase 返回错误：\ncode=' + res.code + '\nmessage=' + res.message + '\nhint=' + (res.hint||'无') + '\n\n→ 可能原因：users 表开启了 RLS，需在 Supabase 后台添加匿名查询策略。');
-      return;
-    }
+    log('④ 返回结果: ' + JSON.stringify(res).slice(0,120));
 
-    if(!res || !Array.isArray(res)){
-      showDbg('✗ 意外返回值：' + JSON.stringify(res) + '\n\n→ 请检查 Supabase 项目配置。');
+    if(!res){ log('✗ 返回 null'); return; }
+
+    if(!Array.isArray(res)){
+      if(res.code){ log('✗ Supabase错误: code='+res.code+'\n  message='+res.message+'\n  → users表RLS未开放anon读取权限'); }
+      else { log('✗ 非数组返回: ' + JSON.stringify(res)); }
       return;
     }
 
     if(res.length === 0){
-      showDbg('✗ 未找到账号 "' + u + '"\n返回结果：空数组 []\n\n→ 可能原因：\n  1. 账号名不存在\n  2. users 表 RLS 开启，匿名 key 无法读取\n     → 去 Supabase → Authentication → Policies → users 表，添加 SELECT 策略允许 anon 角色');
-      const err = document.getElementById('loginErr');
-      err.classList.add('show');
-      setTimeout(()=>err.classList.remove('show'), 3000);
+      log('✗ 账号不存在或RLS拦截（返回空数组）\n→ 请检查:\n  1.账号名是否正确\n  2.Supabase→users表→Policies\n    是否允许anon角色SELECT');
+      var err=document.getElementById('loginErr'); err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),3000);
       return;
     }
 
-    const row = res[0];
+    var row = res[0];
+    log('⑤ 找到账号, role=' + row.role);
+    log('   db.password前16位: ' + (row.password||'').slice(0,16) + '…');
+
     if(row.password !== hashed){
-      showDbg('✗ 密码不匹配\n输入密码的 SHA-256 = ' + hashed.slice(0,16) + '…\n数据库存储的 hash = ' + (row.password||'(空)').slice(0,16) + '…\n\n→ 可能原因：\n  数据库里的密码不是用 SHA-256 哈希存储的，\n  需要用正确的 hash 值更新数据库。');
-      const err = document.getElementById('loginErr');
-      err.classList.add('show');
-      setTimeout(()=>err.classList.remove('show'), 3000);
+      log('✗ 密码不匹配\n   输入hash: '+hashed.slice(0,16)+'…\n   数据库  : '+(row.password||'').slice(0,16)+'…\n→ 数据库密码未用SHA-256存储');
+      var err2=document.getElementById('loginErr'); err2.classList.add('show'); setTimeout(()=>err2.classList.remove('show'),3000);
       return;
     }
 
-    // 登录成功
-    dbg.style.display='none';
+    log('✓ 登录成功！跳转中…');
+    if(dbg) setTimeout(()=>{dbg.style.display='none';},1500);
     currentUser = { username: row.username, role: row.role };
     if(row.role === 'superadmin'){
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -4623,7 +4626,7 @@ async function doLogin(){
       showUserApp();
     }
   }catch(e){
-    showDbg('✗ 未知错误：' + e.message);
+    log('✗ 异常: ' + e.message);
   }finally{
     if(btn){ btn.disabled=false; btn.querySelector('span').textContent='登录'; }
   }
