@@ -4563,8 +4563,6 @@ async function doLogin(){
   var u = document.getElementById('loginUser').value.trim();
   var p = document.getElementById('loginPass').value;
   log('▶ doLogin 已触发');
-  log('账号: ' + (u||'(空)'));
-
   if(!u || !p){ log('✗ 账号或密码为空'); toast('请填写账号和密码','err'); return; }
 
   var btn = document.getElementById('loginBtn');
@@ -4573,45 +4571,38 @@ async function doLogin(){
   try{
     log('① 计算密码哈希…');
     var hashed = await sha256hex(p);
-    log('② hash前16位: ' + hashed.slice(0,16) + '…');
+    log('② hash: ' + hashed.slice(0,16) + '…');
     log('③ 请求 Supabase…');
 
     var res;
-    try{
-      res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*');
-    }catch(netErr){
-      log('✗ 网络错误: ' + netErr.message);
-      return;
-    }
+    try{ res = await sbFetch('/rest/v1/users?username=eq.'+encodeURIComponent(u)+'&select=*'); }
+    catch(netErr){ log('✗ 网络错误: ' + netErr.message); return; }
 
-    log('④ 返回结果: ' + JSON.stringify(res).slice(0,120));
+    log('④ 返回: ' + JSON.stringify(res).slice(0,100));
 
     if(!res){ log('✗ 返回 null'); return; }
-
     if(!Array.isArray(res)){
-      if(res.code){ log('✗ Supabase错误: code='+res.code+'\n  message='+res.message+'\n  → users表RLS未开放anon读取权限'); }
-      else { log('✗ 非数组返回: ' + JSON.stringify(res)); }
+      log('✗ Supabase错误: ' + JSON.stringify(res) + '\n→ users表RLS未开放anon读取权限');
       return;
     }
-
     if(res.length === 0){
-      log('✗ 账号不存在或RLS拦截（返回空数组）\n→ 请检查:\n  1.账号名是否正确\n  2.Supabase→users表→Policies\n    是否允许anon角色SELECT');
-      var err=document.getElementById('loginErr'); err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),3000);
+      log('✗ 账号不存在或RLS拦截（空数组）\n→ 去Supabase→users表→Policies添加anon SELECT策略');
+      document.getElementById('loginErr').classList.add('show');
+      setTimeout(()=>document.getElementById('loginErr').classList.remove('show'),3000);
       return;
     }
 
     var row = res[0];
-    log('⑤ 找到账号, role=' + row.role);
-    log('   db.password前16位: ' + (row.password||'').slice(0,16) + '…');
-
+    log('⑤ 找到账号 role=' + row.role);
     if(row.password !== hashed){
-      log('✗ 密码不匹配\n   输入hash: '+hashed.slice(0,16)+'…\n   数据库  : '+(row.password||'').slice(0,16)+'…\n→ 数据库密码未用SHA-256存储');
-      var err2=document.getElementById('loginErr'); err2.classList.add('show'); setTimeout(()=>err2.classList.remove('show'),3000);
+      log('✗ 密码不匹配\n  输入: '+hashed.slice(0,16)+'…\n  数据库: '+(row.password||'').slice(0,16)+'…\n→ 数据库密码未用SHA-256存储');
+      document.getElementById('loginErr').classList.add('show');
+      setTimeout(()=>document.getElementById('loginErr').classList.remove('show'),3000);
       return;
     }
 
-    log('✓ 登录成功！跳转中…');
-    if(dbg) setTimeout(()=>{dbg.style.display='none';},1500);
+    log('✓ 登录成功！');
+    if(dbg) setTimeout(()=>{dbg.style.display='none';},1000);
     currentUser = { username: row.username, role: row.role };
     if(row.role === 'superadmin'){
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -6733,15 +6724,15 @@ function saRenderUsers(){
         +'</div>'
       +'</div>'
       // 角色切换 select
-      +'<select onchange="saChangeRole(''+u.id+'',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit;"'+(isSelf?' disabled title="不能修改自己的角色"':'')+'>'
+      +'<select onchange="saChangeRole(\'+u.id+\',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit;"'+(isSelf?' disabled title="不能修改自己的角色"':'')+'>'
         +'<option value="user"'+(u.role==='user'?' selected':'')+'>员工</option>'
         +'<option value="admin"'+(u.role==='admin'?' selected':'')+'>管理员</option>'
         +'<option value="superadmin"'+(u.role==='superadmin'?' selected':'')+'>超管</option>'
       +'</select>'
       // 重置密码
-      +'<button onclick="saResetPassword(''+u.id+'',''+u.username+'')" style="background:var(--s3);border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;">重置密码</button>'
+      +'<button onclick="saResetPassword(\'+u.id+\',\'+u.username+\')" style="background:var(--s3);border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;">重置密码</button>'
       // 删除（不能删自己）
-      +'<button onclick="saDeleteUser(''+u.id+'',''+u.username+'')" style="background:transparent;border:1px solid rgba(224,74,56,.3);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;"'+(isSelf?' disabled title="不能删除自己"':'')+'>删除</button>'
+      +'<button onclick="saDeleteUser(\'+u.id+\',\'+u.username+\')" style="background:transparent;border:1px solid rgba(224,74,56,.3);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;"'+(isSelf?' disabled title="不能删除自己"':'')+'>删除</button>'
     +'</div>';
   }).join('');
 }
