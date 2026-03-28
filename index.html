@@ -1355,6 +1355,9 @@ canvas{max-width:100%;}
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
     </div>
 
+    <!-- 内容库专属筛选工具栏 — 非内容页隐藏 -->
+    <div id="contentTopbar" style="display:none;align-items:center;gap:8px;flex:1;min-width:0;">
+
     <!-- 分隔 -->
     <div style="width:1px;height:18px;background:var(--border);flex-shrink:0;opacity:.6;"></div>
 
@@ -1435,10 +1438,13 @@ canvas{max-width:100%;}
       </div>
     </div>
 
-    <!-- 弹性空间 -->
-    <div style="flex:1;"></div>
+    </div><!-- /contentTopbar -->
 
-    <!-- 视图切换：仅两种 -->
+    <!-- 弹性空间 -->
+    <div id="topbarSpacer" style="flex:1;"></div>
+
+    <!-- 视图切换：仅两种（内容库专属） -->
+    <div id="viewToggleWrap" style="display:none;">
     <div style="display:flex;gap:2px;align-items:center;background:var(--s2);border-radius:8px;padding:3px;flex-shrink:0;">
       <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="紧凑卡片" style="width:30px;height:26px;border-radius:6px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -1447,6 +1453,8 @@ canvas{max-width:100%;}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="18" height="5" rx="1"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
       </button>
     </div>
+
+    </div><!-- /viewToggleWrap -->
 
     <!-- 刷新 -->
     <button class="tb-ibtn" id="refreshBtn" onclick="doRefresh()" title="刷新" style="flex-shrink:0;">
@@ -5791,10 +5799,10 @@ function showOverviewPane(){
   // Hide KPI bar and pagination when on overview
   var kb = document.getElementById('kpiBar'); if(kb) kb.style.display='none';
   var pg = document.getElementById('pagination'); if(pg) pg.innerHTML='';
-  // Hide content-only topbar elements on overview page
-  var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='hidden';
-  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='hidden';
-  var vbWrap = document.getElementById('viewBtnWrap'); if(vbWrap) vbWrap.style.visibility='hidden';
+  // Hide content-only topbar
+  var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
+  var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
+  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
   renderOverviewPane();
@@ -5802,10 +5810,10 @@ function showOverviewPane(){
 function hideOverviewPane(){
   document.getElementById('overviewPane').style.display='none';
   document.getElementById('vgrid').style.display='';
-  // Restore topbar elements for content page
-  var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='';
-  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='';
-  var vbWrap = document.getElementById('viewBtnWrap'); if(vbWrap) vbWrap.style.visibility='';
+  // Restore content-only topbar
+  var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='flex';
+  var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='flex';
+  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='';
 }
 function openOverview(){ showOverviewPane(); }
 function closeOverview(){ hideOverviewPane(); }
@@ -7826,7 +7834,9 @@ function switchManualTab(section, el){
   width:82px;                   /* §5-size: adjust here */
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  /* No filter anywhere — any filter on ancestor causes JPEG white to look transparent */
+  /* PNG has alpha channel - white bg makes transparent areas look white */
+  background:#ffffff;
+  border-radius:12px;
 }
 
 /* Face-left: mirror the image */
@@ -7835,7 +7845,6 @@ function switchManualTab(section, el){
   display:block;
   transform:scaleX(-1);         /* face left */
   transform-origin:center bottom;
-  image-rendering:crisp-edges;
   /* No filter — drop-shadow causes PNG white pixels to appear transparent */
 }
 
