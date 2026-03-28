@@ -8104,11 +8104,6 @@ function switchManualTab(section, el){
   <!-- §3 Character -->
   <div id="petChar" class="s-idle">
     <div id="petDot"></div>
-    <div id="petZzz">
-      <span class="z-letter">z</span>
-      <span class="z-letter">Z</span>
-      <span class="z-letter">Z</span>
-    </div>
     <svg id="petSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 16px rgba(0,0,0,.18))">
   <defs>
     <radialGradient id="bodyGrad" cx="40%" cy="32%" r="65%">
@@ -8116,24 +8111,48 @@ function switchManualTab(section, el){
       <stop offset="50%"  stop-color="#e8742a"/>
       <stop offset="100%" stop-color="#c89080"/>
     </radialGradient>
+    <radialGradient id="bodyGradHappy" cx="40%" cy="32%" r="65%">
+      <stop offset="0%"   stop-color="#f0854a"/>
+      <stop offset="52%"  stop-color="#e05818"/>
+      <stop offset="100%" stop-color="#c07060"/>
+    </radialGradient>
+    <clipPath id="clipL"><ellipse id="clipLe" cx="34" cy="40" rx="11" ry="13"/></clipPath>
+    <clipPath id="clipR"><ellipse id="clipRe" cx="66" cy="40" rx="11" ry="13"/></clipPath>
   </defs>
 
   <!-- 身体 -->
-  <circle cx="50" cy="52" r="44" fill="url(#bodyGrad)"/>
+  <circle id="petBody" cx="50" cy="52" r="44" fill="url(#bodyGrad)"/>
 
-  <!-- 左眼（白色椭圆，用 clipPath 实现眼皮合上效果） -->
-  <g id="eyeGroupL">
-    <ellipse id="eyeL" cx="34" cy="42" rx="10" ry="13" fill="white" opacity=".95"/>
-    <!-- 眼皮：从上往下盖住眼睛 -->
-    <ellipse id="lidL" cx="34" cy="42" rx="10.5" ry="13.5" fill="url(#bodyGrad)"
-             style="transform-origin:34px 29px; transform:scaleY(0); transition:transform 90ms ease-in"/>
+  <!-- 普通椭圆眼（idle/follow 状态） -->
+  <g id="eyesNormal">
+    <g clip-path="url(#clipL)">
+      <ellipse id="eyeL" cx="34" cy="40" rx="9" ry="11" fill="white" opacity=".95"/>
+    </g>
+    <g clip-path="url(#clipR)">
+      <ellipse id="eyeR" cx="66" cy="40" rx="9" ry="11" fill="white" opacity=".95"/>
+    </g>
   </g>
 
-  <!-- 右眼 -->
-  <g id="eyeGroupR">
-    <ellipse id="eyeR" cx="66" cy="42" rx="10" ry="13" fill="white" opacity=".95"/>
-    <ellipse id="lidR" cx="66" cy="42" rx="10.5" ry="13.5" fill="url(#bodyGrad)"
-             style="transform-origin:66px 29px; transform:scaleY(0); transition:transform 90ms ease-in"/>
+  <!-- 打瞌睡弧线眼 -->
+  <g id="eyesSleep" style="display:none">
+    <path d="M24 42 Q34 52 44 42" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M56 42 Q66 52 76 42" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- 开心弧线眼 -->
+  <g id="eyesHappy" style="display:none">
+    <path d="M24 44 Q34 54 44 44" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M56 44 Q66 54 76 44" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <text x="60" y="16" font-size="12" fill="#f5c842" font-family="sans-serif">✦</text>
+    <text x="72" y="10" font-size="9"  fill="#f5c842" font-family="sans-serif">✦</text>
+    <text x="80" y="17" font-size="7"  fill="#f5c842" font-family="sans-serif">✦</text>
+  </g>
+
+  <!-- zzZ（打瞌睡状态浮在外层，overflow:visible 可见） -->
+  <g id="petZzzSvg" style="display:none">
+    <text x="68" y="22" font-size="9"  fill="#e8a060" font-weight="bold" font-family="sans-serif">z</text>
+    <text x="76" y="15" font-size="12" fill="#e8a060" font-weight="bold" font-family="sans-serif">Z</text>
+    <text x="85" y="8"  font-size="15" fill="#e8a060" font-weight="bold" font-family="sans-serif">Z</text>
   </g>
 </svg>
   </div>
@@ -8229,7 +8248,7 @@ window.addEventListener('load', function(){
 ═══════════════════════════════════════════════ */
 var char  = document.getElementById('petChar');
 var img   = document.getElementById('petImg');
-var zzz   = document.getElementById('petZzz');
+var zzz   = { style: { display: 'none' } }; // zzz now handled by SVG
 var dot   = document.getElementById('petDot');
 
 var state = 'idle';
@@ -8241,8 +8260,9 @@ function setState(s){
   if(state===s) return;
   state = s;
   char.className = 's-'+s;
-  img.src = A[s];
-  zzz.style.display = s==='sleepy' ? 'block' : 'none';
+  if(img) img.src = A[s];
+  zzz.style.display = 'none';
+  if(typeof window._petSetVisualState === 'function') window._petSetVisualState(s);
 }
 
 function bounce(){
@@ -8572,36 +8592,88 @@ var DATA_TIPS = [
   '定期检查违规视频，避免账号风险'
 ];
 
-// ── SVG 桌宠眨眼 ──────────────────────────────────────────────
+// ── SVG 桌宠状态机 ──────────────────────────────────────────────
 (function setupSvgPet(){
-  function blink(){
-    var lL = document.getElementById('lidL');
-    var lR = document.getElementById('lidR');
-    if(!lL || !lR) return;
-    // 合眼
-    lL.style.transition = 'transform 85ms ease-in';
-    lR.style.transition = 'transform 85ms ease-in';
-    lL.style.transform = 'scaleY(1)';
-    lR.style.transform = 'scaleY(1)';
-    // 张眼
-    setTimeout(function(){
-      lL.style.transition = 'transform 85ms ease-out';
-      lR.style.transition = 'transform 85ms ease-out';
-      lL.style.transform = 'scaleY(0)';
-      lR.style.transform = 'scaleY(0)';
-    }, 85 + 70);
+
+  var petBody   = document.getElementById('petBody');
+  var eyesN     = document.getElementById('eyesNormal');
+  var eyesS     = document.getElementById('eyesSleep');
+  var eyesH     = document.getElementById('eyesHappy');
+  var eyeL      = document.getElementById('eyeL');
+  var eyeR      = document.getElementById('eyeR');
+  var clipLe    = document.getElementById('clipLe');
+  var clipRe    = document.getElementById('clipRe');
+  var zzzSvg    = document.getElementById('petZzzSvg');
+  var petSvg    = document.getElementById('petSvg');
+
+  var MAX_OFFSET = 6;
+  var EYE_LX = 34, EYE_LY = 40;
+  var EYE_RX = 66, EYE_RY = 40;
+
+  // 只显示某组眼睛
+  function showEyes(el) {
+    [eyesN, eyesS, eyesH].forEach(function(e){ e.style.display = 'none'; });
+    el.style.display = '';
   }
-  function schedule(){
-    var delay = 2800 + Math.random() * 3200;
-    setTimeout(function(){
-      blink();
-      if(Math.random() < 0.2){ setTimeout(blink, 260); }
-      schedule();
-    }, delay);
+
+  // 重置眼睛位置到中心
+  function resetEyePos() {
+    eyeL.setAttribute('cx', EYE_LX); eyeL.setAttribute('cy', EYE_LY);
+    eyeR.setAttribute('cx', EYE_RX); eyeR.setAttribute('cy', EYE_RY);
+    clipLe.setAttribute('cx', EYE_LX); clipLe.setAttribute('cy', EYE_LY);
+    clipRe.setAttribute('cx', EYE_RX); clipRe.setAttribute('cy', EYE_RY);
   }
-  schedule();
+
+  // ── 鼠标追踪 ──────────────────────────────────────────────────
+  document.addEventListener('mousemove', function(e) {
+    if (state !== 'idle' && state !== 'happy') return; // 只在 idle/happy 追踪
+    if (state === 'sleepy') return;
+    var r = petSvg.getBoundingClientRect();
+    if (r.width === 0) return;
+    var sx = 100 / r.width, sy = 100 / r.height;
+    var mx = (e.clientX - r.left) * sx;
+    var my = (e.clientY - r.top)  * sy;
+
+    function moveEye(bx, by, el, cl) {
+      var dx = mx - bx, dy = my - by;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var off  = Math.min(dist / 7, MAX_OFFSET);
+      var ang  = Math.atan2(dy, dx);
+      var nx   = bx + Math.cos(ang) * off;
+      var ny   = by + Math.sin(ang) * off;
+      el.setAttribute('cx', nx); el.setAttribute('cy', ny);
+      cl.setAttribute('cx', nx); cl.setAttribute('cy', ny);
+    }
+    moveEye(EYE_LX, EYE_LY, eyeL, clipLe);
+    moveEye(EYE_RX, EYE_RY, eyeR, clipRe);
+  });
+
+  // ── 状态切换 ──────────────────────────────────────────────────
+  var happyTimer = null;
+
+  window._petSetVisualState = function(s) {
+    if (happyTimer) { clearTimeout(happyTimer); happyTimer = null; }
+    petBody.setAttribute('fill', s === 'happy' ? 'url(#bodyGradHappy)' : 'url(#bodyGrad)');
+    zzzSvg.style.display = 'none';
+
+    if (s === 'sleepy') {
+      showEyes(eyesS);
+      zzzSvg.style.display = '';
+      resetEyePos();
+    } else if (s === 'happy') {
+      showEyes(eyesH);
+      resetEyePos();
+      happyTimer = setTimeout(function(){
+        if (state === 'happy') setState('idle');
+      }, 2000);
+    } else {
+      // idle / normal
+      showEyes(eyesN);
+    }
+  };
+
 })();
-// ── END SVG 桌宠眨眼 ─────────────────────────────────────────
+// ── END SVG 桌宠状态机 ───────────────────────────────────────────
 
 function doPeriodicNotif(){
   if(state==='sleepy') return;
