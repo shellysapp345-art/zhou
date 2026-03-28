@@ -8109,64 +8109,32 @@ function switchManualTab(section, el){
       <span class="z-letter">Z</span>
       <span class="z-letter">Z</span>
     </div>
-    <svg id="petSvg" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 14px rgba(0,0,0,.20))">
+    <svg id="petSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 16px rgba(0,0,0,.18))">
   <defs>
-    <radialGradient id="petGrad" cx="38%" cy="32%" r="62%">
-      <stop offset="0%"   stop-color="#f09060"/>
-      <stop offset="55%"  stop-color="#e8742a"/>
-      <stop offset="100%" stop-color="#c8a090"/>
-    </radialGradient>
-    <!-- 高光 -->
-    <radialGradient id="petGlow" cx="36%" cy="28%" r="38%">
-      <stop offset="0%"  stop-color="#fff" stop-opacity=".32"/>
-      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    <radialGradient id="bodyGrad" cx="40%" cy="32%" r="65%">
+      <stop offset="0%"   stop-color="#f0a070"/>
+      <stop offset="50%"  stop-color="#e8742a"/>
+      <stop offset="100%" stop-color="#c89080"/>
     </radialGradient>
   </defs>
 
   <!-- 身体 -->
-  <circle cx="40" cy="42" r="36" fill="url(#petGrad)"/>
-  <circle cx="40" cy="42" r="36" fill="url(#petGlow)"/>
+  <circle cx="50" cy="52" r="44" fill="url(#bodyGrad)"/>
 
-  <!-- 脸部容器（嘴巴随情绪切换，由 JS 控制 display） -->
-  <g id="petFace">
-
-    <!-- 左眼（含上下眼皮可合并眨眼） -->
-    <g id="petEyeL">
-      <!-- 眼白 -->
-      <ellipse cx="28" cy="36" rx="7" ry="9" fill="white" opacity=".95"/>
-      <!-- 瞳孔 -->
-      <ellipse cx="28.5" cy="37" rx="3.2" ry="4.2" fill="#3a2010" id="pupilL"/>
-      <!-- 高光 -->
-      <circle cx="26.5" cy="34.5" r="1.5" fill="white" opacity=".9"/>
-      <!-- 眼皮（眨眼时覆盖） -->
-      <ellipse cx="28" cy="36" rx="7.5" ry="9.5" fill="url(#petGrad)" id="lidL"
-               style="transform-origin:28px 27px;transform:scaleY(0)"/>
-    </g>
-
-    <!-- 右眼 -->
-    <g id="petEyeR">
-      <ellipse cx="52" cy="36" rx="7" ry="9" fill="white" opacity=".95"/>
-      <ellipse cx="52.5" cy="37" rx="3.2" ry="4.2" fill="#3a2010" id="pupilR"/>
-      <circle cx="50.5" cy="34.5" r="1.5" fill="white" opacity=".9"/>
-      <ellipse cx="52" cy="36" rx="7.5" ry="9.5" fill="url(#petGrad)" id="lidR"
-               style="transform-origin:52px 27px;transform:scaleY(0)"/>
-    </g>
-
-    <!-- 嘴巴：idle（微笑） -->
-    <path id="mouthIdle" d="M32 55 Q40 63 48 55" stroke="#c05820" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-
-    <!-- 嘴巴：happy（大笑） -->
-    <path id="mouthHappy" d="M28 53 Q40 67 52 53" stroke="#c05820" stroke-width="2.5" fill="none" stroke-linecap="round" style="display:none"/>
-
-    <!-- 嘴巴：sleepy（呵欠/小 o） -->
-    <ellipse id="mouthSleepy" cx="40" cy="57" rx="4.5" ry="5.5" fill="#c05820" opacity=".7" style="display:none"/>
-
-    <!-- 嘴巴：thinking（弯左） -->
-    <path id="mouthThink" d="M32 55 Q36 59 44 55" stroke="#c05820" stroke-width="2.2" fill="none" stroke-linecap="round" style="display:none"/>
-
+  <!-- 左眼（白色椭圆，用 clipPath 实现眼皮合上效果） -->
+  <g id="eyeGroupL">
+    <ellipse id="eyeL" cx="34" cy="42" rx="10" ry="13" fill="white" opacity=".95"/>
+    <!-- 眼皮：从上往下盖住眼睛 -->
+    <ellipse id="lidL" cx="34" cy="42" rx="10.5" ry="13.5" fill="url(#bodyGrad)"
+             style="transform-origin:34px 29px; transform:scaleY(0); transition:transform 90ms ease-in"/>
   </g>
 
-  <!-- 睡觉 zzz 用 CSS 浮动，不放在这里 -->
+  <!-- 右眼 -->
+  <g id="eyeGroupR">
+    <ellipse id="eyeR" cx="66" cy="42" rx="10" ry="13" fill="white" opacity=".95"/>
+    <ellipse id="lidR" cx="66" cy="42" rx="10.5" ry="13.5" fill="url(#bodyGrad)"
+             style="transform-origin:66px 29px; transform:scaleY(0); transition:transform 90ms ease-in"/>
+  </g>
 </svg>
   </div>
 
@@ -8604,81 +8572,34 @@ var DATA_TIPS = [
   '定期检查违规视频，避免账号风险'
 ];
 
-// ── SVG 桌宠眨眼 & 情绪控制 ──────────────────────────────────
+// ── SVG 桌宠眨眼 ──────────────────────────────────────────────
 (function setupSvgPet(){
-  var lidL = document.getElementById('lidL');
-  var lidR = document.getElementById('lidR');
-  if(!lidL || !lidR) return;
-
-  // 眨眼：合上 → 停 80ms → 张开
   function blink(){
-    var dur = 90; // ms 合眼动画时长
-    // 合上
-    lidL.style.transition = 'transform '+dur+'ms ease-in';
-    lidR.style.transition = 'transform '+dur+'ms ease-in';
-    lidL.style.transform = 'scaleY(1)';
-    lidR.style.transform = 'scaleY(1)';
-    // 80ms 后张开
+    var lL = document.getElementById('lidL');
+    var lR = document.getElementById('lidR');
+    if(!lL || !lR) return;
+    // 合眼
+    lL.style.transition = 'transform 85ms ease-in';
+    lR.style.transition = 'transform 85ms ease-in';
+    lL.style.transform = 'scaleY(1)';
+    lR.style.transform = 'scaleY(1)';
+    // 张眼
     setTimeout(function(){
-      lidL.style.transition = 'transform '+dur+'ms ease-out';
-      lidR.style.transition = 'transform '+dur+'ms ease-out';
-      lidL.style.transform = 'scaleY(0)';
-      lidR.style.transform = 'scaleY(0)';
-    }, dur + 80);
+      lL.style.transition = 'transform 85ms ease-out';
+      lR.style.transition = 'transform 85ms ease-out';
+      lL.style.transform = 'scaleY(0)';
+      lR.style.transform = 'scaleY(0)';
+    }, 85 + 70);
   }
-
-  // 随机间隔 2.5~6s 眨一次，偶尔连眨两次
-  function scheduleBlink(){
-    var delay = 2500 + Math.random()*3500;
+  function schedule(){
+    var delay = 2800 + Math.random() * 3200;
     setTimeout(function(){
       blink();
-      if(Math.random() < 0.25){
-        setTimeout(blink, 280); // 连眨
-      }
-      scheduleBlink();
+      if(Math.random() < 0.2){ setTimeout(blink, 260); }
+      schedule();
     }, delay);
   }
-  scheduleBlink();
-
-  // 情绪嘴巴控制
-  var mouths = {
-    idle   : document.getElementById('mouthIdle'),
-    happy  : document.getElementById('mouthHappy'),
-    sleepy : document.getElementById('mouthSleepy'),
-    think  : document.getElementById('mouthThink')
-  };
-  function setMouth(m){
-    Object.keys(mouths).forEach(function(k){
-      if(mouths[k]) mouths[k].style.display = (k===m)?'':'none';
-    });
-  }
-
-  // 眼睛随机微漂移（灵动感）
-  var pupilL2 = document.getElementById('pupilL');
-  var pupilR2 = document.getElementById('pupilR');
-  function driftEyes(){
-    var dx = (Math.random()-0.5)*2.5;
-    var dy = (Math.random()-0.5)*1.5;
-    if(pupilL2) pupilL2.style.transform='translate('+dx+'px,'+dy+'px)';
-    if(pupilR2) pupilR2.style.transform='translate('+dx+'px,'+dy+'px)';
-    setTimeout(driftEyes, 1800+Math.random()*2000);
-  }
-  driftEyes();
-
-  // 暴露给外部，让 JS 切换情绪
-  window.petSetMood = setMouth;
-
-  // 切换状态时同步嘴巴
-  var origChar = document.getElementById('petChar');
-  if(origChar){
-    var obs = new MutationObserver(function(){
-      var cls = origChar.className;
-      if(cls.indexOf('s-happy')>=0)  setMouth('happy');
-      else if(cls.indexOf('s-sleepy')>=0) setMouth('sleepy');
-      else setMouth('idle');
-    });
-    obs.observe(origChar,{attributes:true,attributeFilter:['class']});
-  }
+  schedule();
 })();
 // ── END SVG 桌宠眨眼 ─────────────────────────────────────────
 
