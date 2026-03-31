@@ -8587,6 +8587,7 @@ char.addEventListener('contextmenu',function(e){
    the pet always stays exactly under the cursor.
 ═══════════════════════════════════════════════ */
 var _dragOX=0, _dragOY=0;  // cursor offset from petEl top-left at drag start
+var _dragSX=0, _dragSY=0;  // mouse position at mousedown (for threshold detection)
 
 // 定位由 CSS 控制：bottom:24px; right:24px（拖拽时在 onDragStart 切换为 left/top）
 
@@ -8601,25 +8602,54 @@ function onDragStart(e){
   wake();
   isDrag=false;
 
-  // Switch positioning to left/top ONLY if still using right/bottom defaults
   var r=petEl.getBoundingClientRect();
+  var p=getXY(e);
+
+  // Switch positioning to left/top ONLY if still using right/bottom defaults
   if(petEl.style.left===''||petEl.style.left==='auto'){
     petEl.style.right='auto'; petEl.style.bottom='auto';
     petEl.style.left = r.left+'px';
     petEl.style.top  = r.top +'px';
   }
 
-  var p=getXY(e);
-  // Always recalculate offset from current actual position
-  var curLeft = parseFloat(petEl.style.left)||r.left;
-  var curTop  = parseFloat(petEl.style.top )||r.top;
-  _dragOX = p.x - curLeft;
-  _dragOY = p.y - curTop;
+  // Offset = distance from element's top-left corner to mouse pointer
+  _dragOX = p.x - parseFloat(petEl.style.left);
+  _dragOY = p.y - parseFloat(petEl.style.top);
+
+  // Save mousedown position for drag threshold detection
+  _dragSX = p.x;
+  _dragSY = p.y;
 
   document.addEventListener('mousemove', onDragMove, {passive:false});
   document.addEventListener('mouseup',   onDragEnd);
   document.addEventListener('touchmove', onDragMove, {passive:false});
   document.addEventListener('touchend',  onDragEnd);
+  if(e.cancelable) e.preventDefault();
+}
+
+function onDragMove(e){
+  var p = getXY(e);
+
+  // Use distance from mousedown point to detect drag (not element position comparison)
+  if(!isDrag&&(Math.abs(p.x-_dragSX)>4||Math.abs(p.y-_dragSY)>4)){
+    isDrag=true;
+    char.style.cursor='grabbing';
+  }
+  if(!isDrag) return;
+
+  var nx = p.x - _dragOX;
+  var ny = p.y - _dragOY;
+
+  var pw=petEl.offsetWidth||100, ph=petEl.offsetHeight||120;
+  nx=Math.max(8, Math.min(window.innerWidth  - pw - 8, nx));
+  ny=Math.max(8, Math.min(window.innerHeight - ph - 8, ny));
+
+  petEl.style.left=nx+'px';
+  petEl.style.top =ny+'px';
+
+  // 面板跟随桌宠实时移动
+  if(panelOpen && panel) _syncPanelPos();
+
   if(e.cancelable) e.preventDefault();
 }
 
