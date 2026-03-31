@@ -8094,7 +8094,9 @@ function switchManualTab(section, el){
   font-size:12px;color:#333;line-height:1.6;
   max-width:200px;
   box-shadow:0 4px 16px rgba(0,0,0,.08);
-  display:none;position:relative;
+  display:none;
+  position:fixed;   /* 脱离flex流，避免影响petChar位置 */
+  z-index:100001;
   animation:panelIn .25s cubic-bezier(.34,1.56,.64,1);
 }
 #petNotifClose{
@@ -8647,8 +8649,10 @@ function onDragMove(e){
   petEl.style.left=nx+'px';
   petEl.style.top =ny+'px';
 
-  // 面板跟随桌宠实时移动
+  // 面板和通知框跟随桌宠实时移动
   if(panelOpen && panel) _syncPanelPos();
+  var _notif = document.getElementById('petNotif');
+  if(_notif && _notif.style.display !== 'none') _syncNotifPos();
 
   if(e.cancelable) e.preventDefault();
 }
@@ -8808,9 +8812,25 @@ function removeTyping(id){ var e=document.getElementById(id); if(e)e.remove(); }
 window.petHideNotif = function(){
   document.getElementById('petNotif').style.display='none';
 };
+function _syncNotifPos(){
+  var notif = document.getElementById('petNotif');
+  var r = petEl.getBoundingClientRect();
+  var nw = 210, gap = 8;
+  var left = r.right - nw;
+  if(left < 8) left = 8;
+  if(left + nw > window.innerWidth - 8) left = window.innerWidth - nw - 8;
+  var bottom = window.innerHeight - r.top + gap;
+  if(bottom > window.innerHeight - 40) bottom = window.innerHeight - 40;
+  notif.style.left   = left + 'px';
+  notif.style.bottom = bottom + 'px';
+  notif.style.top    = 'auto';
+  notif.style.right  = 'auto';
+}
+
 function showNotif(text){
   if(panelOpen) return;
   document.getElementById('petNotifText').textContent=text;
+  _syncNotifPos();
   document.getElementById('petNotif').style.display='block';
   dot.style.display='block';
   clearTimeout(notifTimer);
