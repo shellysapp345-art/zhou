@@ -7870,10 +7870,17 @@ function switchManualTab(section, el){
   100%{ transform:scale(1)    translateY(0);   }
 }
 
-#petChar.s-idle  { animation:pcFloat  3.6s ease-in-out infinite; }
-#petChar.s-happy  #petImg{ animation:pcFloat  3.6s ease-in-out infinite; }
-#petChar.s-sleepy  { animation:pcSleep  4.2s ease-in-out infinite; }
-#petChar.bounce   #petImg{ animation:pcBounce .5s cubic-bezier(.34,1.56,.64,1) both!important; }
+#petChar.s-idle   { animation:pcFloat  3.6s ease-in-out infinite; }
+#petChar.s-happy  { animation:pcFloat  3.6s ease-in-out infinite; }
+#petChar.s-sleepy { animation:pcSleep  4.2s ease-in-out infinite; }
+#petChar.s-drowsy { animation:pcDrowsy 2.4s ease-in-out infinite; }
+#petChar.bounce   { animation:pcBounce .5s cubic-bezier(.34,1.56,.64,1) both!important; }
+
+/* Drowsy: 进入睡眠的过渡动画 — 身体轻轻下垂 */
+@keyframes pcDrowsy{
+  0%,100%{ transform:translateY(0) rotate(0deg); opacity:1; }
+  50%    { transform:translateY(2px) rotate(-3deg); opacity:.82; }
+}
 
 /* Zzz SVG animation */
 @keyframes zzzFloat {
@@ -8316,8 +8323,7 @@ function setState(s){
   if(state===s) return;
   state = s;
   char.className = 's-'+s;
-  if(img) img.src = A[s];
-  zzz.style.display = 'none';
+  if(img) img.src = A[s==='drowsy'?'sleepy':s] || A.idle;
   if(typeof window._petSetVisualState === 'function') window._petSetVisualState(s);
 }
 
@@ -8329,15 +8335,34 @@ function bounce(){
   });
 }
 
+var _drowsyTimer = null;
+
 function wake(){
   lastAct = Date.now();
-  if(state==='sleepy') setState('idle');
+  if(_drowsyTimer){ clearTimeout(_drowsyTimer); _drowsyTimer=null; }
+  if(state==='sleepy'||state==='drowsy'){
+    setState('idle');
+    // 短暂happy表示刚醒来
+    setTimeout(function(){
+      if(state==='idle'){
+        setState('happy');
+        setTimeout(function(){ if(state==='happy') setState('idle'); }, 1200);
+      }
+    }, 80);
+  }
 }
 
-// Sleep checker
+// Sleep checker — with drowsy transition phase
 (function tick(){
-  if(Date.now()-lastAct > sleepIn && state!=='sleepy') setState('sleepy');
-  sleepTimer = setTimeout(tick, 3000);
+  var idle = Date.now()-lastAct;
+  if(idle > sleepIn && state!=='sleepy' && state!=='drowsy'){
+    // Enter drowsy first, then sleep after 3s
+    setState('drowsy');
+    _drowsyTimer = setTimeout(function(){
+      if(state==='drowsy') setState('sleepy');
+    }, 3000);
+  }
+  sleepTimer = setTimeout(tick, 2000);
 })();
 
 // Random idle behaviours
@@ -8576,15 +8601,20 @@ function onDragStart(e){
   wake();
   isDrag=false;
 
-  // Switch positioning to left/top once
+  // Switch positioning to left/top ONLY if still using right/bottom defaults
   var r=petEl.getBoundingClientRect();
-  petEl.style.right='auto'; petEl.style.bottom='auto';
-  petEl.style.left = r.left+'px';
-  petEl.style.top  = r.top +'px';
+  if(petEl.style.left===''||petEl.style.left==='auto'){
+    petEl.style.right='auto'; petEl.style.bottom='auto';
+    petEl.style.left = r.left+'px';
+    petEl.style.top  = r.top +'px';
+  }
 
   var p=getXY(e);
-  _dragOX = p.x - r.left;
-  _dragOY = p.y - r.top;
+  // Always recalculate offset from current actual position
+  var curLeft = parseFloat(petEl.style.left)||r.left;
+  var curTop  = parseFloat(petEl.style.top )||r.top;
+  _dragOX = p.x - curLeft;
+  _dragOY = p.y - curTop;
 
   document.addEventListener('mousemove', onDragMove, {passive:false});
   document.addEventListener('mouseup',   onDragEnd);
@@ -8800,7 +8830,7 @@ var DATA_TIPS = [
   // ── 鼠标追踪 ──────────────────────────────────────────────────
   document.addEventListener('mousemove', function(e) {
     if (state !== 'idle' && state !== 'happy') return; // 只在 idle/happy 追踪
-    if (state === 'sleepy') return;
+    if (state === 'sleepy' || state === 'drowsy') return;
     var r = petSvg.getBoundingClientRect();
     if (r.width === 0) return;
     var sx = 100 / r.width, sy = 100 / r.height;
@@ -8832,6 +8862,10 @@ var DATA_TIPS = [
     if (s === 'sleepy') {
       showEyes(eyesS);
       zzzSvg.style.display = '';
+      resetEyePos();
+    } else if (s === 'drowsy') {
+      // 半睡状态：眼睛半闭（用睡眠眼但不显示zzz）
+      showEyes(eyesS);
       resetEyePos();
     } else if (s === 'happy') {
       showEyes(eyesH);
