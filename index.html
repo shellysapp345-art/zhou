@@ -7202,32 +7202,63 @@ function openVisitQuickEdit(){
     var el=document.getElementById(hideIds[hi]); if(el) el.style.display='none';
   }
   vqmSetMode('single');
-  modal.style.display   = 'block';
-  modal.style.opacity   = '0';
-  modal.style.left      = '';
-  modal.style.top       = '';
+  modal.style.display       = 'block';
+  modal.style.opacity       = '0';
   modal.style.pointerEvents = 'auto';
 
-  // 宽屏：放在 statDetailModal 右侧；窄屏：居中
-  var narrow = window.innerWidth <= 1100;
-  if(narrow){
+  // 动态计算位置：优先放在 statDetailModal 右侧，放不下则放左侧，再放不下则居中
+  function _vqmPosition(){
+    var gap   = 12;
+    var mW    = modal.offsetWidth  || 420;
+    var mH    = modal.offsetHeight || 500;
+    var vpW   = window.innerWidth;
+    var vpH   = window.innerHeight;
+    var sdm   = document.getElementById('statDetailModal');
+    var box   = sdm && sdm.style.display !== 'none'
+                  ? sdm.querySelector('div')
+                  : null;
+
+    if(box){
+      var r = box.getBoundingClientRect();
+      // 尝试右侧
+      if(r.right + gap + mW <= vpW - 8){
+        modal.style.left            = (r.right + gap) + 'px';
+        modal.style.top             = Math.max(8, Math.min(r.top, vpH - mH - 8)) + 'px';
+        modal.style.transform       = 'scale(0.82)';
+        modal.style.transformOrigin = 'left top';
+        modal.dataset.vqmSide       = 'right';
+        return;
+      }
+      // 尝试左侧
+      if(r.left - gap - mW >= 8){
+        modal.style.left            = (r.left - gap - mW) + 'px';
+        modal.style.top             = Math.max(8, Math.min(r.top, vpH - mH - 8)) + 'px';
+        modal.style.transform       = 'scale(0.82)';
+        modal.style.transformOrigin = 'right top';
+        modal.dataset.vqmSide       = 'left';
+        return;
+      }
+    }
+    // 退回屏幕居中
     modal.style.left            = '50%';
     modal.style.top             = '50%';
     modal.style.transform       = 'translate(-50%,-50%) scale(0.82)';
     modal.style.transformOrigin = 'center center';
-  } else {
-    modal.style.transform       = 'translateY(-50%) scale(0.82)';
-    modal.style.transformOrigin = 'left center';
+    modal.dataset.vqmSide       = 'center';
   }
 
+  // 先渲染出尺寸再定位
   requestAnimationFrame(function(){
+    _vqmPosition();
     requestAnimationFrame(function(){
-      modal.style.transform = narrow
+      var side = modal.dataset.vqmSide;
+      modal.style.transform = (side === 'center')
         ? 'translate(-50%,-50%) scale(1)'
-        : 'translateY(-50%) scale(1)';
+        : 'scale(1)';
       modal.style.opacity = '1';
     });
   });
+
   if(!_vqmDragInited){ _vqmInitDrag(); _vqmDragInited = true; }
 }
 
@@ -7235,16 +7266,10 @@ function closeVisitQuickEdit(){
   var modal = document.getElementById('visitQuickModal');
   if(!modal) return;
   modal.style.opacity = '0';
-  // 已拖动过（有 left px 值）→ 原地缩小；否则按打开时方向缩回
-  var hasDragged = modal.style.left && modal.style.left.indexOf('%') === -1;
-  var narrow = window.innerWidth <= 1100;
-  if(hasDragged){
-    modal.style.transform = 'scale(0.82)';
-  } else if(narrow){
-    modal.style.transform = 'translate(-50%,-50%) scale(0.82)';
-  } else {
-    modal.style.transform = 'translateY(-50%) scale(0.82)';
-  }
+  var side = modal.dataset.vqmSide || 'center';
+  modal.style.transform = (side === 'center')
+    ? 'translate(-50%,-50%) scale(0.82)'
+    : 'scale(0.82)';
   setTimeout(function(){ modal.style.display='none'; modal.style.pointerEvents='none'; }, 220);
 }
 
@@ -8483,13 +8508,12 @@ function switchManualTab(section, el){
 
 <!-- ══ 线索录入弹窗（浮动可拖动版） ══ -->
 <div id="visitQuickModal" style="display:none;position:fixed;z-index:9700;
-  top:50%;
-  left:calc(50vw + 340px + 16px);
-  transform:translateY(-50%) scale(0.82);
-  transform-origin:left center;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.82);
+  transform-origin:center center;
   opacity:0;pointer-events:none;
   background:var(--s1);border:1px solid var(--border);border-radius:18px;
-  width:min(88vw,440px);overflow:hidden;
+  width:min(88vw,420px);overflow:hidden;
   box-shadow:0 24px 64px rgba(0,0,0,.28);
   transition:transform .24s cubic-bezier(.34,1.28,.64,1),opacity .18s ease;">
 
