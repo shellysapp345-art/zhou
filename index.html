@@ -1734,8 +1734,12 @@ canvas{max-width:100%;}
 <!-- ── 统计详情内联编辑侧抽屉 ── -->
 <div id="statEditDrawerBg" onclick="closeStatEditDrawer()"></div>
 <div id="statEditDrawer">
-  <div class="sed-head">
-    <button class="sed-close" onclick="closeStatEditDrawer()">←</button>
+  <div class="sed-head" title="拖动可移动位置">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--text3);flex-shrink:0;opacity:.5;">
+      <circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/>
+      <circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/>
+      <circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/>
+    </svg>
     <div class="sed-head-title" id="sedTitle">编辑视频</div>
     <button class="sed-close" onclick="closeStatEditDrawer()">✕</button>
   </div>
@@ -1746,7 +1750,7 @@ canvas{max-width:100%;}
   </div>
 </div>
 
-<div id="statDetailModal" onclick="if(event.target===this)closeStatDetail()" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+<div id="statDetailModal" onclick="if(event.target===this&&!document.getElementById('statEditDrawer').classList.contains('open'))closeStatDetail()" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(96vw,680px);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mIn .18s ease;overflow:hidden;">
     <div id="statDetailHead" style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s2);">
       <div>
@@ -5390,6 +5394,8 @@ function openStatEditDrawer(vidId){
 
   document.getElementById('statEditDrawerBg').classList.add('open');
   document.getElementById('statEditDrawer').classList.add('open');
+  // 初始化拖动（每次打开时重置位置）
+  _sedInitDrag();
 }
 
 function closeStatEditDrawer(){
@@ -5418,6 +5424,80 @@ function sedUpdateThumbPreview(url){
     if(img) img.style.display='none';
     if(ph) ph.style.display='flex';
   }
+}
+
+/* ── 拖动功能 ────────────────────────────────────── */
+function _sedInitDrag(){
+  const drawer = document.getElementById('statEditDrawer');
+  const handle = drawer.querySelector('.sed-head');
+  if(!drawer || !handle) return;
+
+  // 重置为 CSS 默认位置（清除上次拖动残留）
+  drawer.style.left   = '';
+  drawer.style.top    = '';
+  drawer.style.right  = '';
+  drawer.style.transform = '';
+
+  let dragging = false, startX, startY, origL, origT;
+
+  handle.style.cursor = 'grab';
+
+  function onDown(e){
+    // 计算当前实际位置
+    const rect = drawer.getBoundingClientRect();
+    origL = rect.left;
+    origT = rect.top;
+    startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+    // 切换为绝对 left/top 定位（脱离 CSS transform 流）
+    drawer.style.left      = origL + 'px';
+    drawer.style.top       = origT + 'px';
+    drawer.style.right     = 'auto';
+    drawer.style.transform = 'none';
+
+    dragging = true;
+    handle.style.cursor = 'grabbing';
+    drawer.style.transition = 'none';
+    drawer.style.userSelect = 'none';
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend',  onUp);
+  }
+
+  function onMove(e){
+    if(!dragging) return;
+    if(e.cancelable) e.preventDefault();
+    const cx = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const cy = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+    const dx = cx - startX, dy = cy - startY;
+    // 边界限制
+    const w = drawer.offsetWidth, h = drawer.offsetHeight;
+    const newL = Math.min(Math.max(0, origL + dx), window.innerWidth  - w);
+    const newT = Math.min(Math.max(0, origT + dy), window.innerHeight - h);
+    drawer.style.left = newL + 'px';
+    drawer.style.top  = newT + 'px';
+  }
+
+  function onUp(){
+    dragging = false;
+    handle.style.cursor = 'grab';
+    drawer.style.transition = '';
+    drawer.style.userSelect = '';
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend',  onUp);
+  }
+
+  // 清除旧监听器（通过克隆节点）
+  const newHandle = handle.cloneNode(true);
+  handle.parentNode.replaceChild(newHandle, handle);
+  newHandle.style.cursor = 'grab';
+  newHandle.addEventListener('mousedown',  onDown);
+  newHandle.addEventListener('touchstart', onDown, {passive:true});
 }
 
 function sedSave(){
@@ -5547,7 +5627,7 @@ function openStatDetail(type){
       html += `<div style="font-size:12px;font-weight:700;color:var(--text3);margin-top:8px;margin-bottom:6px;letter-spacing:.4px;">▸ 点赞 Top 5 视频</div>`;
       html += topLiked.map(v=>{
         const a = S.accounts.find(x=>String(x.id)===String(v.accId))||{name:'未知',color:'#999'};
-        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--s2);border-radius:9px;cursor:pointer;margin-bottom:6px;" onclick="closeStatDetail();selAcc('${a.id}')">
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--s2);border-radius:9px;cursor:pointer;margin-bottom:6px;transition:background .12s;" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'" onclick="openStatEditDrawer('${v.id}')">
           <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title||'（无标题）'}</div>
