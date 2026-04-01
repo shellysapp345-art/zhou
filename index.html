@@ -5319,6 +5319,7 @@ let _alertData = [];
 // ══════════════════════════════════════════
 function closeStatDetail(){
   closeStatEditDrawer();
+  closeVisitQuickEdit();
   document.getElementById('statDetailModal').style.display='none';
 }
 
@@ -7202,60 +7203,58 @@ function openVisitQuickEdit(){
     var el=document.getElementById(hideIds[hi]); if(el) el.style.display='none';
   }
   vqmSetMode('single');
-  modal.style.display       = 'block';
+
+  // 先让弹窗不可见但占位（可以读尺寸），关闭transition避免初始跳动
+  modal.style.transition    = 'none';
   modal.style.opacity       = '0';
+  modal.style.transform     = 'scale(0.82)';
+  modal.style.transformOrigin = 'left top';
+  modal.style.left          = '-9999px';
+  modal.style.top           = '0';
+  modal.style.display       = 'block';
   modal.style.pointerEvents = 'auto';
 
-  // 动态计算位置：优先放在 statDetailModal 右侧，放不下则放左侧，再放不下则居中
-  function _vqmPosition(){
+  // 强制浏览器完成一次布局，读取真实尺寸，再计算并定位
+  requestAnimationFrame(function(){
+    // 现在可以读到真实 offsetWidth/Height
     var gap   = 12;
     var mW    = modal.offsetWidth  || 420;
     var mH    = modal.offsetHeight || 500;
     var vpW   = window.innerWidth;
     var vpH   = window.innerHeight;
     var sdm   = document.getElementById('statDetailModal');
-    var box   = sdm && sdm.style.display !== 'none'
-                  ? sdm.querySelector('div')
-                  : null;
+    var box   = sdm && sdm.style.display !== 'none' ? sdm.querySelector('div') : null;
+    var side  = 'center';
 
     if(box){
       var r = box.getBoundingClientRect();
-      // 尝试右侧
       if(r.right + gap + mW <= vpW - 8){
         modal.style.left            = (r.right + gap) + 'px';
         modal.style.top             = Math.max(8, Math.min(r.top, vpH - mH - 8)) + 'px';
-        modal.style.transform       = 'scale(0.82)';
         modal.style.transformOrigin = 'left top';
-        modal.dataset.vqmSide       = 'right';
-        return;
-      }
-      // 尝试左侧
-      if(r.left - gap - mW >= 8){
+        side = 'right';
+      } else if(r.left - gap - mW >= 8){
         modal.style.left            = (r.left - gap - mW) + 'px';
         modal.style.top             = Math.max(8, Math.min(r.top, vpH - mH - 8)) + 'px';
-        modal.style.transform       = 'scale(0.82)';
         modal.style.transformOrigin = 'right top';
-        modal.dataset.vqmSide       = 'left';
-        return;
+        side = 'left';
       }
     }
-    // 退回屏幕居中
-    modal.style.left            = '50%';
-    modal.style.top             = '50%';
-    modal.style.transform       = 'translate(-50%,-50%) scale(0.82)';
-    modal.style.transformOrigin = 'center center';
-    modal.dataset.vqmSide       = 'center';
-  }
+    if(side === 'center'){
+      modal.style.left            = '50%';
+      modal.style.top             = '50%';
+      modal.style.transform       = 'translate(-50%,-50%) scale(0.82)';
+      modal.style.transformOrigin = 'center center';
+    } else {
+      modal.style.transform = 'scale(0.82)';
+    }
+    modal.dataset.vqmSide = side;
 
-  // 先渲染出尺寸再定位
-  requestAnimationFrame(function(){
-    _vqmPosition();
+    // 恢复 transition，下一帧触发缩放动画
     requestAnimationFrame(function(){
-      var side = modal.dataset.vqmSide;
-      modal.style.transform = (side === 'center')
-        ? 'translate(-50%,-50%) scale(1)'
-        : 'scale(1)';
-      modal.style.opacity = '1';
+      modal.style.transition = '';   // 恢复 CSS 里定义的 transition
+      modal.style.transform  = (side === 'center') ? 'translate(-50%,-50%) scale(1)' : 'scale(1)';
+      modal.style.opacity    = '1';
     });
   });
 
