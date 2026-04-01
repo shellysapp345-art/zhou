@@ -776,23 +776,63 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ── 统计详情内联编辑侧抽屉 ── */
 #statEditDrawer{
   position:fixed;
-  top:0;bottom:0;
-  width:min(92vw,420px);
+  /* 垂直居中，水平放在主弹窗(680px)的右侧 */
+  top:50%;
+  left:calc(50vw + 340px + 12px);
+  transform:translateY(-50%) scale(0.75);
+  transform-origin:left center;
+  width:min(88vw,320px);
+  max-height:82vh;
   background:var(--s1);
-  box-shadow:4px 0 32px rgba(0,0,0,.18);
+  box-shadow:0 16px 48px rgba(0,0,0,.22);
   z-index:9600;
   display:flex;flex-direction:column;overflow:hidden;
-  transform:translateX(-100%);
-  transition:transform .28s cubic-bezier(.4,0,.2,1);
-  border-right:1px solid var(--border);
+  border-radius:18px;
+  border:1px solid var(--border);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .26s cubic-bezier(.34,1.28,.64,1), opacity .2s ease;
 }
-#statEditDrawer.open{transform:translateX(0);}
+#statEditDrawer.open{
+  transform:translateY(-50%) scale(1);
+  opacity:1;
+  pointer-events:auto;
+}
+/* 小屏时退回中央弹窗 */
+@media(max-width:1100px){
+  #statEditDrawer{
+    left:50%;
+    transform:translate(-50%,-50%) scale(0.75);
+    transform-origin:center center;
+  }
+  #statEditDrawer.open{
+    transform:translate(-50%,-50%) scale(1);
+  }
+}
 #statEditDrawerBg{
   position:fixed;inset:0;
   z-index:9599;
   display:none;
 }
 #statEditDrawerBg.open{display:block;}
+
+/* 封面预览区（链接弹窗内） */
+#sedThumbPreview{
+  width:100%;aspect-ratio:16/9;
+  background:var(--s2);
+  overflow:hidden;
+  position:relative;
+  flex-shrink:0;
+}
+#sedThumbPreview img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+#sedThumbPreviewPlaceholder{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  color:var(--text3);font-size:11px;
+}
+#sedThumbPreviewPlaceholder svg{ opacity:.3; }
 .sed-head{
   padding:14px 18px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:10px;
@@ -801,7 +841,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .sed-head-title{font-size:14px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sed-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .sed-close:hover{background:var(--s4);}
-.sed-body{flex:1;overflow-y:auto;padding:18px;}
+.sed-body{flex:1;overflow-y:auto;padding:0;}
+#sedThumbPreview{border-radius:0;}
 .sed-section{margin-bottom:14px;}
 .sed-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;}
 .sed-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--s1);color:var(--text);font-family:var(--font);outline:none;transition:border-color .12s;box-sizing:border-box;}
@@ -5293,7 +5334,21 @@ function openStatEditDrawer(vidId){
     `<option value="${ac.id}" ${ac.id===v.accId?'selected':''}>${ac.name}</option>`
   ).join('');
 
-  document.getElementById('sedBody').innerHTML = `
+  // 封面图预览区
+  const thumbSrc = (v.thumb&&(v.thumb.startsWith('http')||v.thumb.startsWith('data:'))) ? v.thumb : '';
+  const thumbPreviewHtml = `
+    <div id="sedThumbPreview">
+      ${thumbSrc
+        ? `<img id="sedThumbImg" src="${thumbSrc}" alt="封面" onerror="this.style.display='none';document.getElementById('sedThumbPreviewPlaceholder').style.display='flex';"/>`
+        : ''}
+      <div id="sedThumbPreviewPlaceholder" style="display:${thumbSrc?'none':'flex'};">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>暂无封面图</span>
+      </div>
+    </div>`;
+
+  document.getElementById('sedBody').innerHTML = thumbPreviewHtml + `
+    <div style="padding:14px 16px 0;">
     <div class="sed-section">
       <div class="sed-label">所属账号</div>
       <select class="sed-acc-select" id="sed-acc">${accOpts}</select>
@@ -5321,7 +5376,7 @@ function openStatEditDrawer(vidId){
     </div>
     <div class="sed-section">
       <div class="sed-label">封面图链接</div>
-      <input class="sed-input" id="sed-thumb" value="${(v.thumb||'').replace(/"/g,'&quot;')}" placeholder="封面图 URL（选填）"/>
+      <input class="sed-input" id="sed-thumb" value="${(v.thumb||'').replace(/"/g,'&quot;')}" placeholder="封面图 URL（选填）" oninput="sedUpdateThumbPreview(this.value)"/>
     </div>
     <div class="sed-section">
       <div class="sed-label">状态</div>
@@ -5329,6 +5384,7 @@ function openStatEditDrawer(vidId){
         <button class="sed-tog${v.violation?' on-v':''}" id="sed-tog-v" onclick="this.classList.toggle('on-v')">⚠ 违规</button>
         <button class="sed-tog${v.promo?' on-p':''}" id="sed-tog-p" onclick="this.classList.toggle('on-p')">📢 推广中</button>
       </div>
+    </div>
     </div>
   `;
 
@@ -5340,6 +5396,28 @@ function closeStatEditDrawer(){
   document.getElementById('statEditDrawer').classList.remove('open');
   document.getElementById('statEditDrawerBg').classList.remove('open');
   _sedVidId = null;
+}
+
+function sedUpdateThumbPreview(url){
+  const img = document.getElementById('sedThumbImg');
+  const ph  = document.getElementById('sedThumbPreviewPlaceholder');
+  const preview = document.getElementById('sedThumbPreview');
+  if(!preview) return;
+  if(url && (url.startsWith('http')||url.startsWith('data:'))){
+    if(!img){
+      const i = document.createElement('img');
+      i.id='sedThumbImg'; i.alt='封面';
+      i.style.cssText='width:100%;height:100%;object-fit:cover;display:block;';
+      i.onerror=function(){ this.style.display='none'; if(ph) ph.style.display='flex'; };
+      preview.insertBefore(i, ph);
+    }
+    const el = document.getElementById('sedThumbImg');
+    if(el){ el.src=url; el.style.display='block'; }
+    if(ph) ph.style.display='none';
+  } else {
+    if(img) img.style.display='none';
+    if(ph) ph.style.display='flex';
+  }
 }
 
 function sedSave(){
