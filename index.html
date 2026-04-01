@@ -7138,177 +7138,272 @@ function closeAbnModal(){
 }
 
 // ══════════════════════════════════════════
-// ══════════════════════════════════════════
-// 线索录入弹窗（精细版：单天 / 区间 / 按月）
+// 线索录入弹窗（浮动·可拖动·单天/区间/按月）
 // ══════════════════════════════════════════
 var _vqmMode = 'single';
+var _vqmDragInited = false;
 
 function vqmSetMode(mode){
   _vqmMode = mode;
-  ['single','range','month'].forEach(m=>{
-    const tab   = document.getElementById('vqm-tab-'+m);
-    const panel = document.getElementById('vqm-panel-'+m);
-    const active = m===mode;
+  var modes = ['single','range','month'];
+  for(var mi=0;mi<modes.length;mi++){
+    var m = modes[mi];
+    var tab   = document.getElementById('vqm-tab-'+m);
+    var panel = document.getElementById('vqm-panel-'+m);
+    var active = m === mode;
     if(tab){
       tab.style.background = active ? 'var(--accent)' : 'var(--s2)';
       tab.style.color      = active ? '#fff'          : 'var(--text2)';
       tab.style.fontWeight = active ? '700'           : '500';
     }
-    if(panel) panel.style.display = active ? '' : 'none';
-  });
+    if(panel) panel.style.display = active ? 'block' : 'none';
+  }
+  var suc = document.getElementById('vqm-success');
+  if(suc) suc.style.display = 'none';
 }
 
 function openVisitQuickEdit(){
-  const modal = document.getElementById('visitQuickModal');
+  var modal = document.getElementById('visitQuickModal');
   if(!modal) return;
-  // 填充账号
-  const sel = document.getElementById('vqe-acc');
-  if(sel) sel.innerHTML = S.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  var sel = document.getElementById('vqe-acc');
+  if(sel){
+    sel.innerHTML = '';
+    for(var ai=0;ai<S.accounts.length;ai++){
+      var a = S.accounts[ai];
+      sel.innerHTML += '<option value="'+a.id+'">'+a.name+'</option>';
+    }
+  }
   if(sel && window._ovSelAccId) sel.value = window._ovSelAccId;
-  // 默认今天
-  const today = new Date().toISOString().slice(0,10);
-  const dateEl = document.getElementById('vqe-date');
+  var today = new Date().toISOString().slice(0,10);
+  var dateEl = document.getElementById('vqe-date');
   if(dateEl) dateEl.value = today;
-  // 区间默认本月1日～今天
-  const d = new Date();
-  const m1 = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
-  const rs = document.getElementById('vqe-range-start');
-  const re = document.getElementById('vqe-range-end');
+  var d  = new Date();
+  var m1 = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
+  var rs = document.getElementById('vqe-range-start');
+  var re = document.getElementById('vqe-range-end');
   if(rs) rs.value = m1;
   if(re) re.value = today;
-  // 月份默认本月
-  const yr = document.getElementById('vqe-month-year');
-  const mn = document.getElementById('vqe-month-mon');
+  var yr = document.getElementById('vqe-month-year');
   if(yr){
     yr.innerHTML = '';
-    for(let y=d.getFullYear()-2; y<=d.getFullYear()+1; y++)
-      yr.innerHTML += `<option value="${y}"${y===d.getFullYear()?' selected':''}>${y}年</option>`;
+    var cy = d.getFullYear();
+    for(var y=cy-2;y<=cy+1;y++)
+      yr.innerHTML += '<option value="'+y+'"'+(y===cy?' selected':'')+'>'+y+'年</option>';
   }
-  if(mn) mn.value = d.getMonth()+1;
-  // 清空数值
-  const fields = ['vqe-count','vqe-range-total','vqe-month-total'];
-  fields.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  // 重置预览
-  ['vqm-range-preview','vqm-month-preview'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.style.display='none';
-  });
-  // 默认单天模式
+  var mn = document.getElementById('vqe-month-mon');
+  if(mn) mn.value = String(d.getMonth()+1);
+  var clrIds = ['vqe-count','vqe-range-total','vqe-month-total'];
+  for(var ci=0;ci<clrIds.length;ci++){
+    var el=document.getElementById(clrIds[ci]); if(el) el.value='';
+  }
+  var hideIds = ['vqm-range-preview','vqm-month-preview','vqm-success'];
+  for(var hi=0;hi<hideIds.length;hi++){
+    var el=document.getElementById(hideIds[hi]); if(el) el.style.display='none';
+  }
   vqmSetMode('single');
-  modal.style.display = 'flex';
+  modal.style.display   = 'block';
+  modal.style.opacity   = '0';
+  modal.style.left      = '';
+  modal.style.top       = '';
+  modal.style.transform = 'translate(-50%,-50%) scale(0.85)';
+  modal.style.pointerEvents = 'auto';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      modal.style.transform = 'translate(-50%,-50%) scale(1)';
+      modal.style.opacity   = '1';
+    });
+  });
+  if(!_vqmDragInited){ _vqmInitDrag(); _vqmDragInited = true; }
 }
 
 function closeVisitQuickEdit(){
-  const m = document.getElementById('visitQuickModal');
-  if(m) m.style.display = 'none';
+  var modal = document.getElementById('visitQuickModal');
+  if(!modal) return;
+  modal.style.opacity   = '0';
+  modal.style.transform = (modal.style.left ? 'scale(0.85)' : 'translate(-50%,-50%) scale(0.85)');
+  setTimeout(function(){ modal.style.display='none'; modal.style.pointerEvents='none'; }, 200);
 }
 
-// ── 区间预览 ────────────────────────────────
+function _vqmInitDrag(){
+  var modal  = document.getElementById('visitQuickModal');
+  var handle = document.getElementById('vqm-handle');
+  if(!modal||!handle) return;
+  var dragging=false, startX, startY, origL, origT;
+  handle.style.cursor = 'grab';
+  function onDown(e){
+    var rect = modal.getBoundingClientRect();
+    origL  = rect.left; origT  = rect.top;
+    startX = e.type==='touchstart' ? e.touches[0].clientX : e.clientX;
+    startY = e.type==='touchstart' ? e.touches[0].clientY : e.clientY;
+    modal.style.left      = origL+'px';
+    modal.style.top       = origT+'px';
+    modal.style.transform = 'none';
+    dragging=true;
+    handle.style.cursor    = 'grabbing';
+    modal.style.transition = 'none';
+    modal.style.userSelect = 'none';
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('touchend',onUp);
+  }
+  function onMove(e){
+    if(!dragging) return;
+    if(e.cancelable) e.preventDefault();
+    var cx=e.type==='touchmove'?e.touches[0].clientX:e.clientX;
+    var cy=e.type==='touchmove'?e.touches[0].clientY:e.clientY;
+    var w=modal.offsetWidth,h=modal.offsetHeight;
+    modal.style.left=Math.min(Math.max(0,origL+(cx-startX)),window.innerWidth-w)+'px';
+    modal.style.top =Math.min(Math.max(0,origT+(cy-startY)),window.innerHeight-h)+'px';
+  }
+  function onUp(){
+    dragging=false;
+    handle.style.cursor    = 'grab';
+    modal.style.transition = '';
+    modal.style.userSelect = '';
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('touchend',onUp);
+  }
+  handle.addEventListener('mousedown',onDown);
+  handle.addEventListener('touchstart',onDown,{passive:true});
+}
+
 function vqmPreviewRange(){
-  const s   = document.getElementById('vqe-range-start')?.value;
-  const e   = document.getElementById('vqe-range-end')?.value;
-  const tot = Number(document.getElementById('vqe-range-total')?.value)||0;
-  const prev = document.getElementById('vqm-range-preview');
+  var sEl  = document.getElementById('vqe-range-start');
+  var eEl  = document.getElementById('vqe-range-end');
+  var tEl  = document.getElementById('vqe-range-total');
+  var prev = document.getElementById('vqm-range-preview');
   if(!prev) return;
+  var s=sEl&&sEl.value, e=eEl&&eEl.value, tot=Number(tEl&&tEl.value)||0;
   if(!s||!e||!tot){ prev.style.display='none'; return; }
-  const start = new Date(s), end = new Date(e);
+  var start=new Date(s), end=new Date(e);
   if(start>end){ prev.innerHTML='⚠ 开始日期不能晚于结束日期'; prev.style.display=''; return; }
-  const days = Math.round((end-start)/86400000)+1;
-  const perDay = Math.round(tot/days);
-  const even = document.getElementById('vqe-range-even')?.checked;
+  var days=Math.round((end-start)/86400000)+1;
+  var perDay=(tot/days).toFixed(1);
+  var evEl=document.getElementById('vqe-range-even');
+  var even=evEl&&evEl.checked;
   prev.innerHTML = even
-    ? `<b>${days}</b> 天 · 每天约 <b style="color:var(--accent)">${perDay}</b> 条 · 合计 <b>${tot}</b> 条`
-    : `<b>${days}</b> 天区间 · 仅记录汇总 <b style="color:var(--accent)">${tot}</b> 条（起始日）`;
-  prev.style.display = '';
+    ? '📅 <b>'+s+'</b> 至 <b>'+e+'</b><br>共 <b>'+days+'</b> 天，总计 <b style="color:var(--accent)">'+tot+'</b> 条线索<br>均匀分配 → 每天约 <b style="color:var(--accent)">'+perDay+'</b> 条'
+    : '📅 区间 <b>'+days+'</b> 天，仅记录汇总 <b style="color:var(--accent)">'+tot+'</b> 条（存入起始日）';
+  prev.style.display='';
 }
 
-// ── 月份预览 ────────────────────────────────
 function vqmPreviewMonth(){
-  const y   = Number(document.getElementById('vqe-month-year')?.value);
-  const m   = Number(document.getElementById('vqe-month-mon')?.value);
-  const tot = Number(document.getElementById('vqe-month-total')?.value)||0;
-  const prev = document.getElementById('vqm-month-preview');
+  var yrEl  = document.getElementById('vqe-month-year');
+  var mnEl  = document.getElementById('vqe-month-mon');
+  var totEl = document.getElementById('vqe-month-total');
+  var prev  = document.getElementById('vqm-month-preview');
   if(!prev) return;
-  if(!y||!m||!tot){ prev.style.display='none'; return; }
-  const days = new Date(y,m,0).getDate();
-  const perDay = Math.round(tot/days);
-  const even = document.getElementById('vqe-month-even')?.checked;
+  var y=Number(yrEl&&yrEl.value), mo=Number(mnEl&&mnEl.value), tot=Number(totEl&&totEl.value)||0;
+  if(!y||!mo||!tot){ prev.style.display='none'; return; }
+  var days=new Date(y,mo,0).getDate();
+  var perDay=(tot/days).toFixed(1);
+  var evEl=document.getElementById('vqe-month-even');
+  var even=evEl&&evEl.checked;
+  var mStr=y+'年'+mo+'月';
   prev.innerHTML = even
-    ? `${y}年${m}月共 <b>${days}</b> 天 · 每天约 <b style="color:var(--accent)">${perDay}</b> 条 · 合计 <b>${tot}</b> 条`
-    : `${y}年${m}月汇总 <b style="color:var(--accent)">${tot}</b> 条（记录到月首）`;
-  prev.style.display = '';
+    ? '📆 <b>'+mStr+'</b>，共 <b>'+days+'</b> 天<br>总计 <b style="color:var(--accent)">'+tot+'</b> 条线索<br>均匀拆分 → 每天约 <b style="color:var(--accent)">'+perDay+'</b> 条（共 '+days+' 条记录）'
+    : '📆 <b>'+mStr+'</b> 月度汇总<br>仅记录 <b style="color:var(--accent)">'+tot+'</b> 条（存入 '+y+'-'+String(mo).padStart(2,'0')+'-01）';
+  prev.style.display='';
 }
 
-// ── 保存 ────────────────────────────────────
 async function saveVisitQuickNew(){
-  const accId = document.getElementById('vqe-acc')?.value;
+  var accEl = document.getElementById('vqe-acc');
+  var accId = accEl && accEl.value;
   if(!accId){ toast('请选择账号','err'); return; }
-  if(!S.visits) S.visits = [];
-  const records = [];
+  if(!S.visits) S.visits=[];
+  var records=[], ts=Date.now(), rnd=Math.floor(Math.random()*9000)+1000;
 
   if(_vqmMode==='single'){
-    const date  = document.getElementById('vqe-date')?.value;
-    const count = Number(document.getElementById('vqe-count')?.value)||0;
+    var dEl=document.getElementById('vqe-date'), cEl=document.getElementById('vqe-count');
+    var date=dEl&&dEl.value, count=Number(cEl&&cEl.value)||0;
     if(!date){ toast('请选择日期','err'); return; }
     if(count<=0){ toast('线索数需大于 0','err'); return; }
-    records.push({ id:'v'+Date.now()+'_0', acc_id:accId, date, count, visit_type:'day' });
+    records.push({id:'v'+ts+'_0',acc_id:accId,date:date,count:count,visit_type:'day'});
 
   } else if(_vqmMode==='range'){
-    const s   = document.getElementById('vqe-range-start')?.value;
-    const e   = document.getElementById('vqe-range-end')?.value;
-    const tot = Number(document.getElementById('vqe-range-total')?.value)||0;
-    const even = document.getElementById('vqe-range-even')?.checked;
+    var sEl=document.getElementById('vqe-range-start'),eEl=document.getElementById('vqe-range-end');
+    var tEl=document.getElementById('vqe-range-total'),evEl=document.getElementById('vqe-range-even');
+    var s=sEl&&sEl.value, e=eEl&&eEl.value, tot=Number(tEl&&tEl.value)||0, even=evEl&&evEl.checked;
     if(!s||!e){ toast('请选择日期区间','err'); return; }
     if(new Date(s)>new Date(e)){ toast('开始日期不能晚于结束日期','err'); return; }
     if(tot<=0){ toast('线索数需大于 0','err'); return; }
     if(even){
-      const start = new Date(s), end = new Date(e);
-      const days  = Math.round((end-start)/86400000)+1;
-      const base  = Math.floor(tot/days);
-      let   rem   = tot-base*days;
-      for(let i=0;i<days;i++){
-        const d = new Date(start); d.setDate(start.getDate()+i);
-        const dstr = d.toISOString().slice(0,10);
-        const c = base+(rem-->0?1:0);
-        records.push({ id:'v'+Date.now()+'_'+i, acc_id:accId, date:dstr, count:c, visit_type:'range' });
+      var start=new Date(s),end=new Date(e),days=Math.round((end-start)/86400000)+1;
+      var base=Math.floor(tot/days),rem=tot-base*days;
+      for(var i=0;i<days;i++){
+        var dd=new Date(start); dd.setDate(start.getDate()+i);
+        records.push({id:'v'+ts+'_'+i,acc_id:accId,date:dd.toISOString().slice(0,10),count:base+(rem-->0?1:0),visit_type:'range'});
       }
     } else {
-      records.push({ id:'v'+Date.now()+'_0', acc_id:accId, date:s, count:tot, visit_type:'range' });
+      records.push({id:'v'+ts+'_0',acc_id:accId,date:s,count:tot,visit_type:'range'});
     }
 
   } else if(_vqmMode==='month'){
-    const y   = Number(document.getElementById('vqe-month-year')?.value);
-    const m   = Number(document.getElementById('vqe-month-mon')?.value);
-    const tot = Number(document.getElementById('vqe-month-total')?.value)||0;
-    const even = document.getElementById('vqe-month-even')?.checked;
-    if(!y||!m){ toast('请选择年月','err'); return; }
+    var yrEl=document.getElementById('vqe-month-year'),mnEl=document.getElementById('vqe-month-mon');
+    var totEl=document.getElementById('vqe-month-total'),evEl=document.getElementById('vqe-month-even');
+    var y=Number(yrEl&&yrEl.value),mo=Number(mnEl&&mnEl.value),tot=Number(totEl&&totEl.value)||0,even=evEl&&evEl.checked;
+    if(!y||!mo){ toast('请选择年月','err'); return; }
     if(tot<=0){ toast('线索数需大于 0','err'); return; }
     if(even){
-      const days = new Date(y,m,0).getDate();
-      const base = Math.floor(tot/days);
-      let   rem  = tot-base*days;
-      for(let i=1;i<=days;i++){
-        const dstr = y+'-'+String(m).padStart(2,'0')+'-'+String(i).padStart(2,'0');
-        const c    = base+(rem-->0?1:0);
-        records.push({ id:'v'+Date.now()+'_'+i, acc_id:accId, date:dstr, count:c, visit_type:'month' });
+      var days=new Date(y,mo,0).getDate(),base=Math.floor(tot/days),rem=tot-base*days;
+      for(var i=1;i<=days;i++){
+        var dstr=y+'-'+String(mo).padStart(2,'0')+'-'+String(i).padStart(2,'0');
+        records.push({id:'v'+ts+'_'+i,acc_id:accId,date:dstr,count:base+(rem-->0?1:0),visit_type:'month'});
       }
     } else {
-      const dstr = y+'-'+String(m).padStart(2,'0')+'-01';
-      records.push({ id:'v'+Date.now()+'_0', acc_id:accId, date:dstr, count:tot, visit_type:'month' });
+      records.push({id:'v'+ts+'_0',acc_id:accId,date:y+'-'+String(mo).padStart(2,'0')+'-01',count:tot,visit_type:'month'});
     }
   }
 
   if(!records.length){ toast('无有效数据','err'); return; }
+
+  // ── 去重检查：同账号同日期已有记录则跳过或提示 ──
+  var dupes = [];
+  var newRecords = [];
+  for(var di=0; di<records.length; di++){
+    var rec = records[di];
+    var exists = S.visits.find(function(v){
+      return v.accId === rec.acc_id && v.date === rec.date;
+    });
+    if(exists) dupes.push(rec.date);
+    else newRecords.push(rec);
+  }
+  if(newRecords.length === 0){
+    toast('所选日期已有线索记录，请修改后重试','err'); return;
+  }
+  if(dupes.length > 0){
+    var dupMsg = dupes.length <= 3 ? dupes.join('、') : dupes.slice(0,3).join('、')+'等'+dupes.length+'天';
+    if(!confirm(dupMsg+' 已有记录，跳过这些日期，继续录入其余 '+newRecords.length+' 条？')) return;
+    records = newRecords;
+  }
   try{
-    await sbFetch('/rest/v1/visits','POST', records);
-    records.forEach(r=> S.visits.push({ id:r.id, accId:r.acc_id, date:r.date, count:r.count, visit_type:r.visit_type }));
-    closeVisitQuickEdit();
+    await sbFetch('/rest/v1/visits','POST',records);
+    for(var ri=0;ri<records.length;ri++){
+      var r=records[ri];
+      S.visits.push({id:r.id,accId:r.acc_id,date:r.date,count:r.count,visit_type:r.visit_type});
+    }
     if(typeof renderOverviewPane==='function') renderOverviewPane();
-    toast(`✓ 已录入 ${records.length} 条线索记录`);
-  }catch(e){ toast('保存失败，请重试','err'); }
+    if(typeof _lastStatDetailType!=='undefined'&&_lastStatDetailType) openStatDetail(_lastStatDetailType);
+    var suc=document.getElementById('vqm-success');
+    if(suc){
+      suc.textContent='✓ 已成功录入 '+records.length+' 条线索记录';
+      suc.style.display='';
+      setTimeout(function(){ if(suc) suc.style.display='none'; },4000);
+    }
+    toast('✓ 已录入 '+records.length+' 条线索');
+    var clrIds=['vqe-count','vqe-range-total','vqe-month-total'];
+    for(var ci=0;ci<clrIds.length;ci++){ var el=document.getElementById(clrIds[ci]); if(el) el.value=''; }
+    var hideIds=['vqm-range-preview','vqm-month-preview'];
+    for(var hi=0;hi<hideIds.length;hi++){ var el=document.getElementById(hideIds[hi]); if(el) el.style.display='none'; }
+  } catch(err){ toast('保存失败，请重试','err'); }
 }
 
-// 保留旧函数名兼容性
 function saveVisitQuick(){ saveVisitQuickNew(); }
+
+
 
 
 function bindOvPaneCtxMenu(){
@@ -7352,7 +7447,7 @@ const MODAL_IDS = [
   'statDetailModal'
 ];
 // style.display 控制的弹窗（非 classList）
-const DISPLAY_MODAL_IDS = ['alertModal','likesRankModal','visitQuickModal'];
+const DISPLAY_MODAL_IDS = ['alertModal','likesRankModal'];
 
 // ESC 优先关闭最上层弹窗
 document.addEventListener('keydown', function(e){
@@ -7364,12 +7459,16 @@ document.addEventListener('keydown', function(e){
   var sed = document.getElementById('statEditDrawer');
   if(sed && sed.classList.contains('open')){ closeStatEditDrawer(); return; }
 
-  // 2. statDetailModal（z-9500，display控制）
+  // 2. visitQuickModal 线索录入浮窗（z-9550，浮动窗口）
+  var vqm = document.getElementById('visitQuickModal');
+  if(vqm && vqm.style.display !== 'none' && vqm.style.display !== ''){ closeVisitQuickEdit(); return; }
+
+  // 3. statDetailModal（z-9500，display控制）
   var sdm = document.getElementById('statDetailModal');
   if(sdm && sdm.style.display === 'flex'){ closeStatDetail(); return; }
 
-  // 3. display 控制的弹窗（z-9400）
-  var displayIds = ['alertModal','abnModal','likesRankModal','visitQuickModal'];
+  // 4. display 控制的弹窗（z-9400）
+  var displayIds = ['alertModal','abnModal','likesRankModal'];
   for(var i = displayIds.length-1; i >= 0; i--){
     var el = document.getElementById(displayIds[i]);
     if(el && el.style.display === 'flex'){ el.style.display='none'; return; }
@@ -8358,117 +8457,175 @@ function switchManualTab(section, el){
 </div>
 </div>
 
-<!-- ══ 线索录入弹窗（精细版） ══ -->
-<div id="visitQuickModal" onclick="if(event.target===this)closeVisitQuickEdit()" style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-<div onclick="event.stopPropagation()" style="background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(96vw,480px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:mIn .18s ease;">
+<!-- ══ 线索录入弹窗（浮动可拖动版） ══ -->
+<div id="visitQuickModal" style="display:none;position:fixed;z-index:9700;
+  top:50%;left:50%;transform:translate(-50%,-50%) scale(0.88);
+  opacity:0;pointer-events:none;
+  background:var(--s1);border:1px solid var(--border);border-radius:18px;
+  width:min(96vw,460px);overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.28);
+  transition:transform .22s cubic-bezier(.34,1.28,.64,1),opacity .18s ease;">
 
-  <!-- 头部 -->
-  <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--s2);">
-    <div>
-      <div style="font-size:15px;font-weight:700;color:var(--text);">录入线索数据</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">支持单天 · 日期区间 · 按月录入</div>
+  <!-- 头部（拖动把手） -->
+  <div id="vqm-handle" style="padding:14px 18px 11px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:10px;background:var(--s2);cursor:grab;user-select:none;"
+    title="可拖动">
+    <!-- 拖动图标 -->
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" style="color:var(--text3);opacity:.5;flex-shrink:0;">
+      <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
+      <circle cx="15" cy="5"  r="1" fill="currentColor"/>
+      <circle cx="9"  cy="12" r="1" fill="currentColor"/>
+      <circle cx="15" cy="12" r="1" fill="currentColor"/>
+      <circle cx="9"  cy="19" r="1" fill="currentColor"/>
+      <circle cx="15" cy="19" r="1" fill="currentColor"/>
+    </svg>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);">录入线索数据</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:1px;">单天 · 日期区间 · 按月</div>
     </div>
-    <button onclick="closeVisitQuickEdit()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="closeVisitQuickEdit()" style="width:26px;height:26px;border-radius:7px;border:none;
+      background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
   </div>
 
-  <!-- 模式切换 Tab -->
-  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);">
+  <!-- 模式 Tab -->
+  <div style="display:flex;border-bottom:1px solid var(--border);">
     <button id="vqm-tab-single" onclick="vqmSetMode('single')"
-      style="flex:1;padding:10px 0;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border-radius:0;transition:all .12s;">单天</button>
+      style="flex:1;padding:9px 0;border:none;background:var(--accent);color:#fff;
+      font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;">单天</button>
     <button id="vqm-tab-range" onclick="vqmSetMode('range')"
-      style="flex:1;padding:10px 0;border:none;background:var(--s2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border-radius:0;transition:all .12s;">日期区间</button>
+      style="flex:1;padding:9px 0;border:none;background:var(--s2);color:var(--text2);
+      font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;">日期区间</button>
     <button id="vqm-tab-month" onclick="vqmSetMode('month')"
-      style="flex:1;padding:10px 0;border:none;background:var(--s2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border-radius:0;transition:all .12s;">按月</button>
+      style="flex:1;padding:9px 0;border:none;background:var(--s2);color:var(--text2);
+      font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;">按月汇总</button>
   </div>
 
-  <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;">
+  <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;">
 
-    <!-- 账号选择（共用） -->
-    <div style="display:flex;flex-direction:column;gap:5px;">
+    <!-- 账号（共用） -->
+    <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">所属账号</label>
-      <select id="vqe-acc" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;"></select>
+      <select id="vqe-acc" style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+        padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;"></select>
     </div>
 
-    <!-- ── 单天模式 ── -->
+    <!-- ── 单天面板 ── -->
     <div id="vqm-panel-single">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
           <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">日期</label>
-          <input id="vqe-date" type="date" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+          <input id="vqe-date" type="date" style="background:var(--s1);border:1px solid var(--border);
+            border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
           <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">线索人数</label>
           <input id="vqe-count" type="number" min="0" placeholder="0"
-            style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+            style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+            padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
         </div>
       </div>
     </div>
 
-    <!-- ── 日期区间模式 ── -->
+    <!-- ── 日期区间面板 ── -->
     <div id="vqm-panel-range" style="display:none;">
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div style="display:flex;flex-direction:column;gap:5px;">
-            <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">开始日期</label>
-            <input id="vqe-range-start" type="date" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;" oninput="vqmPreviewRange()"/>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px;">
-            <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">结束日期</label>
-            <input id="vqe-range-end" type="date" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;" oninput="vqmPreviewRange()"/>
-          </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">开始日期</label>
+          <input id="vqe-range-start" type="date" style="background:var(--s1);border:1px solid var(--border);
+            border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"
+            oninput="vqmPreviewRange()"/>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">区间总线索数</label>
-          <input id="vqe-range-total" type="number" min="0" placeholder="0" oninput="vqmPreviewRange()"
-            style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">结束日期</label>
+          <input id="vqe-range-end" type="date" style="background:var(--s1);border:1px solid var(--border);
+            border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"
+            oninput="vqmPreviewRange()"/>
         </div>
-        <div id="vqm-range-preview" style="display:none;background:var(--s2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.8;"></div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);">
-          <input type="checkbox" id="vqe-range-even" checked style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;"/>
-          <label for="vqe-range-even" style="cursor:pointer;">均匀分配到每天</label>
-          <span style="margin-left:auto;font-size:11px;color:var(--text3);">（取消则只记录区间汇总）</span>
-        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">区间总线索数</label>
+        <input id="vqe-range-total" type="number" min="0" placeholder="这段时间共几条线索"
+          oninput="vqmPreviewRange()"
+          style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+          padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="vqe-range-even" checked onchange="vqmPreviewRange()"
+          style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
+        <label for="vqe-range-even" style="font-size:12px;color:var(--text2);cursor:pointer;">均匀分配到区间内每天</label>
+      </div>
+      <div id="vqm-range-preview" style="display:none;background:var(--accent-light);border:1px solid rgba(232,116,42,.2);
+        border-radius:9px;padding:9px 13px;font-size:12px;color:var(--text);line-height:1.9;"></div>
       </div>
     </div>
 
-    <!-- ── 按月模式 ── -->
+    <!-- ── 按月面板 ── -->
     <div id="vqm-panel-month" style="display:none;">
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div style="display:flex;flex-direction:column;gap:5px;">
-            <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">年份</label>
-            <select id="vqe-month-year" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;" oninput="vqmPreviewMonth()"></select>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px;">
-            <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">月份</label>
-            <select id="vqe-month-mon" style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;" oninput="vqmPreviewMonth()">
-              ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}">${m}月</option>`).join('')}
-            </select>
-          </div>
+      <!-- 说明文字 -->
+      <div style="background:var(--s2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--text2);line-height:1.7;">
+        📅 选择年月，填入当月总线索数。可选择均匀分配到每天，或仅汇总记录到月初（1日）。
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">年份</label>
+          <select id="vqe-month-year" onchange="vqmPreviewMonth()"
+            style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+            padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;">
+          </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">当月总线索数</label>
-          <input id="vqe-month-total" type="number" min="0" placeholder="0" oninput="vqmPreviewMonth()"
-            style="background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">月份</label>
+          <select id="vqe-month-mon" onchange="vqmPreviewMonth()"
+            style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+            padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;cursor:pointer;">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
         </div>
-        <div id="vqm-month-preview" style="display:none;background:var(--s2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.8;"></div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);">
-          <input type="checkbox" id="vqe-month-even" checked style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;"/>
-          <label for="vqe-month-even" style="cursor:pointer;">均匀分配到每天</label>
-          <span style="margin-left:auto;font-size:11px;color:var(--text3);">（取消则只记录月汇总）</span>
-        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;">当月总线索数</label>
+        <input id="vqe-month-total" type="number" min="0" placeholder="这个月共几条线索"
+          oninput="vqmPreviewMonth()"
+          style="background:var(--s1);border:1px solid var(--border);border-radius:8px;
+          padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="vqe-month-even" checked onchange="vqmPreviewMonth()"
+          style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
+        <label for="vqe-month-even" style="font-size:12px;color:var(--text2);cursor:pointer;">均匀拆分到每天（推荐）</label>
+      </div>
+      <div id="vqm-month-preview" style="display:none;background:var(--accent-light);border:1px solid rgba(232,116,42,.2);
+        border-radius:9px;padding:9px 13px;font-size:12px;color:var(--text);line-height:1.9;"></div>
       </div>
     </div>
 
+    <!-- 成功提示 -->
+    <div id="vqm-success" style="display:none;background:rgba(46,140,84,.08);border:1px solid rgba(46,140,84,.25);
+      border-radius:9px;padding:9px 13px;font-size:12px;color:var(--green);font-weight:600;"></div>
+
   </div>
 
-  <!-- 底部操作 -->
-  <div style="padding:12px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);background:var(--s1);">
-    <button onclick="closeVisitQuickEdit()" style="padding:9px 18px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;transition:all .12s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">取消</button>
-    <button onclick="saveVisitQuickNew()" style="padding:9px 22px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s;box-shadow:0 2px 8px rgba(232,116,42,.25);" onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'">保存录入</button>
+  <!-- 底部 -->
+  <div style="padding:10px 18px 14px;display:flex;gap:8px;justify-content:flex-end;
+    border-top:1px solid var(--border);background:var(--s1);">
+    <button onclick="closeVisitQuickEdit()"
+      style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;
+      color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s;"
+      onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">关闭</button>
+    <button onclick="saveVisitQuickNew()"
+      style="padding:8px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;
+      font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s;
+      box-shadow:0 2px 8px rgba(232,116,42,.25);"
+      onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'">保存录入</button>
   </div>
 
-</div>
 </div>
 
 <!-- ══ 点赞排名弹窗 ══ -->
