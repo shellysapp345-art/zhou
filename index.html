@@ -808,6 +808,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
     transform:translate(-50%,-50%) scale(1);
   }
 }
+/* 小屏：录入弹窗退回居中（由JS处理，CSS媒体查询备用） */
 #statEditDrawerBg{
   position:fixed;inset:0;
   z-index:9599;
@@ -7205,12 +7206,26 @@ function openVisitQuickEdit(){
   modal.style.opacity   = '0';
   modal.style.left      = '';
   modal.style.top       = '';
-  modal.style.transform = 'translate(-50%,-50%) scale(0.85)';
   modal.style.pointerEvents = 'auto';
+
+  // 宽屏：放在 statDetailModal 右侧；窄屏：居中
+  var narrow = window.innerWidth <= 1100;
+  if(narrow){
+    modal.style.left            = '50%';
+    modal.style.top             = '50%';
+    modal.style.transform       = 'translate(-50%,-50%) scale(0.82)';
+    modal.style.transformOrigin = 'center center';
+  } else {
+    modal.style.transform       = 'translateY(-50%) scale(0.82)';
+    modal.style.transformOrigin = 'left center';
+  }
+
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      modal.style.transform = 'translate(-50%,-50%) scale(1)';
-      modal.style.opacity   = '1';
+      modal.style.transform = narrow
+        ? 'translate(-50%,-50%) scale(1)'
+        : 'translateY(-50%) scale(1)';
+      modal.style.opacity = '1';
     });
   });
   if(!_vqmDragInited){ _vqmInitDrag(); _vqmDragInited = true; }
@@ -7219,9 +7234,18 @@ function openVisitQuickEdit(){
 function closeVisitQuickEdit(){
   var modal = document.getElementById('visitQuickModal');
   if(!modal) return;
-  modal.style.opacity   = '0';
-  modal.style.transform = (modal.style.left ? 'scale(0.85)' : 'translate(-50%,-50%) scale(0.85)');
-  setTimeout(function(){ modal.style.display='none'; modal.style.pointerEvents='none'; }, 200);
+  modal.style.opacity = '0';
+  // 已拖动过（有 left px 值）→ 原地缩小；否则按打开时方向缩回
+  var hasDragged = modal.style.left && modal.style.left.indexOf('%') === -1;
+  var narrow = window.innerWidth <= 1100;
+  if(hasDragged){
+    modal.style.transform = 'scale(0.82)';
+  } else if(narrow){
+    modal.style.transform = 'translate(-50%,-50%) scale(0.82)';
+  } else {
+    modal.style.transform = 'translateY(-50%) scale(0.82)';
+  }
+  setTimeout(function(){ modal.style.display='none'; modal.style.pointerEvents='none'; }, 220);
 }
 
 function _vqmInitDrag(){
@@ -8459,12 +8483,15 @@ function switchManualTab(section, el){
 
 <!-- ══ 线索录入弹窗（浮动可拖动版） ══ -->
 <div id="visitQuickModal" style="display:none;position:fixed;z-index:9700;
-  top:50%;left:50%;transform:translate(-50%,-50%) scale(0.88);
+  top:50%;
+  left:calc(50vw + 340px + 16px);
+  transform:translateY(-50%) scale(0.82);
+  transform-origin:left center;
   opacity:0;pointer-events:none;
   background:var(--s1);border:1px solid var(--border);border-radius:18px;
-  width:min(96vw,460px);overflow:hidden;
+  width:min(88vw,440px);overflow:hidden;
   box-shadow:0 24px 64px rgba(0,0,0,.28);
-  transition:transform .22s cubic-bezier(.34,1.28,.64,1),opacity .18s ease;">
+  transition:transform .24s cubic-bezier(.34,1.28,.64,1),opacity .18s ease;">
 
   <!-- 头部（拖动把手） -->
   <div id="vqm-handle" style="padding:14px 18px 11px;border-bottom:1px solid var(--border);
