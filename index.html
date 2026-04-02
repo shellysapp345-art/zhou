@@ -3360,10 +3360,11 @@ function renderDashboard(){
   const totalLeads  = ctxAccs.reduce((s,a)=>{return s+(S.visits||[]).filter(v=>v.accId===a.id).reduce((x,v)=>x+v.count,0);},0);
   const totalViol   = allVids.filter(v=>v.violation).length;
 
-  const statCard=(icon,label,val,color)=>`
-    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
+  const statCard=(icon,label,val,color,onclick='')=>`
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;${onclick?'cursor:pointer;transition:box-shadow .15s,transform .15s;':''}"
+      ${onclick?`onclick="${onclick}" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.09)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='';this.style.transform=''"`:''}>
       <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);font-weight:600;">
-        <span>${icon}</span><span>${label}</span>
+        <span>${icon}</span><span>${label}</span>${onclick?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;opacity:.35;"><polyline points="9 18 15 12 9 6"/></svg>':''}
       </div>
       <div style="font-size:26px;font-weight:800;color:${color};font-family:var(--mono);line-height:1;">${val}</div>
     </div>`;
@@ -3388,7 +3389,7 @@ function renderDashboard(){
         ${statCard('○','总评论',fmt(totalComm),'#2a8ca0')}
         ${statCard('☆','总收藏',fmt(totalColl),'#c49020')}
         ${statCard('⊕','总转发',fmt(totalShare),'#2e8c54')}
-        ${statCard('👤','总线索',totalLeads,'var(--accent)')}
+        ${statCard('👤','总线索',totalLeads,'var(--accent)',"openStatDetail('lead')")}
         ${statCard('⚠','违规',totalViol,totalViol>0?'var(--red)':'var(--green)')}
       </div>
     </div>
@@ -6341,7 +6342,7 @@ function showOverviewPane(){
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
   var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
-  document.getElementById('pageTitle').textContent='项目组数据';
+  document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
   try { renderOverviewPane(); } catch(e){ console.error('renderOverviewPane error:', e); }
 }
@@ -7252,9 +7253,13 @@ function openVisitQuickEdit(){
 
     // 恢复 transition，下一帧触发缩放动画
     requestAnimationFrame(function(){
+      // 强制 reflow，确保浏览器已确认 scale(0.82) 初始状态，再启用 transition
+      void modal.offsetWidth;
       modal.style.transition = '';   // 恢复 CSS 里定义的 transition
-      modal.style.transform  = (side === 'center') ? 'translate(-50%,-50%) scale(1)' : 'scale(1)';
-      modal.style.opacity    = '1';
+      requestAnimationFrame(function(){
+        modal.style.transform  = (side === 'center') ? 'translate(-50%,-50%) scale(1)' : 'scale(1)';
+        modal.style.opacity    = '1';
+      });
     });
   });
 
