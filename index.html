@@ -5321,7 +5321,21 @@ let _alertData = [];
 function closeStatDetail(){
   closeStatEditDrawer();
   closeVisitQuickEdit();
-  document.getElementById('statDetailModal').style.display='none';
+  var modal = document.getElementById('statDetailModal');
+  var innerBox = modal ? modal.querySelector('div') : null;
+  if(innerBox){
+    innerBox.style.transition = 'opacity .15s ease, transform .15s ease';
+    innerBox.style.opacity = '0';
+    innerBox.style.transform = 'scale(0.96)';
+    setTimeout(function(){
+      modal.style.display = 'none';
+      innerBox.style.transition = '';
+      innerBox.style.opacity = '';
+      innerBox.style.transform = '';
+    }, 160);
+  } else if(modal){
+    modal.style.display = 'none';
+  }
 }
 
 // ── 统计详情侧边编辑抽屉 ──────────────────────────────
@@ -5826,6 +5840,14 @@ function openStatDetail(type){
   }
 
   body.innerHTML = html;
+
+  // ── 带动画打开（每次重置 mIn 动画）──
+  var innerBox = modal.querySelector('div');
+  if(innerBox){
+    innerBox.style.animation = 'none';
+    void innerBox.offsetHeight; // force reflow
+    innerBox.style.animation = '';
+  }
   modal.style.display = 'flex';
 }
 
