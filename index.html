@@ -269,8 +269,133 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 #selectToolbar button.danger:hover{background:rgba(255,80,80,.2);}
 
 /* ══════════════════════════════════════════
-   快捷编辑弹窗（单击视频卡片）
+   项目视图 (Project Card View)
    ══════════════════════════════════════════ */
+#projectPane{background:var(--bg);}
+
+/* 项目视图内容区 */
+.pv-wrap{padding:16px 20px 48px;display:flex;flex-direction:column;gap:14px;}
+
+/* 全部视频汇总卡片 */
+.pv-all-card{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:13px;padding:16px 20px;
+  cursor:pointer;display:flex;align-items:center;gap:14px;
+  box-shadow:0 4px 16px rgba(232,116,42,.26);
+  transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;
+  flex-shrink:0;
+}
+.pv-all-card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(232,116,42,.36);}
+.pv-all-card::after{content:'';position:absolute;right:-16px;top:-16px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.09);}
+.pv-all-icon{width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.20);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.pv-all-info{flex:1;min-width:0;}
+.pv-all-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;}
+.pv-all-sub{font-size:11px;color:rgba(255,255,255,.70);}
+.pv-all-right{text-align:right;flex-shrink:0;}
+.pv-all-num{font-size:30px;font-weight:900;color:#fff;font-family:var(--mono);line-height:1;}
+.pv-all-unit{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px;}
+
+/* 排序栏 */
+.pv-sort-bar{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pv-sort-label{font-size:12px;color:var(--text3);font-weight:500;}
+.pv-sort-btns{display:flex;gap:5px;}
+.pv-sort-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--s1);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;}
+.pv-sort-btn:hover{background:var(--s2);color:var(--text);}
+.pv-sort-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* 卡片网格 */
+.pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;}
+
+/* 项目卡片 */
+.pv-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:14px 14px 12px;cursor:pointer;position:relative;overflow:hidden;
+  transition:box-shadow .18s,transform .18s,border-color .15s;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  animation:cardIn .2s ease both;
+}
+.pv-card:hover{box-shadow:0 6px 18px rgba(0,0,0,.09);transform:translateY(-2px);border-color:var(--border2);}
+.pv-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--pvc,var(--accent));border-radius:12px 12px 0 0;}
+
+.pv-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.pv-card-left{display:flex;align-items:center;gap:9px;flex:1;min-width:0;}
+.pv-card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.pv-card-name{font-size:14px;font-weight:700;color:var(--text);line-height:1.25;}
+.pv-card-cnt{font-size:11px;color:var(--text3);margin-top:2px;}
+.pv-card-cnt b{font-weight:700;color:var(--pvc,var(--accent));}
+.pv-card-more{width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .12s;letter-spacing:-1px;flex-shrink:0;margin-left:4px;}
+.pv-card-more:hover{background:var(--s2);color:var(--text2);}
+
+/* 账号标签 */
+.pv-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.pv-tag{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
+  border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid var(--tag-b,var(--border));
+  background:var(--tag-bg,var(--s2));color:var(--tag-c,var(--text2));
+  cursor:pointer;transition:all .12s;
+}
+.pv-tag:hover{filter:brightness(.96);}
+.pv-tag.zero{background:var(--s2);border-color:var(--border);color:var(--text3);}
+.pv-tag-n{font-size:11px;font-weight:800;font-family:var(--mono);}
+.pv-tag.zero .pv-tag-n{color:var(--text3);}
+
+/* 未分组卡片 */
+.pv-card.ungrouped{--pvc:var(--text3);}
+.pv-card.ungrouped .pv-card-name{color:var(--text2);}
+
+/* ── 项目视频面板 ── */
+.pv-panel-bg{
+  display:none;position:fixed;inset:0;z-index:9300;
+  background:rgba(0,0,0,.3);backdrop-filter:blur(4px);
+  align-items:flex-end;justify-content:center;
+}
+.pv-panel-bg.open{display:flex;}
+.pv-panel{
+  background:var(--s1);border-radius:18px 18px 0 0;
+  width:100%;max-width:980px;max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 -4px 32px rgba(0,0,0,.13);
+  animation:panelUp .22s cubic-bezier(.4,0,.2,1);
+}
+@keyframes panelUp{from{transform:translateY(36px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+.pvp-head{
+  padding:14px 20px 10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  background:var(--s2);border-radius:18px 18px 0 0;
+}
+.pvp-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.pvp-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
+.pvp-cnt{font-size:11px;color:var(--text3);}
+.pvp-close{width:26px;height:26px;border-radius:7px;border:none;background:var(--s3);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+.pvp-close:hover{background:var(--s4);}
+
+/* 账号筛选 tab */
+.pvp-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;background:var(--s1);}
+.pvp-tab{padding:8px 16px;border:none;border-bottom:2px solid transparent;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3);font-family:var(--font);white-space:nowrap;transition:all .12s;}
+.pvp-tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.pvp-tab:hover:not(.on){color:var(--text2);}
+
+/* 视频网格 */
+.pvp-body{flex:1;overflow-y:auto;padding:14px 20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-content:start;}
+
+/* 视频迷你卡 */
+.pvp-vcard{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s;}
+.pvp-vcard:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px);}
+.pvp-vthumb{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.pvp-vthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pvp-vthumb-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.pvp-vdate{position:absolute;bottom:4px;right:5px;background:rgba(0,0,0,.55);color:#fff;font-size:8px;padding:1px 5px;border-radius:3px;font-family:var(--mono);}
+.pvp-vinfo{padding:7px 9px;}
+.pvp-vtitle{font-size:11px;font-weight:600;color:var(--text);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-bottom:5px;}
+.pvp-vstats{display:flex;gap:7px;}
+.pvp-vstat{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:2px;font-family:var(--mono);}
+
+/* 空状态 */
+.pvp-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;padding:48px 0;color:var(--text3);gap:10px;}
+.pvp-empty svg{opacity:.2;}
+.pvp-empty p{font-size:13px;}
 #quickEditModal{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);margin:0;padding:0;}
 #quickEditModal.open{display:flex;}
 #quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;margin:auto;position:relative;}
@@ -345,90 +470,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ── GRID ── */
 .grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
 #overviewPane{flex:1;min-height:0;overflow-y:auto;padding:0;}
-
-/* ── 文件夹卡片首页 ── */
-.fc-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:12px;
-  padding:18px 20px 32px;
-  align-content:start;
-}
-.fc-card{
-  background:var(--s1);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:15px 16px 13px;
-  cursor:pointer;
-  transition:border-color .15s,box-shadow .15s,transform .13s;
-}
-.fc-card:hover{
-  border-color:var(--border2);
-  box-shadow:0 4px 16px rgba(26,24,20,.07);
-  transform:translateY(-2px);
-}
-.fc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
-.fc-left{display:flex;align-items:center;gap:8px;}
-.fc-icon{font-size:18px;line-height:1;flex-shrink:0;}
-.fc-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
-.fc-total{font-size:12px;color:var(--text3);margin-left:4px;font-weight:400;}
-.fc-menu{
-  width:26px;height:26px;border-radius:50%;
-  border:1px solid var(--border);background:transparent;
-  color:var(--text3);font-size:13px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:background .12s;letter-spacing:2px;
-}
-.fc-menu:hover{background:var(--s2);}
-.fc-tags{display:flex;flex-wrap:wrap;gap:7px;}
-.fc-tag{
-  display:inline-flex;align-items:center;
-  border-radius:20px;font-size:12px;font-weight:600;
-  cursor:pointer;overflow:hidden;
-  border:1px solid transparent;
-  transition:opacity .12s;
-}
-.fc-tag:hover{opacity:.82;}
-.fc-tag-name{padding:4px 8px 4px 10px;font-size:12px;font-weight:600;}
-.fc-tag-num{padding:4px 8px 4px 5px;font-size:11px;font-weight:700;min-width:22px;text-align:center;}
-/* 暖橙 */
-.fc-t0 .fc-tag-name{background:rgba(232,116,42,.12);color:#c05a20;border-right:1px solid rgba(232,116,42,.2);}
-.fc-t0 .fc-tag-num{background:rgba(232,116,42,.22);color:#a04818;}
-.fc-t0{border-color:rgba(232,116,42,.28);}
-/* 青色 */
-.fc-t1 .fc-tag-name{background:rgba(42,140,160,.10);color:#1a6e80;border-right:1px solid rgba(42,140,160,.18);}
-.fc-t1 .fc-tag-num{background:rgba(42,140,160,.20);color:#145a6a;}
-.fc-t1{border-color:rgba(42,140,160,.25);}
-/* 金色 */
-.fc-t2 .fc-tag-name{background:rgba(196,144,32,.10);color:#8a6010;border-right:1px solid rgba(196,144,32,.2);}
-.fc-t2 .fc-tag-num{background:rgba(196,144,32,.20);color:#6e4c0a;}
-.fc-t2{border-color:rgba(196,144,32,.28);}
-/* 绿色 */
-.fc-t3 .fc-tag-name{background:rgba(46,140,84,.10);color:#1c6638;border-right:1px solid rgba(46,140,84,.18);}
-.fc-t3 .fc-tag-num{background:rgba(46,140,84,.20);color:#155230;}
-.fc-t3{border-color:rgba(46,140,84,.25);}
-/* 紫色 */
-.fc-t4 .fc-tag-name{background:rgba(112,80,168,.10);color:#503880;border-right:1px solid rgba(112,80,168,.18);}
-.fc-t4 .fc-tag-num{background:rgba(112,80,168,.20);color:#3c2868;}
-.fc-t4{border-color:rgba(112,80,168,.25);}
-.fc-empty{font-size:12px;color:var(--text3);padding:4px 0;}
-/* 卡片首页顶栏 */
-.fc-topbar{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 20px;
-  border-bottom:1px solid var(--border);
-  flex-shrink:0;background:var(--s1);
-}
-.fc-topbar-title{font-size:15px;font-weight:800;color:var(--text);}
-.fc-topbar-sub{font-size:12px;color:var(--text3);margin-left:4px;}
-.fc-back{
-  display:flex;align-items:center;gap:5px;
-  font-size:12px;color:var(--text2);
-  background:var(--s2);border:1px solid var(--border);
-  border-radius:8px;padding:5px 12px;
-  cursor:pointer;transition:background .12s;margin-left:auto;
-}
-.fc-back:hover{background:var(--s3);}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
 .vgrid.list{grid-template-columns:1fr;gap:6px;}
 
@@ -1599,6 +1640,10 @@ canvas{max-width:100%;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     <span class="sb-tip">总览</span>
   </button>
+  <button class="sb-icon-btn sb-nav-item" id="sb-nav-projects" onclick="sbNavTo('projects')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="sb-tip">项目视图</span>
+  </button>
   <button class="sb-icon-btn sb-nav-item" id="sb-nav-content" onclick="sbNavTo('content')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
     <span class="sb-tip">内容库</span>
@@ -1769,12 +1814,27 @@ canvas{max-width:100%;}
   </div>
   <div class="grid-wrap">
     <div id="overviewPane" style="display:none;padding:4px 0;"></div>
+    <div id="projectPane" style="display:none;padding:0;flex:1;min-height:0;overflow-y:auto;"></div>
     <div id="kpiBar" class="kpi-bar" style="display:none;"></div>
     <div class="vgrid" id="vgrid"></div>
   </div>
 </div>
 </div>
 
+
+<!-- ══ 项目视图 · 视频面板 ══ -->
+<div class="pv-panel-bg" id="pvPanelBg" onclick="if(event.target===this)pvClosePanel()">
+  <div class="pv-panel">
+    <div class="pvp-head">
+      <div class="pvp-dot" id="pvpDot"></div>
+      <div class="pvp-title" id="pvpTitle">视频列表</div>
+      <div class="pvp-cnt" id="pvpCnt"></div>
+      <button class="pvp-close" onclick="pvClosePanel()">✕</button>
+    </div>
+    <div class="pvp-tabs" id="pvpTabs"></div>
+    <div class="pvp-body" id="pvpBody"></div>
+  </div>
+</div>
 
 <!-- ══ 视频详情弹窗（底部滑入）══ -->
 <div class="detail-drawer-bg" id="detailDrawerBg" onclick="if(event.target===this)closeDetailDrawer()">
@@ -5604,15 +5664,13 @@ function _sedInitDrag(){
     document.removeEventListener('touchend',  onUp);
   }
 
-  // 清除旧监听器（通过克隆节点）
-  const newHandle = handle.cloneNode(true);
-  handle.parentNode.replaceChild(newHandle, handle);
-  newHandle.style.cursor = 'grab';
-  newHandle.addEventListener('mousedown',  onDown);
-  newHandle.addEventListener('touchstart', onDown, {passive:true});
+  // sed-head 每次打开都重新渲染，直接绑定即可（不需要克隆）
+  handle.style.cursor = 'grab';
+  handle.addEventListener('mousedown',  onDown);
+  handle.addEventListener('touchstart', onDown, {passive:true});
 }
 
-function sedSave(){
+async function sedSave(){
   if(!_sedVidId) return;
   const v = S.videos.find(x=>x.id===_sedVidId);
   if(!v) return;
@@ -5627,24 +5685,32 @@ function sedSave(){
   v.thumb    = document.getElementById('sed-thumb').value.trim();
   v.violation= document.getElementById('sed-tog-v').classList.contains('on-v');
   v.promo    = document.getElementById('sed-tog-p').classList.contains('on-p');
-  save();
+  try{
+    await sbFetch('/rest/v1/videos?id=eq.'+_sedVidId,'PATCH',{
+      acc_id:v.accId, title:v.title, url:v.url,
+      likes:v.likes, comm:v.comm, coll:v.coll, share:v.share,
+      date:v.date, thumb:v.thumb||'', violation:v.violation, promo:v.promo
+    });
+  }catch(e){ toast('保存失败，请重试','err'); return; }
   closeStatEditDrawer();
-  // 重新渲染统计详情面板当前内容
   if(_lastStatDetailType) openStatDetail(_lastStatDetailType);
+  if(typeof render==='function') render();
   toast('已保存 ✓');
 }
 
-function sedDelete(){
+async function sedDelete(){
   if(!_sedVidId) return;
   const v = S.videos.find(x=>x.id===_sedVidId);
   if(!v) return;
   if(!confirm('确认删除「'+(v.title||'该视频')+'」？')) return;
   S.videos = S.videos.filter(x=>x.id!==_sedVidId);
-  save();
+  try{
+    await sbFetch('/rest/v1/videos?id=eq.'+_sedVidId,'DELETE');
+  }catch(e){ toast('删除失败，请重试','err'); return; }
   closeStatEditDrawer();
   if(_lastStatDetailType) openStatDetail(_lastStatDetailType);
   if(typeof render==='function') render();
-  toast('已删除', 'err');
+  toast('已删除','err');
 }
 
 var _lastStatDetailType = null;
@@ -6034,12 +6100,13 @@ function computeAlerts(){
     if(v.violation){
       seen.add(key);
       alerts.push({ type:'违规', color:'#ff4060', bg:'rgba(255,64,96,.06)', vid:v, acc, reason:'该视频已被标记为违规，请及时处理' });
-    } else if(v.play > 0){
-      const inter = (v.likes||0) + (v.comm||0) + (v.coll||0);
-      const rate = inter / v.play;
-      if(rate < 0.005 && v.play > 5000){
+    } else {
+      // 用点赞量与账号均值对比来检测低互动（不依赖播放量）
+      const accVids = S.videos.filter(x=>x.accId===v.accId);
+      const avgLikes = accVids.length>1 ? accVids.reduce((s,x)=>s+x.likes,0)/accVids.length : 0;
+      if(avgLikes>50 && v.likes < avgLikes*0.2 && accVids.length>3){
         seen.add(key);
-        alerts.push({ type:'低互动', color:'#ffb800', bg:'rgba(255,184,0,.06)', vid:v, acc, reason:`互动率仅 ${(rate*100).toFixed(2)}%，播放量 ${fmt(v.play)}，互动偏低` });
+        alerts.push({ type:'低互动', color:'#ffb800', bg:'rgba(255,184,0,.06)', vid:v, acc, reason:`点赞量 ${fmt(v.likes)}，仅为账号均值的 ${(v.likes/avgLikes*100).toFixed(0)}%，互动偏低` });
       }
     }
   });
@@ -6455,15 +6522,16 @@ let _ovView = 'table';
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
+  // Hide KPI bar and pagination when on overview
   var kb = document.getElementById('kpiBar'); if(kb) kb.style.display='none';
   var pg = document.getElementById('pagination'); if(pg) pg.innerHTML='';
+  // Hide content-only topbar
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
   var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
-  _ovMode = 'cards'; // 默认进入卡片首页
-  try { renderFolderCards(); } catch(e){ console.error('renderFolderCards error:', e); }
+  try { renderOverviewPane(); } catch(e){ console.error('renderOverviewPane error:', e); }
 }
 function hideOverviewPane(){
   document.getElementById('overviewPane').style.display='none';
@@ -6475,6 +6543,293 @@ function hideOverviewPane(){
 }
 function openOverview(){ showOverviewPane(); }
 function closeOverview(){ hideOverviewPane(); }
+
+// ══════════════════════════════════════════
+// 项目视图 (Project Card View)
+// ══════════════════════════════════════════
+var _pvSort = 'name'; // 'name' | 'count'
+var _pvPanelFid = null;
+var _pvPanelAid = null;
+var _pvPanelColor = '#e8742a';
+
+// 卡片颜色循环列表（与主站色系一致）
+var PV_COLORS = [
+  '#e8742a','#2a8ca0','#2e8c54','#7050a8',
+  '#c49020','#e04a38','#b87f5a','#7a9e8e',
+  '#6a9e6a','#9a7a9e','#c47a5a','#7a8e9e','#c4a43c'
+];
+
+function _pvRgba(hex, a){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+
+function showProjectPane(){
+  var pane = document.getElementById('projectPane');
+  var ovPane = document.getElementById('overviewPane');
+  var vgrid = document.getElementById('vgrid');
+  var kb = document.getElementById('kpiBar');
+  var ct = document.getElementById('contentTopbar');
+  var vt = document.getElementById('viewToggleWrap');
+  var ts = document.getElementById('topbarSearch');
+  var pg = document.getElementById('pagination');
+
+  if(pane)  pane.style.display  = 'flex';
+  if(ovPane) ovPane.style.display = 'none';
+  if(vgrid)  vgrid.style.display  = 'none';
+  if(kb) kb.style.display = 'none';
+  if(pg) pg.innerHTML = '';
+  if(ct) ct.style.display = 'none';
+  if(vt) vt.style.display = 'none';
+  if(ts) ts.style.display = 'none';
+  document.getElementById('pageTitle').textContent = '项目视图';
+  renderProjectPane();
+}
+
+function hideProjectPane(){
+  var pane = document.getElementById('projectPane');
+  if(pane) pane.style.display = 'none';
+}
+
+function renderProjectPane(){
+  var pane = document.getElementById('projectPane');
+  if(!pane) return;
+
+  var folders = S.folders || [];
+  var accounts = S.accounts || [];
+  var videos = S.videos || [];
+
+  // 排序
+  var sortedFolders = folders.slice();
+  if(_pvSort === 'count'){
+    sortedFolders.sort(function(a,b){
+      var ca = videos.filter(function(v){ return accounts.find(function(ac){ return ac.id===v.accId && String(ac.folderId)===String(a.id); }); }).length;
+      var cb = videos.filter(function(v){ return accounts.find(function(ac){ return ac.id===v.accId && String(ac.folderId)===String(b.id); }); }).length;
+      return cb - ca;
+    });
+  } else {
+    sortedFolders.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','zh'); });
+  }
+
+  // 未分组账号
+  var ungroupedAccs = accounts.filter(function(a){ return !a.folderId; });
+
+  // 总数
+  var totalVids = videos.length;
+  var totalAccs = accounts.length;
+
+  // 构建账号标签 HTML
+  function buildTags(folderId){
+    var accs = accounts.filter(function(a){ return String(a.folderId) === String(folderId); });
+    if(!accs.length) return '<div style="font-size:11px;color:var(--text3);">暂无账号</div>';
+    return accs.map(function(acc){
+      var cnt = videos.filter(function(v){ return v.accId === acc.id; }).length;
+      var tc = acc.color || '#b87f5a';
+      var hasVid = cnt > 0;
+      return '<div class="pv-tag'+(hasVid?'':' zero')+'"'
+        +(hasVid?' style="--tag-bg:'+_pvRgba(tc,.10)+';--tag-b:'+_pvRgba(tc,.25)+';--tag-c:'+tc+';"':'')+
+        ' onclick="event.stopPropagation();pvOpenPanel(\''+folderId+'\',\''+escHtmlAttr(acc.name)+'\',null,\''+acc.id+'\')">'
+        +escHtml(acc.name)
+        +'<span class="pv-tag-n" style="color:'+(hasVid?tc:'var(--text3)')+';">'+cnt+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  // 卡片 HTML
+  function buildCard(f, fi){
+    var col = PV_COLORS[fi % PV_COLORS.length];
+    var accs = accounts.filter(function(a){ return String(a.folderId) === String(f.id); });
+    var vids = videos.filter(function(v){ return accs.find(function(a){ return a.id===v.accId; }); });
+    var icon = f.icon || '📁';
+    return '<div class="pv-card" style="--pvc:'+col+';animation-delay:'+(fi*.04)+'s;"'
+      +' onclick="pvOpenPanel(\''+f.id+'\',\''+escHtmlAttr(f.name)+'\',\''+col+'\',null)">'
+      +'<div class="pv-card-top">'
+        +'<div class="pv-card-left">'
+          +'<div class="pv-card-icon" style="background:'+_pvRgba(col,.10)+';">'+icon+'</div>'
+          +'<div>'
+            +'<div class="pv-card-name">'+escHtml(f.name)+'</div>'
+            +'<div class="pv-card-cnt"><b>'+vids.length+'</b> 条视频</div>'
+          +'</div>'
+        +'</div>'
+        +'<button class="pv-card-more" onclick="event.stopPropagation()">···</button>'
+      +'</div>'
+      +'<div class="pv-tags">'+buildTags(f.id)+'</div>'
+      +'</div>';
+  }
+
+  // 未分组卡片
+  var ungroupedCard = '';
+  if(ungroupedAccs.length){
+    var ugVids = videos.filter(function(v){ return ungroupedAccs.find(function(a){ return a.id===v.accId; }); });
+    var ugTags = ungroupedAccs.map(function(acc){
+      var cnt = videos.filter(function(v){ return v.accId===acc.id; }).length;
+      var tc = acc.color || '#b87f5a';
+      var hasVid = cnt > 0;
+      return '<div class="pv-tag'+(hasVid?'':' zero')+'"'
+        +(hasVid?' style="--tag-bg:'+_pvRgba(tc,.10)+';--tag-b:'+_pvRgba(tc,.25)+';--tag-c:'+tc+';"':'')+
+        ' onclick="event.stopPropagation();pvOpenPanel(\'__ug__\',\'未分组\',null,\''+acc.id+'\')">'
+        +escHtml(acc.name)
+        +'<span class="pv-tag-n" style="color:'+(hasVid?tc:'var(--text3)')+';">'+cnt+'</span>'
+        +'</div>';
+    }).join('');
+    ungroupedCard = '<div class="pv-card ungrouped" style="animation-delay:'+(sortedFolders.length*.04)+'s;"'
+      +' onclick="pvOpenPanel(\'__ug__\',\'未分组\',null,null)">'
+      +'<div class="pv-card-top">'
+        +'<div class="pv-card-left">'
+          +'<div class="pv-card-icon" style="background:var(--s3);">📂</div>'
+          +'<div>'
+            +'<div class="pv-card-name">未分组</div>'
+            +'<div class="pv-card-cnt"><b>'+ugVids.length+'</b> 条视频</div>'
+          +'</div>'
+        +'</div>'
+        +'<button class="pv-card-more" onclick="event.stopPropagation()">···</button>'
+      +'</div>'
+      +'<div class="pv-tags">'+ugTags+'</div>'
+      +'</div>';
+  }
+
+  pane.innerHTML =
+    '<div class="pv-wrap">'
+    // 全部汇总
+    +'<div class="pv-all-card" onclick="pvOpenPanel(null,\'全部视频\',null,null)">'
+      +'<div class="pv-all-icon">🎬</div>'
+      +'<div class="pv-all-info">'
+        +'<div class="pv-all-title">全部视频</div>'
+        +'<div class="pv-all-sub">所有项目 · 共 '+totalAccs+' 个账号</div>'
+      +'</div>'
+      +'<div class="pv-all-right">'
+        +'<div class="pv-all-num">'+totalVids+'</div>'
+        +'<div class="pv-all-unit">条视频</div>'
+      +'</div>'
+    +'</div>'
+    // 排序栏
+    +'<div class="pv-sort-bar">'
+      +'<span class="pv-sort-label">共 '+sortedFolders.length+' 个项目组'+(ungroupedAccs.length?' · '+ungroupedAccs.length+'个未分组账号':'')+' </span>'
+      +'<div class="pv-sort-btns">'
+        +'<button class="pv-sort-btn'+(_pvSort==='name'?' on':'')+'" onclick="pvSetSort(\'name\')">按名称</button>'
+        +'<button class="pv-sort-btn'+(_pvSort==='count'?' on':'')+'" onclick="pvSetSort(\'count\')">按视频数↓</button>'
+      +'</div>'
+    +'</div>'
+    // 卡片网格
+    +'<div class="pv-grid">'
+      + sortedFolders.map(function(f,fi){ return buildCard(f,fi); }).join('')
+      + ungroupedCard
+    +'</div>'
+  +'</div>';
+}
+
+function pvSetSort(s){
+  _pvSort = s;
+  renderProjectPane();
+}
+
+// ── 打开视频面板 ──
+function pvOpenPanel(folderId, name, color, accId){
+  _pvPanelFid   = folderId;
+  _pvPanelAid   = accId || null;
+  _pvPanelColor = color || '#e8742a';
+
+  document.getElementById('pvpDot').style.background   = _pvPanelColor;
+  document.getElementById('pvpTitle').textContent = name;
+
+  // 构建 tabs
+  var tabs = document.getElementById('pvpTabs');
+  var tabsHtml = '<button class="pvp-tab'+(accId?'':' on')+'" data-aid="">全部</button>';
+
+  if(folderId && folderId !== '__ug__' && folderId !== null){
+    var accs = (S.accounts||[]).filter(function(a){ return String(a.folderId)===String(folderId); });
+    tabsHtml += accs.map(function(a){
+      return '<button class="pvp-tab'+(accId===a.id?' on':'')+'" data-aid="'+a.id+'">'+escHtml(a.name)+'</button>';
+    }).join('');
+  } else if(folderId === '__ug__'){
+    var ugAccs = (S.accounts||[]).filter(function(a){ return !a.folderId; });
+    tabsHtml += ugAccs.map(function(a){
+      return '<button class="pvp-tab'+(accId===a.id?' on':'')+'" data-aid="'+a.id+'">'+escHtml(a.name)+'</button>';
+    }).join('');
+  }
+
+  tabs.innerHTML = tabsHtml;
+  tabs.querySelectorAll('.pvp-tab').forEach(function(t){
+    t.onclick = function(){
+      tabs.querySelectorAll('.pvp-tab').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      _pvPanelAid = t.dataset.aid || null;
+      pvRenderBody(_pvPanelAid);
+    };
+  });
+
+  pvRenderBody(accId || null);
+
+  var bg = document.getElementById('pvPanelBg');
+  bg.style.display = 'flex';
+  requestAnimationFrame(function(){ bg.classList.add('open'); });
+}
+
+function pvRenderBody(aid){
+  var body = document.getElementById('pvpBody');
+  var videos = S.videos || [];
+  var accounts = S.accounts || [];
+  var vids;
+
+  if(!_pvPanelFid){
+    // 全部视频
+    vids = aid ? videos.filter(function(v){ return v.accId===aid; }) : videos;
+  } else if(_pvPanelFid === '__ug__'){
+    var ugIds = accounts.filter(function(a){ return !a.folderId; }).map(function(a){ return a.id; });
+    vids = aid
+      ? videos.filter(function(v){ return v.accId===aid; })
+      : videos.filter(function(v){ return ugIds.indexOf(v.accId)!==-1; });
+  } else {
+    var fAccIds = accounts.filter(function(a){ return String(a.folderId)===String(_pvPanelFid); }).map(function(a){ return a.id; });
+    vids = aid
+      ? videos.filter(function(v){ return v.accId===aid; })
+      : videos.filter(function(v){ return fAccIds.indexOf(v.accId)!==-1; });
+  }
+
+  document.getElementById('pvpCnt').textContent = '共 '+vids.length+' 条';
+
+  if(!vids.length){
+    body.innerHTML = '<div class="pvp-empty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M9 10l6 0M9 14l4 0" stroke-linecap="round"/></svg><p>暂无视频数据</p></div>';
+    return;
+  }
+
+  body.innerHTML = vids.map(function(v){
+    var acc = accounts.find(function(a){ return a.id===v.accId; }) || {color:'#b87f5a'};
+    var c   = acc.color || '#b87f5a';
+    var thumbHtml = v.thumb && (v.thumb.startsWith('http')||v.thumb.startsWith('data:'))
+      ? '<img src="'+v.thumb+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"/>'
+        +'<div class="pvp-vthumb-fb" style="background:'+_pvRgba(c,.12)+';">'
+          +'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="1.5" opacity=".4"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 17 12 10 16" fill="'+c+'" opacity=".7"/></svg>'
+        +'</div>'
+      : '<div class="pvp-vthumb-fb" style="background:'+_pvRgba(c,.10)+';">'
+          +'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="1.5" opacity=".4"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 17 12 10 16" fill="'+c+'" opacity=".7"/></svg>'
+        +'</div>';
+
+    return '<div class="pvp-vcard" onclick="pvClosePanel();openDetailDrawer(\''+v.id+'\')">'
+      +'<div class="pvp-vthumb" style="background:var(--s3);">'
+        + thumbHtml
+        +(v.date?'<div class="pvp-vdate">'+v.date+'</div>':'')
+      +'</div>'
+      +'<div class="pvp-vinfo">'
+        +'<div class="pvp-vtitle">'+(v.title||'（无标题）')+'</div>'
+        +'<div class="pvp-vstats">'
+          +'<div class="pvp-vstat">❤️'+fmt(v.likes||0)+'</div>'
+          +'<div class="pvp-vstat">💬'+fmt(v.comm||0)+'</div>'
+          +'<div class="pvp-vstat">⭐'+fmt(v.coll||0)+'</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function pvClosePanel(){
+  var bg = document.getElementById('pvPanelBg');
+  bg.classList.remove('open');
+  setTimeout(function(){ bg.style.display='none'; }, 220);
+}
+
+// ── 属性转义辅助 ──
+function escHtmlAttr(s){ return (s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
 // ══ 侧边栏导航切换 ══
 function sbNavTo(page){
@@ -6501,122 +6856,6 @@ function _ovRows(){
 function ovSelectFolder(idx){
   _ovFolderIdx = idx;
   renderOverviewPane();
-}
-
-// ══ 文件夹卡片首页 ══
-var _ovMode = 'cards'; // 'cards' | 'detail'
-var FC_TAG_COLORS = ['fc-t0','fc-t1','fc-t2','fc-t3','fc-t4'];
-var FC_ICONS = ['🌿','🏙','❄️','🦋','🍀','🍎','🌊','🔥','🌸','🎯','🌺','🍇','🦅','🌴','🎪','🏔'];
-
-function renderFolderCards(){
-  _ovMode = 'cards';
-  var pane = document.getElementById('overviewPane');
-  if(!pane) return;
-
-  // 构建数据：文件夹 + 未分组
-  var items = [];
-  (S.folders||[]).forEach(function(f){
-    var accs = S.accounts.filter(function(a){ return String(a.folderId)===String(f.id); });
-    var vids = S.videos.filter(function(v){ return accs.map(function(a){return a.id;}).indexOf(v.accId)>=0; });
-    items.push({ id:f.id, name:f.name, accs:accs, vids:vids, isFolder:true });
-  });
-  var noFolder = S.accounts.filter(function(a){ return !a.folderId; });
-  if(noFolder.length){
-    var nfVids = S.videos.filter(function(v){ return noFolder.map(function(a){return a.id;}).indexOf(v.accId)>=0; });
-    items.push({ id:'__nofolder__', name:'未分组', accs:noFolder, vids:nfVids, isFolder:false });
-  }
-
-  var totalAll = S.videos.length;
-  var totalAccs = S.accounts.length;
-
-  var cardsHtml = items.map(function(item, fi){
-    var icon = FC_ICONS[fi % FC_ICONS.length];
-    var total = item.vids.length;
-
-    var tagsHtml = item.accs.map(function(a, ai){
-      var c = FC_TAG_COLORS[ai % FC_TAG_COLORS.length];
-      var cnt = S.videos.filter(function(v){ return v.accId===a.id; }).length;
-      return '<span class="fc-tag '+c+'" onclick="event.stopPropagation();fcOpenAcc(\'' +a.id+ '\')">'
-        +'<span class="fc-tag-name">'+a.name+'</span>'
-        +'<span class="fc-tag-num">'+cnt+'</span>'
-        +'</span>';
-    }).join('');
-
-    if(!tagsHtml) tagsHtml = '<span class="fc-empty">暂无账号</span>';
-
-    return '<div class="fc-card" onclick="fcOpenFolder(\'' +item.id+ '\')">'
-      +'<div class="fc-head">'
-      +'<div class="fc-left">'
-      +'<span class="fc-icon">'+icon+'</span>'
-      +'<span class="fc-name">'+item.name+'<span class="fc-total">'+total+'条</span></span>'
-      +'</div>'
-      +'<button class="fc-menu" onclick="event.stopPropagation()">···</button>'
-      +'</div>'
-      +'<div class="fc-tags">'+tagsHtml+'</div>'
-      +'</div>';
-  }).join('');
-
-  if(!cardsHtml){
-    cardsHtml = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;">暂无项目组，请先在侧边栏「项目/账号」中新建文件夹</div>';
-  }
-
-  pane.innerHTML =
-    '<div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);">'
-    +'<div class="fc-topbar">'
-    +'<div style="width:3px;height:18px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:2px;flex-shrink:0;"></div>'
-    +'<span class="fc-topbar-title">数据总览</span>'
-    +'<span class="fc-topbar-sub">'+totalAccs+' 个账号 · '+totalAll+' 条视频</span>'
-    +'</div>'
-    +'<div style="flex:1;overflow-y:auto;">'
-    +'<div class="fc-grid">'+cardsHtml+'</div>'
-    +'</div>'
-    +'</div>';
-}
-
-function fcOpenFolder(folderId){
-  // 找到该文件夹在 _ovRows() 的 index，切到详情视图
-  var rows = _ovRows();
-  var idx = 0;
-  for(var i=0;i<rows.length;i++){
-    if(String(rows[i].folderId)===String(folderId)){ idx=i; break; }
-    if(folderId==='__nofolder__' && rows[i].folder==='未分组'){ idx=i; break; }
-  }
-  _ovFolderIdx = idx;
-  _ovMode = 'detail';
-  window._ovSelAccId = null;
-  renderOverviewPaneWithBack();
-}
-
-function fcOpenAcc(accId){
-  // 找到账号所属文件夹的 row index
-  var acc = S.accounts.find(function(a){ return a.id===accId; });
-  if(!acc) return;
-  var rows = _ovRows();
-  var idx = 0;
-  for(var i=0;i<rows.length;i++){
-    if(rows[i].accs && rows[i].accs.find(function(a){ return a.id===accId; })){ idx=i; break; }
-  }
-  _ovFolderIdx = idx;
-  _ovMode = 'detail';
-  window._ovSelAccId = accId;
-  renderOverviewPaneWithBack();
-}
-
-function renderOverviewPaneWithBack(){
-  // 先渲染详情，再注入「返回」按钮
-  renderOverviewPane();
-  var pane = document.getElementById('overviewPane');
-  if(!pane) return;
-  var inner = pane.querySelector('div');
-  if(!inner) return;
-  var topbar = inner.querySelector('div');
-  if(!topbar) return;
-  // 注入返回按钮
-  var backBtn = document.createElement('button');
-  backBtn.className = 'fc-back';
-  backBtn.innerHTML = '← 返回总览';
-  backBtn.onclick = function(){ renderFolderCards(); };
-  topbar.appendChild(backBtn);
 }
 
 function renderOverviewPane(){
@@ -7073,7 +7312,6 @@ async function saveQuickEdit(){
   const v = S.videos.find(x=>x.id===_qeVidId);
   if(!v) return;
   v.title     = document.getElementById('qe-title').value.trim();
-  v.play      = Number(document.getElementById('qe-play').value)||0;
   v.likes     = Number(document.getElementById('qe-likes').value)||0;
   v.comm      = Number(document.getElementById('qe-comm').value)||0;
   v.coll      = Number(document.getElementById('qe-coll').value)||0;
@@ -7081,7 +7319,7 @@ async function saveQuickEdit(){
   v.promo     = document.getElementById('qe-promo').checked;
   try{
     await sbFetch('/rest/v1/videos?id=eq.'+_qeVidId,'PATCH',{
-      title:v.title, play:v.play, likes:v.likes, comm:v.comm, coll:v.coll,
+      title:v.title, likes:v.likes, comm:v.comm, coll:v.coll,
       violation:v.violation, promo:v.promo
     });
   }catch(e){ toast('保存失败','err'); return; }
@@ -7749,6 +7987,10 @@ document.addEventListener('keydown', function(e){
   var sed = document.getElementById('statEditDrawer');
   if(sed && sed.classList.contains('open')){ closeStatEditDrawer(); return; }
 
+  // 1b. 项目视图视频面板（z-9300）
+  var pvbg = document.getElementById('pvPanelBg');
+  if(pvbg && pvbg.classList.contains('open')){ pvClosePanel(); return; }
+
   // 2. visitQuickModal 线索录入浮窗（z-9550，浮动窗口）
   var vqm = document.getElementById('visitQuickModal');
   if(vqm && vqm.style.display !== 'none' && vqm.style.display !== ''){ closeVisitQuickEdit(); return; }
@@ -7792,9 +8034,19 @@ function switchPage(page){
   document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
   var navBtn = document.getElementById('sb-nav-'+page);
   if(navBtn) navBtn.classList.add('active');
+  // 始终先隐藏项目视图面板
+  if(page !== 'projects') hideProjectPane();
   // 路由
   if(page==='overview'){
     if(typeof showOverviewPane==='function') showOverviewPane();
+  } else if(page==='projects'){
+    if(typeof hideOverviewPane==='function') hideOverviewPane();
+    var kb=document.getElementById('kpiBar'); if(kb) kb.style.display='none';
+    var vgrid=document.getElementById('vgrid'); if(vgrid) vgrid.style.display='none';
+    var ct=document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
+    var vt=document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
+    var ts=document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
+    if(typeof showProjectPane==='function') showProjectPane();
   } else if(page==='content'){
     if(typeof hideOverviewPane==='function') hideOverviewPane();
     var gs=document.getElementById('globalSearch'); if(gs)gs.value='';
