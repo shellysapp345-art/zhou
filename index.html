@@ -7227,27 +7227,28 @@ function openVisitQuickEdit(){
   }
   vqmSetMode('single');
 
-  // 先让弹窗不可见但占位（可以读尺寸），关闭transition避免初始跳动
+  // ── 定位 + 缩放弹入动画 ──
+  // 1. 先隐藏并摆到屏幕外读取尺寸（不触发 transition）
+  var VQM_TRANSITION = 'transform .24s cubic-bezier(.34,1.28,.64,1),opacity .18s ease';
   modal.style.transition    = 'none';
   modal.style.opacity       = '0';
   modal.style.transform     = 'scale(0.82)';
-  modal.style.transformOrigin = 'left top';
+  modal.style.transformOrigin = 'center center';
   modal.style.left          = '-9999px';
   modal.style.top           = '0';
   modal.style.display       = 'block';
   modal.style.pointerEvents = 'auto';
 
-  // 强制浏览器完成一次布局，读取真实尺寸，再计算并定位
+  // 2. 第一帧：读取真实尺寸，计算定位
   requestAnimationFrame(function(){
-    // 现在可以读到真实 offsetWidth/Height
-    var gap   = 12;
-    var mW    = modal.offsetWidth  || 420;
-    var mH    = modal.offsetHeight || 500;
-    var vpW   = window.innerWidth;
-    var vpH   = window.innerHeight;
-    var sdm   = document.getElementById('statDetailModal');
-    var box   = sdm && sdm.style.display !== 'none' ? sdm.querySelector('div') : null;
-    var side  = 'center';
+    var gap = 12;
+    var mW  = modal.offsetWidth  || 420;
+    var mH  = modal.offsetHeight || 500;
+    var vpW = window.innerWidth;
+    var vpH = window.innerHeight;
+    var sdm = document.getElementById('statDetailModal');
+    var box = sdm && sdm.style.display !== 'none' ? sdm.querySelector('div') : null;
+    var side = 'center';
 
     if(box){
       var r = box.getBoundingClientRect();
@@ -7273,15 +7274,14 @@ function openVisitQuickEdit(){
     }
     modal.dataset.vqmSide = side;
 
-    // 恢复 transition，下一帧触发缩放动画
+    // 3. 强制 reflow 确认初始 scale(0.82) 状态已提交
+    void modal.offsetWidth;
+
+    // 4. 第二帧：开启 transition，设置目标状态 → 触发弹入动画
     requestAnimationFrame(function(){
-      // 强制 reflow，确保浏览器已确认 scale(0.82) 初始状态，再启用 transition
-      void modal.offsetWidth;
-      modal.style.transition = '';   // 恢复 CSS 里定义的 transition
-      requestAnimationFrame(function(){
-        modal.style.transform  = (side === 'center') ? 'translate(-50%,-50%) scale(1)' : 'scale(1)';
-        modal.style.opacity    = '1';
-      });
+      modal.style.transition = VQM_TRANSITION;
+      modal.style.transform  = (side === 'center') ? 'translate(-50%,-50%) scale(1)' : 'scale(1)';
+      modal.style.opacity    = '1';
     });
   });
 
@@ -7291,6 +7291,8 @@ function openVisitQuickEdit(){
 function closeVisitQuickEdit(){
   var modal = document.getElementById('visitQuickModal');
   if(!modal) return;
+  // 确保关闭动画的 transition 始终在线
+  modal.style.transition = 'transform .24s cubic-bezier(.34,1.28,.64,1),opacity .18s ease';
   modal.style.opacity = '0';
   var side = modal.dataset.vqmSide || 'center';
   modal.style.transform = (side === 'center')
@@ -8540,8 +8542,7 @@ function switchManualTab(section, el){
   opacity:0;pointer-events:none;
   background:var(--s1);border:1px solid var(--border);border-radius:18px;
   width:min(88vw,420px);overflow:hidden;
-  box-shadow:0 24px 64px rgba(0,0,0,.28);
-  transition:transform .24s cubic-bezier(.34,1.28,.64,1),opacity .18s ease;">
+  box-shadow:0 24px 64px rgba(0,0,0,.28);">
 
   <!-- 头部（拖动把手） -->
   <div id="vqm-handle" style="padding:14px 18px 11px;border-bottom:1px solid var(--border);
