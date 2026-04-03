@@ -3901,7 +3901,19 @@ function exportCSV(){
   toast('✓ 已导出');
 }
 
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  // 重置内层 box 的 mIn 动画，确保每次打开都有入场动画
+  var innerBox = el.querySelector('.modal-split, .modal-sm, [id$="Box"], [id$="box"]');
+  if(!innerBox) innerBox = el.querySelector('div');
+  if(innerBox){
+    innerBox.style.animation = 'none';
+    void innerBox.offsetWidth; // force reflow
+    innerBox.style.animation = '';
+  }
+  el.classList.add('open');
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 /* 修改位置8a: 已合并至底部统一 DOMContentLoaded */
@@ -5854,8 +5866,10 @@ function openStatDetail(type){
 function openAlertModal(){
   const modal = document.getElementById('alertModal');
   if(!modal) return;
+  // 重置 mIn 动画
+  const innerBox = modal.querySelector('div');
+  if(innerBox){ innerBox.style.animation='none'; void innerBox.offsetWidth; innerBox.style.animation=''; }
   modal.style.display = 'flex';
-  // 渲染异常内容
   renderAlertModalContent();
 }
 
