@@ -345,6 +345,90 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 /* ── GRID ── */
 .grid-wrap{padding:20px 24px 48px;flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
 #overviewPane{flex:1;min-height:0;overflow-y:auto;padding:0;}
+
+/* ── 文件夹卡片首页 ── */
+.fc-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+  padding:18px 20px 32px;
+  align-content:start;
+}
+.fc-card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px 16px 13px;
+  cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .13s;
+}
+.fc-card:hover{
+  border-color:var(--border2);
+  box-shadow:0 4px 16px rgba(26,24,20,.07);
+  transform:translateY(-2px);
+}
+.fc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+.fc-left{display:flex;align-items:center;gap:8px;}
+.fc-icon{font-size:18px;line-height:1;flex-shrink:0;}
+.fc-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+.fc-total{font-size:12px;color:var(--text3);margin-left:4px;font-weight:400;}
+.fc-menu{
+  width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--border);background:transparent;
+  color:var(--text3);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .12s;letter-spacing:2px;
+}
+.fc-menu:hover{background:var(--s2);}
+.fc-tags{display:flex;flex-wrap:wrap;gap:7px;}
+.fc-tag{
+  display:inline-flex;align-items:center;
+  border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;overflow:hidden;
+  border:1px solid transparent;
+  transition:opacity .12s;
+}
+.fc-tag:hover{opacity:.82;}
+.fc-tag-name{padding:4px 8px 4px 10px;font-size:12px;font-weight:600;}
+.fc-tag-num{padding:4px 8px 4px 5px;font-size:11px;font-weight:700;min-width:22px;text-align:center;}
+/* 暖橙 */
+.fc-t0 .fc-tag-name{background:rgba(232,116,42,.12);color:#c05a20;border-right:1px solid rgba(232,116,42,.2);}
+.fc-t0 .fc-tag-num{background:rgba(232,116,42,.22);color:#a04818;}
+.fc-t0{border-color:rgba(232,116,42,.28);}
+/* 青色 */
+.fc-t1 .fc-tag-name{background:rgba(42,140,160,.10);color:#1a6e80;border-right:1px solid rgba(42,140,160,.18);}
+.fc-t1 .fc-tag-num{background:rgba(42,140,160,.20);color:#145a6a;}
+.fc-t1{border-color:rgba(42,140,160,.25);}
+/* 金色 */
+.fc-t2 .fc-tag-name{background:rgba(196,144,32,.10);color:#8a6010;border-right:1px solid rgba(196,144,32,.2);}
+.fc-t2 .fc-tag-num{background:rgba(196,144,32,.20);color:#6e4c0a;}
+.fc-t2{border-color:rgba(196,144,32,.28);}
+/* 绿色 */
+.fc-t3 .fc-tag-name{background:rgba(46,140,84,.10);color:#1c6638;border-right:1px solid rgba(46,140,84,.18);}
+.fc-t3 .fc-tag-num{background:rgba(46,140,84,.20);color:#155230;}
+.fc-t3{border-color:rgba(46,140,84,.25);}
+/* 紫色 */
+.fc-t4 .fc-tag-name{background:rgba(112,80,168,.10);color:#503880;border-right:1px solid rgba(112,80,168,.18);}
+.fc-t4 .fc-tag-num{background:rgba(112,80,168,.20);color:#3c2868;}
+.fc-t4{border-color:rgba(112,80,168,.25);}
+.fc-empty{font-size:12px;color:var(--text3);padding:4px 0;}
+/* 卡片首页顶栏 */
+.fc-topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;background:var(--s1);
+}
+.fc-topbar-title{font-size:15px;font-weight:800;color:var(--text);}
+.fc-topbar-sub{font-size:12px;color:var(--text3);margin-left:4px;}
+.fc-back{
+  display:flex;align-items:center;gap:5px;
+  font-size:12px;color:var(--text2);
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:5px 12px;
+  cursor:pointer;transition:background .12s;margin-left:auto;
+}
+.fc-back:hover{background:var(--s3);}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
 .vgrid.list{grid-template-columns:1fr;gap:6px;}
 
@@ -6371,16 +6455,15 @@ let _ovView = 'table';
 function showOverviewPane(){
   document.getElementById('overviewPane').style.display='flex';
   document.getElementById('vgrid').style.display='none';
-  // Hide KPI bar and pagination when on overview
   var kb = document.getElementById('kpiBar'); if(kb) kb.style.display='none';
   var pg = document.getElementById('pagination'); if(pg) pg.innerHTML='';
-  // Hide content-only topbar
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
   var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
-  try { renderOverviewPane(); } catch(e){ console.error('renderOverviewPane error:', e); }
+  _ovMode = 'cards'; // 默认进入卡片首页
+  try { renderFolderCards(); } catch(e){ console.error('renderFolderCards error:', e); }
 }
 function hideOverviewPane(){
   document.getElementById('overviewPane').style.display='none';
@@ -6418,6 +6501,122 @@ function _ovRows(){
 function ovSelectFolder(idx){
   _ovFolderIdx = idx;
   renderOverviewPane();
+}
+
+// ══ 文件夹卡片首页 ══
+var _ovMode = 'cards'; // 'cards' | 'detail'
+var FC_TAG_COLORS = ['fc-t0','fc-t1','fc-t2','fc-t3','fc-t4'];
+var FC_ICONS = ['🌿','🏙','❄️','🦋','🍀','🍎','🌊','🔥','🌸','🎯','🌺','🍇','🦅','🌴','🎪','🏔'];
+
+function renderFolderCards(){
+  _ovMode = 'cards';
+  var pane = document.getElementById('overviewPane');
+  if(!pane) return;
+
+  // 构建数据：文件夹 + 未分组
+  var items = [];
+  (S.folders||[]).forEach(function(f){
+    var accs = S.accounts.filter(function(a){ return String(a.folderId)===String(f.id); });
+    var vids = S.videos.filter(function(v){ return accs.map(function(a){return a.id;}).indexOf(v.accId)>=0; });
+    items.push({ id:f.id, name:f.name, accs:accs, vids:vids, isFolder:true });
+  });
+  var noFolder = S.accounts.filter(function(a){ return !a.folderId; });
+  if(noFolder.length){
+    var nfVids = S.videos.filter(function(v){ return noFolder.map(function(a){return a.id;}).indexOf(v.accId)>=0; });
+    items.push({ id:'__nofolder__', name:'未分组', accs:noFolder, vids:nfVids, isFolder:false });
+  }
+
+  var totalAll = S.videos.length;
+  var totalAccs = S.accounts.length;
+
+  var cardsHtml = items.map(function(item, fi){
+    var icon = FC_ICONS[fi % FC_ICONS.length];
+    var total = item.vids.length;
+
+    var tagsHtml = item.accs.map(function(a, ai){
+      var c = FC_TAG_COLORS[ai % FC_TAG_COLORS.length];
+      var cnt = S.videos.filter(function(v){ return v.accId===a.id; }).length;
+      return '<span class="fc-tag '+c+'" onclick="event.stopPropagation();fcOpenAcc(\'' +a.id+ '\')">'
+        +'<span class="fc-tag-name">'+a.name+'</span>'
+        +'<span class="fc-tag-num">'+cnt+'</span>'
+        +'</span>';
+    }).join('');
+
+    if(!tagsHtml) tagsHtml = '<span class="fc-empty">暂无账号</span>';
+
+    return '<div class="fc-card" onclick="fcOpenFolder(\'' +item.id+ '\')">'
+      +'<div class="fc-head">'
+      +'<div class="fc-left">'
+      +'<span class="fc-icon">'+icon+'</span>'
+      +'<span class="fc-name">'+item.name+'<span class="fc-total">'+total+'条</span></span>'
+      +'</div>'
+      +'<button class="fc-menu" onclick="event.stopPropagation()">···</button>'
+      +'</div>'
+      +'<div class="fc-tags">'+tagsHtml+'</div>'
+      +'</div>';
+  }).join('');
+
+  if(!cardsHtml){
+    cardsHtml = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;">暂无项目组，请先在侧边栏「项目/账号」中新建文件夹</div>';
+  }
+
+  pane.innerHTML =
+    '<div style="display:flex;flex-direction:column;width:100%;height:100%;background:var(--bg);">'
+    +'<div class="fc-topbar">'
+    +'<div style="width:3px;height:18px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:2px;flex-shrink:0;"></div>'
+    +'<span class="fc-topbar-title">数据总览</span>'
+    +'<span class="fc-topbar-sub">'+totalAccs+' 个账号 · '+totalAll+' 条视频</span>'
+    +'</div>'
+    +'<div style="flex:1;overflow-y:auto;">'
+    +'<div class="fc-grid">'+cardsHtml+'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+function fcOpenFolder(folderId){
+  // 找到该文件夹在 _ovRows() 的 index，切到详情视图
+  var rows = _ovRows();
+  var idx = 0;
+  for(var i=0;i<rows.length;i++){
+    if(String(rows[i].folderId)===String(folderId)){ idx=i; break; }
+    if(folderId==='__nofolder__' && rows[i].folder==='未分组'){ idx=i; break; }
+  }
+  _ovFolderIdx = idx;
+  _ovMode = 'detail';
+  window._ovSelAccId = null;
+  renderOverviewPaneWithBack();
+}
+
+function fcOpenAcc(accId){
+  // 找到账号所属文件夹的 row index
+  var acc = S.accounts.find(function(a){ return a.id===accId; });
+  if(!acc) return;
+  var rows = _ovRows();
+  var idx = 0;
+  for(var i=0;i<rows.length;i++){
+    if(rows[i].accs && rows[i].accs.find(function(a){ return a.id===accId; })){ idx=i; break; }
+  }
+  _ovFolderIdx = idx;
+  _ovMode = 'detail';
+  window._ovSelAccId = accId;
+  renderOverviewPaneWithBack();
+}
+
+function renderOverviewPaneWithBack(){
+  // 先渲染详情，再注入「返回」按钮
+  renderOverviewPane();
+  var pane = document.getElementById('overviewPane');
+  if(!pane) return;
+  var inner = pane.querySelector('div');
+  if(!inner) return;
+  var topbar = inner.querySelector('div');
+  if(!topbar) return;
+  // 注入返回按钮
+  var backBtn = document.createElement('button');
+  backBtn.className = 'fc-back';
+  backBtn.innerHTML = '← 返回总览';
+  backBtn.onclick = function(){ renderFolderCards(); };
+  topbar.appendChild(backBtn);
 }
 
 function renderOverviewPane(){
