@@ -366,6 +366,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   from{opacity:0;transform:translate(-50%,-50%) scale(.92);}
   to{opacity:1;transform:translate(-50%,-50%) scale(1);}
 }
+@keyframes pvScaleOut{
+  from{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  to{opacity:0;transform:translate(-50%,-50%) scale(.92);}
+}
+.pv-panel.closing{animation:pvScaleOut .18s ease forwards!important;}
 .pv-panel.dragging{animation:none!important;user-select:none;}
 .pvp-head{
   padding:13px 18px 11px;border-bottom:1px solid var(--border);
@@ -383,7 +388,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .pvp-tab{padding:8px 16px;border:none;border-bottom:2px solid transparent;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3);font-family:var(--font);white-space:nowrap;transition:all .12s;}
 .pvp-tab.on{color:var(--accent);border-bottom-color:var(--accent);}
 .pvp-tab:hover:not(.on){color:var(--text2);}
-.pvp-body{flex:1;overflow-y:auto;padding:16px 18px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;align-content:start;}
+.pvp-body{flex:1;overflow-y:auto;padding:16px 18px 24px;}
+.pvp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;align-content:start;}
 .pvp-body::-webkit-scrollbar{width:4px;}
 .pvp-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
 .pvp-vcard{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow .18s,transform .15s,border-color .15s;display:flex;flex-direction:column;}
@@ -6777,9 +6783,11 @@ function pvOpenPanel(folderId, name, color, accId){
 
   var bg = document.getElementById('pvPanelBg');
   var panel = bg.querySelector('.pv-panel');
+  panel.classList.remove('closing');
   panel.style.left=''; panel.style.top=''; panel.style.transform='';
-  bg.style.display = 'flex';
-  requestAnimationFrame(function(){ bg.classList.add('open'); });
+  bg.style.display = '';
+  bg.classList.add('open');
+  requestAnimationFrame(function(){ /* ensure paint */ });
 
   // ── 拖拽 ──
   var head = document.getElementById('pvpHead');
@@ -6828,11 +6836,11 @@ function pvRenderBody(aid){
   document.getElementById('pvpCnt').textContent = '共 '+vids.length+' 条';
 
   if(!vids.length){
-    body.innerHTML = '<div class="pvp-empty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M9 10l6 0M9 14l4 0" stroke-linecap="round"/></svg><p>暂无视频数据</p></div>';
+    body.innerHTML = '<div class="pvp-grid"><div class="pvp-empty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M9 10l6 0M9 14l4 0" stroke-linecap="round"/></svg><p>暂无视频数据</p></div></div>';
     return;
   }
 
-  body.innerHTML = vids.map(function(v){
+  var cardsHtml = vids.map(function(v){
     var acc = accounts.find(function(a){ return a.id===v.accId; }) || {color:'#b87f5a',name:''};
     var c   = acc.color || '#b87f5a';
     var accName = acc.name || '';
@@ -6861,15 +6869,25 @@ function pvRenderBody(aid){
 
     return '<div class="pvp-vcard" onclick="pvClosePanel();openDetailDrawer(\''+v.id+'\')">'      +'<div class="pvp-vthumb">'        + thumbHtml        +'<div class="pvp-vthumb-play">'          +'<div class="pvp-vthumb-playbtn">'            +'<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><polygon points="5 3 19 12 5 21"/></svg>'          +'</div>'        +'</div>'        + pillHtml        +(v.date?'<div class="pvp-vdate">'+v.date+'</div>':'')      +'</div>'      +'<div class="pvp-vinfo">'        +'<div class="pvp-vtitle">'+(v.title||'（无标题）')+'</div>'        +'<div class="pvp-vstats">'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--red)" opacity=".7"><path d="M12 21C12 21 3 13.5 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5.5-9 13-9 13z"/></svg>'+fmt(v.likes||0)+'</div>'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+fmt(v.comm||0)+'</div>'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)" opacity=".8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'+fmt(v.coll||0)+'</div>'        +'</div>'        + accRow      +'</div>'    +'</div>';
   }).join('');
+  body.innerHTML = '<div class="pvp-grid">' + cardsHtml + '</div>';
 }
 
 function pvClosePanel(){
   var bg = document.getElementById('pvPanelBg');
   var panel = bg ? bg.querySelector('.pv-panel') : null;
-  bg.classList.remove('open');
+  if(!bg) return;
+  if(panel) panel.classList.add('closing');
+  bg.style.background = 'rgba(0,0,0,0)';
+  bg.style.backdropFilter = 'blur(0px)';
   setTimeout(function(){
-    bg.style.display='none';
-    if(panel){ panel.style.left=''; panel.style.top=''; panel.style.transform=''; }
+    bg.classList.remove('open');
+    bg.style.display = '';
+    bg.style.background = '';
+    bg.style.backdropFilter = '';
+    if(panel){
+      panel.classList.remove('closing');
+      panel.style.left=''; panel.style.top=''; panel.style.transform='';
+    }
   }, 200);
 }
 
