@@ -274,7 +274,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 #projectPane{background:var(--bg);}
 
 /* 项目视图内容区 */
-.pv-wrap{padding:16px 20px 48px;display:flex;flex-direction:column;gap:14px;}
+.pv-wrap{padding:16px 20px 48px;display:flex;flex-direction:column;gap:14px;width:100%;box-sizing:border-box;}
 
 /* 全部视频汇总卡片 */
 .pv-all-card{
@@ -304,7 +304,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .pv-sort-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
 
 /* 卡片网格 */
-.pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;}
+.pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;width:100%;}
 
 /* 项目卡片 */
 .pv-card{
@@ -381,13 +381,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
 .pvp-body{flex:1;overflow-y:auto;padding:14px 20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-content:start;}
 
 /* 视频迷你卡 */
-.pvp-vcard{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s;}
+.pvp-vcard{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s;display:flex;flex-direction:column;}
 .pvp-vcard:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px);}
-.pvp-vthumb{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.pvp-vthumb{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;}
 .pvp-vthumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pvp-vthumb-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .pvp-vdate{position:absolute;bottom:4px;right:5px;background:rgba(0,0,0,.55);color:#fff;font-size:8px;padding:1px 5px;border-radius:3px;font-family:var(--mono);}
-.pvp-vinfo{padding:7px 9px;}
+.pvp-vinfo{padding:7px 9px;flex:1;min-height:0;}
 .pvp-vtitle{font-size:11px;font-weight:600;color:var(--text);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-bottom:5px;}
 .pvp-vstats{display:flex;gap:7px;}
 .pvp-vstat{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:2px;font-family:var(--mono);}
