@@ -10072,22 +10072,6 @@ function switchManualTab(section, el){
   </div>
 
   <!-- 桌宠右键菜单 -->
-  <div id="petCtxMenu" style="display:none;position:fixed;z-index:999999;background:var(--s1,#fff);border:1px solid var(--border2,#ddd);border-radius:10px;padding:4px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.14);animation:ctxIn .12s ease;">
-    <div class="ctx-item" onclick="petCtxClose();wake();petTogglePanel()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      打开对话面板
-    </div>
-    <div class="ctx-item" onclick="petCtxClose();document.getElementById('petAvatarFileInput').click()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-      更换桌宠头像
-    </div>
-    <div class="ctx-item" id="petCtxResetAvt" style="display:none;" onclick="petCtxClose();resetPetAvatar()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
-      恢复默认头像
-    </div>
-  </div>
-  <input type="file" id="petAvatarFileInput" accept="image/*" style="display:none" onchange="handlePetAvatarUpload(this)"/>
-
   <!-- §3 Character -->
   <div id="petChar" class="s-idle">
     <div id="petDot"></div>
@@ -10149,8 +10133,22 @@ function switchManualTab(section, el){
 
 </div>
 
-<script>
-(function(){
+<!-- 桌宠右键菜单（在 petRoot 外，避免 pointer-events:none 问题） -->
+<div id="petCtxMenu" style="display:none;position:fixed;z-index:999999;pointer-events:auto;background:var(--s1,#fff);border:1px solid var(--border2,#ddd);border-radius:10px;padding:4px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.14);animation:ctxIn .12s ease;">
+  <div class="ctx-item" onmousedown="event.stopPropagation();petCtxClose();wake();petTogglePanel()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    打开对话面板
+  </div>
+  <div class="ctx-item" onmousedown="event.stopPropagation();petCtxClose();setTimeout(function(){document.getElementById('petAvatarFileInput').click();},50)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    更换桌宠头像
+  </div>
+  <div class="ctx-item" id="petCtxResetAvt" style="display:none;" onmousedown="event.stopPropagation();petCtxClose();resetPetAvatar()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+    恢复默认头像
+  </div>
+</div>
+<input type="file" id="petAvatarFileInput" accept="image/*" style="display:none" onchange="handlePetAvatarUpload(this)"/>
 
 /* ═══════════════════════════════════════════════
    §1  ASSETS
@@ -10649,14 +10647,18 @@ function showPetCtxMenu(e){
   var menu = document.getElementById('petCtxMenu');
   if(!menu) return;
   var x = e.clientX, y = e.clientY;
-  // 防止超出屏幕
   if(x + 180 > window.innerWidth) x = window.innerWidth - 185;
   if(y + 120 > window.innerHeight) y = window.innerHeight - 125;
   menu.style.left = x + 'px';
   menu.style.top  = y + 'px';
   menu.style.display = 'block';
   setTimeout(function(){
-    document.addEventListener('click', petCtxClose, {once:true});
+    document.addEventListener('mousedown', function handler(ev){
+      if(!menu.contains(ev.target)) {
+        petCtxClose();
+        document.removeEventListener('mousedown', handler);
+      }
+    });
   }, 0);
 }
 
