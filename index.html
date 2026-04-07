@@ -371,14 +371,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   from{opacity:1;transform:translate(-50%,-50%) scale(1);}
   to{opacity:0;transform:translate(-50%,-50%) scale(.92);}
 }
-.pv-panel.dragging{animation:none!important;user-select:none;}
 .pvp-head{
   padding:13px 18px 11px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:10px;flex-shrink:0;
   background:var(--s2);border-radius:16px 16px 0 0;
-  cursor:grab;
 }
-.pvp-head:active{cursor:grabbing;}
 .pvp-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
 .pvp-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
 .pvp-cnt{font-size:11px;color:var(--text3);}
@@ -790,26 +787,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17
   from{opacity:1;transform:translate(-50%,-50%) scale(1);}
   to{opacity:0;transform:translate(-50%,-50%) scale(.92);}
 }
-.detail-drawer.dd-dragging{animation:none!important;user-select:none;}
 
 /* 拖拽把手 — 现在在 header 里 */
 .dd-handle{
   width:36px;height:4px;border-radius:99px;
   background:var(--border2);
   flex-shrink:0;
-  cursor:grab;
 }
-.dd-handle:active{cursor:grabbing;}
 
 /* 顶部栏 */
 .dd-header{
   padding:12px 18px 12px;
   display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;
-  cursor:grab;
   border-radius:16px 16px 0 0;
 }
-.dd-header:active{cursor:grabbing;}
 .dd-header-title{font-size:15px;font-weight:700;color:var(--text);}
 .dd-close{
   width:30px;height:30px;border-radius:50%;
@@ -3874,27 +3866,6 @@ function openDetailDrawer(vid){
   void drawer.offsetWidth;
   drawer.classList.add('dd-entering');
 
-  // ── 拖拽 ──
-  var ddHead=document.querySelector('.dd-header');
-  if(ddHead && !ddHead._ddDrag){
-    ddHead._ddDrag=true;
-    var _ddx=0,_ddy=0,_ddon=false;
-    ddHead.addEventListener('mousedown',function(e){
-      if(e.button!==0) return;
-      var r=drawer.getBoundingClientRect();
-      drawer.style.transform='none';
-      drawer.style.left=r.left+'px'; drawer.style.top=r.top+'px';
-      _ddx=e.clientX-r.left; _ddy=e.clientY-r.top;
-      _ddon=true; drawer.classList.add('dd-dragging'); e.preventDefault();
-    });
-    document.addEventListener('mousemove',function(e){
-      if(!_ddon) return;
-      var nx=Math.max(0,Math.min(window.innerWidth-drawer.offsetWidth, e.clientX-_ddx));
-      var ny=Math.max(0,Math.min(window.innerHeight-drawer.offsetHeight,e.clientY-_ddy));
-      drawer.style.left=nx+'px'; drawer.style.top=ny+'px';
-    });
-    document.addEventListener('mouseup',function(){ if(!_ddon)return; _ddon=false; drawer.classList.remove('dd-dragging'); });
-  }
 }
 
 function escHtml(s){
@@ -4073,6 +4044,8 @@ function delV(id){
       }
     } else {
       render();
+      // 如果项目视图面板开着，同步刷新
+      _refreshPvIfOpen();
     }
     toast('已删除');
   });
@@ -4185,6 +4158,7 @@ function deleteAcc(id){
     await sbFetch('/rest/v1/videos?acc_id=eq.'+id,'DELETE');
     await sbFetch('/rest/v1/accounts?id=eq.'+id,'DELETE');
     render();
+    _refreshPvIfOpen();
     toast(cnt>0?`已删除项目及 ${cnt} 条视频`:'已删除项目');
   });
 }
@@ -5771,6 +5745,7 @@ async function sedSave(){
   closeStatEditDrawer();
   if(_lastStatDetailType) openStatDetail(_lastStatDetailType);
   if(typeof render==='function') render();
+  _refreshPvIfOpen();
   toast('已保存 ✓');
 }
 
@@ -5786,6 +5761,7 @@ async function sedDelete(){
   closeStatEditDrawer();
   if(_lastStatDetailType) openStatDetail(_lastStatDetailType);
   if(typeof render==='function') render();
+  _refreshPvIfOpen();
   toast('已删除','err');
 }
 
@@ -6847,27 +6823,6 @@ function pvOpenPanel(folderId, name, color, accId){
   void panel.offsetWidth;
   panel.classList.add('pv-entering');
 
-  // ── 拖拽 ──
-  var head = document.getElementById('pvpHead');
-  if(head && !head._pvDrag){
-    head._pvDrag = true;
-    var _dx=0,_dy=0,_on=false;
-    head.addEventListener('mousedown',function(e){
-      if(e.button!==0) return;
-      var r=panel.getBoundingClientRect();
-      panel.style.transform='none';
-      panel.style.left=r.left+'px'; panel.style.top=r.top+'px';
-      _dx=e.clientX-r.left; _dy=e.clientY-r.top;
-      _on=true; panel.classList.add('dragging'); e.preventDefault();
-    });
-    document.addEventListener('mousemove',function(e){
-      if(!_on) return;
-      var nx=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth, e.clientX-_dx));
-      var ny=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,e.clientY-_dy));
-      panel.style.left=nx+'px'; panel.style.top=ny+'px';
-    });
-    document.addEventListener('mouseup',function(){ if(!_on)return; _on=false; panel.classList.remove('dragging'); });
-  }
 }
 
 function pvRenderBody(aid){
@@ -6927,6 +6882,20 @@ function pvRenderBody(aid){
 
     return '<div class="pvp-vcard" onclick="pvClosePanel();openDetailDrawer(\''+v.id+'\')">'      +'<div class="pvp-vthumb">'        + thumbHtml        +'<div class="pvp-vthumb-play">'          +'<div class="pvp-vthumb-playbtn">'            +'<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><polygon points="5 3 19 12 5 21"/></svg>'          +'</div>'        +'</div>'        + pillHtml        +(v.date?'<div class="pvp-vdate">'+v.date+'</div>':'')      +'</div>'      +'<div class="pvp-vinfo">'        +'<div class="pvp-vtitle">'+(v.title||'（无标题）')+'</div>'        +'<div class="pvp-vstats">'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--red)" opacity=".7"><path d="M12 21C12 21 3 13.5 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5.5-9 13-9 13z"/></svg>'+fmt(v.likes||0)+'</div>'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+fmt(v.comm||0)+'</div>'          +'<div class="pvp-vstat"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)" opacity=".8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'+fmt(v.coll||0)+'</div>'        +'</div>'        + accRow      +'</div>'    +'</div>';
   }).join('');
+}
+
+// 项目视图面板刷新辅助：删除/修改后同步更新面板数据
+function _refreshPvIfOpen(){
+  var bg = document.getElementById('pvPanelBg');
+  if(bg && bg.classList.contains('open')){
+    // 刷新弹窗内视频列表
+    if(typeof pvRenderBody === 'function') pvRenderBody(_pvPanelAid || null);
+  }
+  // 不管面板是否开着，刷新项目视图主页
+  var projPane = document.getElementById('projectPane');
+  if(projPane && projPane.style.display !== 'none'){
+    if(typeof renderProjectPane === 'function') renderProjectPane();
+  }
 }
 
 var _pvClosing = false;
@@ -7536,6 +7505,7 @@ function batchDelete(){
     S.videos = S.videos.filter(v=>!ids.includes(v.id));
     await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'DELETE')));
     render(); closeBatchModal(); exitSelectMode();
+    _refreshPvIfOpen();
     toast('已删除 '+ids.length+' 条');
   });
 }
