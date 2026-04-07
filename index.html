@@ -1736,15 +1736,7 @@ canvas{max-width:100%;}
   </button>
   <button class="sb-icon-btn sb-nav-item" id="sb-nav-projects" onclick="sbNavTo('projects')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span class="sb-tip">项目视图</span>
-  </button>
-  <button class="sb-icon-btn sb-nav-item" id="sb-nav-content" onclick="sbNavTo('content')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
     <span class="sb-tip">内容库</span>
-  </button>
-  <button class="sb-icon-btn sb-nav-item" id="sb-nav-alert" onclick="sbNavTo('alert')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    <span class="sb-tip">异常内容</span>
   </button>
   <button class="sb-icon-btn sb-nav-item" id="sb-nav-analytics" onclick="sbNavTo('analytics')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -1826,6 +1818,7 @@ canvas{max-width:100%;}
       <button class="fchip"    id="fc-normal"    onclick="setFilter('normal',this)">✓ 正常</button>
       <button class="fchip"    id="fc-violation" onclick="setFilter('violation',this)">✕ 违规</button>
       <button class="fchip"    id="fc-promo"     onclick="setFilter('promo',this)">★ 推广</button>
+      <button class="fchip"    id="fc-alert"     onclick="setFilter('alert',this)" style="color:#e06030;">⚠ 异常</button>
     </div>
 
     <!-- 自定义筛选组 -->
@@ -1905,14 +1898,16 @@ canvas{max-width:100%;}
     <!-- 视图切换：仅两种（内容库专属） -->
     <div id="viewToggleWrap" style="display:none;">
     <div style="display:flex;gap:2px;align-items:center;background:var(--s2);border-radius:8px;padding:3px;flex-shrink:0;">
-      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="紧凑卡片" style="width:30px;height:26px;border-radius:6px;">
+      <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="宫格视图" style="width:30px;height:26px;border-radius:6px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       </button>
-      <button class="vbtn" id="vb-detail" onclick="setView('detail')" title="详情卡片" style="width:30px;height:26px;border-radius:6px;">
+      <button class="vbtn" id="vb-detail" onclick="setView('detail')" title="详情列表" style="width:30px;height:26px;border-radius:6px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="18" height="5" rx="1"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
       </button>
+      <button class="vbtn" id="vb-group" onclick="setView('group')" title="项目分组" style="width:30px;height:26px;border-radius:6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
     </div>
-
     </div><!-- /viewToggleWrap -->
 
     <!-- 刷新 -->
@@ -3186,6 +3181,7 @@ function renderGrid(){
   if(S.filter==='violation')vids=vids.filter(v=>v.violation);
   else if(S.filter==='promo')vids=vids.filter(v=>v.promo);
   else if(S.filter==='normal')vids=vids.filter(v=>!v.violation&&!v.promo);
+  else if(S.filter==='alert')vids=vids.filter(v=>v.violation||v.promo);
   // 日期筛选（区间）
   if(S.dateFilter) vids=vids.filter(v=>v.date===S.dateFilter);
   if(S.dateFrom||S.dateTo){
@@ -3506,7 +3502,24 @@ function onGlobalSearch(val){
   },200);
 }
 function goPage(p){S.page=p;renderGrid();window.scrollTo(0,0);}
-function setView(v){S.view=v;['grid','detail'].forEach(x=>{const el=document.getElementById('vb-'+x);if(el)el.classList.toggle('on',x===v)});renderGrid();}
+function setView(v){
+  S.view=v;
+  ['grid','detail','group'].forEach(x=>{
+    var el=document.getElementById('vb-'+x);
+    if(el) el.classList.toggle('on',x===v);
+  });
+  if(v==='group'){
+    // 切换到项目分组视图：显示 projectPane，隐藏 vgrid
+    var vg=document.getElementById('vgrid'); if(vg) vg.style.display='none';
+    var kb=document.getElementById('kpiBar'); if(kb) kb.style.display='none';
+    if(typeof showProjectPane==='function') showProjectPane();
+  } else {
+    // 普通卡片视图：隐藏 projectPane，显示 vgrid
+    if(typeof hideProjectPane==='function') hideProjectPane();
+    var pp=document.getElementById('projectPane'); if(pp) pp.style.display='none';
+    renderGrid();
+  }
+}
 
 // ══════════════════════════════════════════
 // 账号效率排名视图
@@ -8472,51 +8485,7 @@ document.addEventListener('keydown', function(e){
 });
 
 // ── 统一页面切换 ──
-function switchPage(page){
-  if(!page) return;
-  appState.currentPage = page;
-  // 更新侧边栏 active
-  document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
-  var navBtn = document.getElementById('sb-nav-'+page);
-  if(navBtn) navBtn.classList.add('active');
-  // 始终先隐藏项目视图面板
-  if(page !== 'projects') hideProjectPane();
-  // 路由
-  if(page==='overview'){
-    if(typeof showOverviewPane==='function') showOverviewPane();
-  } else if(page==='projects'){
-    if(typeof hideOverviewPane==='function') hideOverviewPane();
-    var kb=document.getElementById('kpiBar'); if(kb) kb.style.display='none';
-    var vgrid=document.getElementById('vgrid'); if(vgrid) vgrid.style.display='none';
-    var ct=document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
-    var vt=document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
-    var ts=document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
-    if(typeof showProjectPane==='function') showProjectPane();
-  } else if(page==='content'){
-    if(typeof hideOverviewPane==='function') hideOverviewPane();
-    var gs=document.getElementById('globalSearch'); if(gs)gs.value='';
-    if(typeof S!=='undefined'){
-      S.filter='all';S.page=0;S.searchQuery='';
-      // 如果没有选中账号或文件夹，默认显示全部
-      if(!S.curAcc && !S.curFolder) S.curAcc='all';
-    }
-    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
-    var fcAll=document.getElementById('fc-all'); if(fcAll)fcAll.classList.add('on');
-    if(typeof render==='function') render();
-  } else if(page==='alert'){
-    if(typeof hideOverviewPane==='function') hideOverviewPane();
-    if(typeof S!=='undefined'){
-      S.filter='violation';S.page=0;
-      if(!S.curAcc && !S.curFolder) S.curAcc='all';
-    }
-    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
-    var vb=document.getElementById('fc-violation'); if(vb)vb.classList.add('on');
-    if(typeof render==='function') render();
-  } else if(page==='analytics'){
-    if(typeof hideOverviewPane==='function') hideOverviewPane();
-    if(typeof setView==='function') setView('detail');
-  }
-}
+function switchPage(page){\n  if(!page) return;\n  appState.currentPage = page;\n  document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});\n  var navBtn = document.getElementById('sb-nav-'+page);\n  if(navBtn) navBtn.classList.add('active');\n  if(page !== 'projects') hideProjectPane();\n\n  if(page==='overview'){\n    if(typeof showOverviewPane==='function') showOverviewPane();\n  } else if(page==='projects'){\n    // 内容库主页：显示工具栏 + 宫格（项目分组视图通过 vb-group 按钮切换）\n    if(typeof hideOverviewPane==='function') hideOverviewPane();\n    var pp=document.getElementById('projectPane'); if(pp) pp.style.display='none';\n    var gs=document.getElementById('globalSearch'); if(gs) gs.value='';\n    if(typeof S!=='undefined'){\n      S.filter='all'; S.page=0; S.searchQuery='';\n      if(!S.curAcc && !S.curFolder) S.curAcc='all';\n      // 如果当前是 group 视图，重置为 grid\n      if(S.view==='group') S.view='grid';\n    }\n    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});\n    var fcAll=document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');\n    // 视图按钮重置为 grid\n    ['grid','detail','group'].forEach(function(x){\n      var el=document.getElementById('vb-'+x);\n      if(el) el.classList.toggle('on', x==='grid');\n    });\n    if(typeof render==='function') render();\n  } else if(page==='content' || page==='alert'){\n    if(typeof hideOverviewPane==='function') hideOverviewPane();\n    var gs=document.getElementById('globalSearch'); if(gs) gs.value='';\n    if(typeof S!=='undefined'){\n      S.page=0; S.searchQuery='';\n      if(!S.curAcc && !S.curFolder) S.curAcc='all';\n      if(page==='alert'){\n        S.filter='alert';\n        document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});\n        var ab=document.getElementById('fc-alert'); if(ab) ab.classList.add('on');\n      } else {\n        S.filter='all';\n        document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});\n        var fcAll=document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');\n      }\n    }\n    if(typeof render==='function') render();\n  } else if(page==='analytics'){\n    if(typeof hideOverviewPane==='function') hideOverviewPane();\n    if(typeof setView==='function') setView('detail');\n  }\n}
 
 // ── 统一 DOMContentLoaded 初始化入口 ──
 document.addEventListener('DOMContentLoaded', function(){
@@ -9846,10 +9815,10 @@ function switchManualTab(section, el){
   display:none;
   flex-direction:column;
   width:300px;
-  background:#fef6f0;
-  border:1px solid #f0c8a8;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
   border-radius:16px;
-  box-shadow:0 8px 32px rgba(232,116,42,.12), 0 2px 8px rgba(0,0,0,.06);
+  box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
   position:fixed;
@@ -9860,52 +9829,51 @@ function switchManualTab(section, el){
   to  { opacity:1; transform:translateY(0)    scale(1);   }
 }
 
-/* Header — 橙色渐变 */
+/* Header */
 #petPanelHead{
   padding:14px 16px 12px;
-  border-bottom:none;
+  border-bottom:1px solid rgba(0,0,0,.06);
   display:flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,#e8742a,#f09050);
 }
 #petPanelAvatar{
-  width:36px;height:36px;border-radius:50%;overflow:hidden;
-  background:rgba(255,255,255,.25);flex-shrink:0;
+  width:30px;height:30px;border-radius:50%;overflow:hidden;
+  background:#f5f5f5;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
 }
 #petPanelAvatar img{ width:40px;height:40px;border-radius:50%;object-fit:cover; }
-#petPanelAvatar svg{ width:40px;height:40px; }
+#petPanelAvatar svg{ width:46px;height:46px; }
 #petPanelTitle{
   flex:1;
-  font-size:13px;font-weight:600;color:#fff;letter-spacing:-.1px;
+  font-size:13px;font-weight:600;color:#111;letter-spacing:-.1px;
 }
 #petPanelSub{
-  font-size:11px;color:rgba(255,255,255,.75);margin-top:1px;font-weight:400;
+  font-size:11px;color:#999;margin-top:1px;font-weight:400;
 }
 #petPanelClose{
   width:24px;height:24px;border-radius:8px;border:none;
-  background:rgba(255,255,255,.15);cursor:pointer;
-  color:rgba(255,255,255,.8);font-size:14px;
+  background:transparent;cursor:pointer;
+  color:#bbb;font-size:14px;
   transition:background .12s,color .12s;
   display:flex;align-items:center;justify-content:center;
 }
-#petPanelClose:hover{ background:rgba(255,255,255,.28);color:#fff; }
+#petPanelClose:hover{ background:#f2f2f2;color:#555; }
 
 /* Quick actions */
 #petPanelActions{
   display:flex;gap:6px;flex-wrap:wrap;
   padding:10px 14px 8px;
-  border-bottom:1px solid rgba(232,116,42,.12);
+  border-bottom:1px solid rgba(0,0,0,.05);
 }
 .pa-btn{
   padding:4px 10px;
   border-radius:20px;
-  border:1px solid rgba(232,116,42,.25);
-  background:#fff;
-  color:#c05818;
+  border:1px solid rgba(0,0,0,.1);
+  background:#fafafa;
+  color:#444;
   font-size:11px;font-weight:500;
   cursor:pointer;transition:all .12s;
 }
-.pa-btn:hover{ background:#fff3ec;border-color:rgba(232,116,42,.45);color:#9a3808; }
+.pa-btn:hover{ background:#f0f0f0;border-color:rgba(0,0,0,.15);color:#111; }
 
 /* Messages */
 #petMsgs{
@@ -9913,41 +9881,36 @@ function switchManualTab(section, el){
   padding:12px 14px;
   display:flex;flex-direction:column;gap:8px;
   max-height:240px;min-height:72px;
-  background:#fef6f0;
 }
 #petMsgs::-webkit-scrollbar{ width:3px; }
-#petMsgs::-webkit-scrollbar-thumb{ background:rgba(232,116,42,.2);border-radius:99px; }
+#petMsgs::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.1);border-radius:99px; }
 
 .pm{ display:flex;gap:7px;align-items:flex-end; }
 .pm.u{ flex-direction:row-reverse; }
 
 .pm-avt{
   width:22px;height:22px;border-radius:50%;overflow:hidden;
-  flex-shrink:0;background:#fde0c0;
+  flex-shrink:0;background:#f0f0f0;
   display:flex;align-items:center;justify-content:center;
 }
 .pm-avt svg{ width:34px;height:34px; }
 .pm-avt.u{
-  background:#e8742a;
+  background:#111;
   color:#fff;font-size:9px;font-weight:600;
 }
 .pm-bubble{
   max-width:200px;padding:7px 10px;
   border-radius:12px 12px 12px 3px;
-  background:#fff;
-  border:1px solid #f0d0b0;
-  box-shadow:0 1px 4px rgba(232,116,42,.08);
-  font-size:12px;line-height:1.6;color:#3a1a00;
+  background:#f5f5f5;
+  font-size:12px;line-height:1.6;color:#222;
 }
 .pm.u .pm-bubble{
   border-radius:12px 12px 3px 12px;
-  background:#e8742a;color:#fff;
-  border-color:transparent;
-  box-shadow:0 2px 8px rgba(232,116,42,.3);
+  background:#111;color:#fff;
 }
 .pm-bubble.typing span{
   display:inline-block;width:4px;height:4px;border-radius:50%;
-  background:#e8a070;margin:0 1px;
+  background:#aaa;margin:0 1px;
   animation:td 1.2s ease-in-out infinite;
 }
 .pm-bubble.typing span:nth-child(2){animation-delay:.2s;}
@@ -10133,22 +10096,18 @@ function switchManualTab(section, el){
 
 </div>
 
-<!-- 桌宠右键菜单（在 petRoot 外，避免 pointer-events:none 问题） -->
-<div id="petCtxMenu" style="display:none;position:fixed;z-index:999999;pointer-events:auto;background:var(--s1,#fff);border:1px solid var(--border2,#ddd);border-radius:10px;padding:4px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.14);animation:ctxIn .12s ease;">
-  <div class="ctx-item" onmousedown="event.stopPropagation();petCtxClose();wake();petTogglePanel()">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    打开对话面板
-  </div>
-  <div class="ctx-item" onmousedown="event.stopPropagation();petCtxClose();setTimeout(function(){document.getElementById('petAvatarFileInput').click();},50)">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+<!-- 桌宠右键菜单 -->
+<div id="petCtxMenu" style="display:none;position:fixed;z-index:999999;background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:4px;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,.12);">
+  <div style="padding:7px 12px;font-size:13px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;" onmousedown="event.stopPropagation();document.getElementById('petCtxMenu').style.display='none';setTimeout(function(){document.getElementById('petAvatarInput').click();},50);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     更换桌宠头像
   </div>
-  <div class="ctx-item" id="petCtxResetAvt" style="display:none;" onmousedown="event.stopPropagation();petCtxClose();resetPetAvatar()">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+  <div id="petResetItem" style="display:none;padding:7px 12px;font-size:13px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;" onmousedown="event.stopPropagation();document.getElementById('petCtxMenu').style.display='none';petResetAvatar();">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
     恢复默认头像
   </div>
 </div>
-<input type="file" id="petAvatarFileInput" accept="image/*" style="display:none" onchange="handlePetAvatarUpload(this)"/>
+<input type="file" id="petAvatarInput" accept="image/*" style="display:none" onchange="petHandleAvatar(this)"/>
 
 <script>
 (function(){
@@ -10506,8 +10465,42 @@ char.addEventListener('click',function(e){
 char.addEventListener('contextmenu',function(e){
   e.preventDefault(); e.stopPropagation();
   colorPicker.style.display = 'none';
-  showPetCtxMenu(e);
+  var menu = document.getElementById('petCtxMenu');
+  var x = e.clientX, y = e.clientY;
+  if(x+160>window.innerWidth) x=window.innerWidth-165;
+  if(y+100>window.innerHeight) y=window.innerHeight-105;
+  menu.style.left=x+'px'; menu.style.top=y+'px';
+  menu.style.display='block';
+  setTimeout(function(){
+    document.addEventListener('mousedown',function h(ev){
+      if(!menu.contains(ev.target)){ menu.style.display='none'; document.removeEventListener('mousedown',h); }
+    });
+  },0);
 });
+
+function petHandleAvatar(input){
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var src=e.target.result;
+    localStorage.setItem('petAvatar',src);
+    petApplyAvatar(src);
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function petApplyAvatar(src){
+  var el=document.getElementById('petPanelAvatar');
+  if(el) el.innerHTML='<img src="'+src+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"/>';
+  document.getElementById('petResetItem').style.display='flex';
+}
+function petResetAvatar(){
+  localStorage.removeItem('petAvatar');
+  var el=document.getElementById('petPanelAvatar');
+  if(el) el.innerHTML='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:46px;height:46px;overflow:visible"><defs><radialGradient id="paG" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="paCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="paCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#paG)"/><g clip-path="url(#paCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#paCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg>';
+  document.getElementById('petResetItem').style.display='none';
+}
+(function(){ var s=localStorage.getItem('petAvatar'); if(s) petApplyAvatar(s); })();
 
 /* ═══════════════════════════════════════════════
    §6C  DRAG — left/top absolute positioning
@@ -10646,72 +10639,6 @@ function _syncPanelPos(){
   panel.style.right  = 'auto';
 }
 
-function showPetCtxMenu(e){
-  var menu = document.getElementById('petCtxMenu');
-  if(!menu) return;
-  var x = e.clientX, y = e.clientY;
-  if(x + 180 > window.innerWidth) x = window.innerWidth - 185;
-  if(y + 120 > window.innerHeight) y = window.innerHeight - 125;
-  menu.style.left = x + 'px';
-  menu.style.top  = y + 'px';
-  menu.style.display = 'block';
-  setTimeout(function(){
-    document.addEventListener('mousedown', function handler(ev){
-      if(!menu.contains(ev.target)) {
-        petCtxClose();
-        document.removeEventListener('mousedown', handler);
-      }
-    });
-  }, 0);
-}
-
-function petCtxClose(){
-  var menu = document.getElementById('petCtxMenu');
-  if(menu) menu.style.display = 'none';
-}
-
-function handlePetAvatarUpload(input){
-  var file = input.files[0];
-  if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var src = e.target.result;
-    localStorage.setItem('petAvatarImg', src);
-    applyPetAvatar(src);
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
-
-function applyPetAvatar(src){
-  // 替换面板顶部头像
-  var avatarDiv = document.getElementById('petPanelAvatar');
-  if(avatarDiv){
-    if(src){
-      avatarDiv.innerHTML = '<img src="'+src+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"/>';
-    } else {
-      // 恢复原始SVG头像
-      avatarDiv.innerHTML = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:40px;height:40px;overflow:visible"><defs><radialGradient id="paGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="paCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="paCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#paGrad)"/><g clip-path="url(#paCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#paCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg>';
-    }
-  }
-  // 记录到全局，addMsg/addTyping 里用
-  window._petAvatarSrc = src || null;
-  // 显示/隐藏「恢复默认」菜单项
-  var resetBtn = document.getElementById('petCtxResetAvt');
-  if(resetBtn) resetBtn.style.display = src ? '' : 'none';
-}
-
-function resetPetAvatar(){
-  localStorage.removeItem('petAvatarImg');
-  applyPetAvatar(null);
-}
-
-// 页面加载恢复
-(function(){
-  var saved = localStorage.getItem('petAvatarImg');
-  if(saved) applyPetAvatar(saved);
-})();
-
 function petTogglePanel(){
   panelOpen = !panelOpen;
   if(panelOpen){
@@ -10783,11 +10710,8 @@ function setDis(d){
 function addMsg(role,text){
   var box=document.getElementById('petMsgs');
   var w=document.createElement('div'); w.className='pm'+(role==='user'?' u':'');
-  var botAvtHtml = window._petAvatarSrc
-    ? '<div class="pm-avt"><img src="'+window._petAvatarSrc+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;"/></div>'
-    : '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
   var avt = role==='bot'
-    ? botAvtHtml
+    ? '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>'
     : (window._userAvatarSrc
         ? '<div class="pm-avt u"><img src="'+window._userAvatarSrc+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/></div>'
         : '<div class="pm-avt u">我</div>');
@@ -10800,9 +10724,7 @@ function addMsg(role,text){
 function addTyping(){
   var box=document.getElementById('petMsgs'), id='t'+Date.now();
   var w=document.createElement('div'); w.className='pm'; w.id=id;
-  var tAvt = window._petAvatarSrc
-    ? '<div class="pm-avt"><img src="'+window._petAvatarSrc+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;"/></div>'
-    : '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
+  var tAvt='<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
   w.innerHTML=tAvt+'<div class="pm-bubble typing"><span></span><span></span><span></span></div>';
   box.appendChild(w); box.scrollTop=box.scrollHeight; return id;
 }
