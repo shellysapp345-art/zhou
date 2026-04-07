@@ -9846,13 +9846,13 @@ function switchManualTab(section, el){
   display:none;
   flex-direction:column;
   width:300px;
-  background:#fff;
-  border:1px solid rgba(0,0,0,.08);
+  background:#fef6f0;
+  border:1px solid #f0c8a8;
   border-radius:16px;
-  box-shadow:0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
+  box-shadow:0 8px 32px rgba(232,116,42,.12), 0 2px 8px rgba(0,0,0,.06);
   overflow:hidden;
   animation:panelIn .22s cubic-bezier(.34,1.56,.64,1);
-  position:fixed;   /* 修改位置7: 脱离flex流，独立定位 */
+  position:fixed;
   z-index:100000;
 }
 @keyframes panelIn{
@@ -9860,51 +9860,52 @@ function switchManualTab(section, el){
   to  { opacity:1; transform:translateY(0)    scale(1);   }
 }
 
-/* Header */
+/* Header — 橙色渐变 */
 #petPanelHead{
   padding:14px 16px 12px;
-  border-bottom:1px solid rgba(0,0,0,.06);
+  border-bottom:none;
   display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#e8742a,#f09050);
 }
 #petPanelAvatar{
-  width:30px;height:30px;border-radius:50%;overflow:hidden;
-  background:#f5f5f5;flex-shrink:0;
+  width:36px;height:36px;border-radius:50%;overflow:hidden;
+  background:rgba(255,255,255,.25);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
 }
-#petPanelAvatar img{ width:46px;margin-left:-8px;margin-top:3px; }
-#petPanelAvatar svg{ width:46px;height:46px; }
+#petPanelAvatar img{ width:40px;height:40px;border-radius:50%;object-fit:cover; }
+#petPanelAvatar svg{ width:40px;height:40px; }
 #petPanelTitle{
   flex:1;
-  font-size:13px;font-weight:600;color:#111;letter-spacing:-.1px;
+  font-size:13px;font-weight:600;color:#fff;letter-spacing:-.1px;
 }
 #petPanelSub{
-  font-size:11px;color:#999;margin-top:1px;font-weight:400;
+  font-size:11px;color:rgba(255,255,255,.75);margin-top:1px;font-weight:400;
 }
 #petPanelClose{
   width:24px;height:24px;border-radius:8px;border:none;
-  background:transparent;cursor:pointer;
-  color:#bbb;font-size:14px;line-height:24px;text-align:center;
+  background:rgba(255,255,255,.15);cursor:pointer;
+  color:rgba(255,255,255,.8);font-size:14px;
   transition:background .12s,color .12s;
   display:flex;align-items:center;justify-content:center;
 }
-#petPanelClose:hover{ background:#f2f2f2;color:#555; }
+#petPanelClose:hover{ background:rgba(255,255,255,.28);color:#fff; }
 
 /* Quick actions */
 #petPanelActions{
   display:flex;gap:6px;flex-wrap:wrap;
   padding:10px 14px 8px;
-  border-bottom:1px solid rgba(0,0,0,.05);
+  border-bottom:1px solid rgba(232,116,42,.12);
 }
 .pa-btn{
   padding:4px 10px;
   border-radius:20px;
-  border:1px solid rgba(0,0,0,.1);
-  background:#fafafa;
-  color:#444;
+  border:1px solid rgba(232,116,42,.25);
+  background:#fff;
+  color:#c05818;
   font-size:11px;font-weight:500;
   cursor:pointer;transition:all .12s;
 }
-.pa-btn:hover{ background:#f0f0f0;border-color:rgba(0,0,0,.15);color:#111; }
+.pa-btn:hover{ background:#fff3ec;border-color:rgba(232,116,42,.45);color:#9a3808; }
 
 /* Messages */
 #petMsgs{
@@ -9912,36 +9913,41 @@ function switchManualTab(section, el){
   padding:12px 14px;
   display:flex;flex-direction:column;gap:8px;
   max-height:240px;min-height:72px;
+  background:#fef6f0;
 }
 #petMsgs::-webkit-scrollbar{ width:3px; }
-#petMsgs::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.1);border-radius:99px; }
+#petMsgs::-webkit-scrollbar-thumb{ background:rgba(232,116,42,.2);border-radius:99px; }
 
 .pm{ display:flex;gap:7px;align-items:flex-end; }
 .pm.u{ flex-direction:row-reverse; }
 
 .pm-avt{
   width:22px;height:22px;border-radius:50%;overflow:hidden;
-  flex-shrink:0;background:#f0f0f0;
+  flex-shrink:0;background:#fde0c0;
   display:flex;align-items:center;justify-content:center;
 }
 .pm-avt svg{ width:34px;height:34px; }
 .pm-avt.u{
-  background:#111;
+  background:#e8742a;
   color:#fff;font-size:9px;font-weight:600;
 }
 .pm-bubble{
   max-width:200px;padding:7px 10px;
   border-radius:12px 12px 12px 3px;
-  background:#f5f5f5;
-  font-size:12px;line-height:1.6;color:#222;
+  background:#fff;
+  border:1px solid #f0d0b0;
+  box-shadow:0 1px 4px rgba(232,116,42,.08);
+  font-size:12px;line-height:1.6;color:#3a1a00;
 }
 .pm.u .pm-bubble{
   border-radius:12px 12px 3px 12px;
-  background:#111;color:#fff;
+  background:#e8742a;color:#fff;
+  border-color:transparent;
+  box-shadow:0 2px 8px rgba(232,116,42,.3);
 }
 .pm-bubble.typing span{
   display:inline-block;width:4px;height:4px;border-radius:50%;
-  background:#aaa;margin:0 1px;
+  background:#e8a070;margin:0 1px;
   animation:td 1.2s ease-in-out infinite;
 }
 .pm-bubble.typing span:nth-child(2){animation-delay:.2s;}
@@ -10064,6 +10070,23 @@ function switchManualTab(section, el){
     <button id="petNotifClose" onclick="petHideNotif()">✕</button>
     <div id="petNotifText"></div>
   </div>
+
+  <!-- 桌宠右键菜单 -->
+  <div id="petCtxMenu" style="display:none;position:fixed;z-index:999999;background:var(--s1,#fff);border:1px solid var(--border2,#ddd);border-radius:10px;padding:4px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.14);animation:ctxIn .12s ease;">
+    <div class="ctx-item" onclick="petCtxClose();wake();petTogglePanel()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      打开对话面板
+    </div>
+    <div class="ctx-item" onclick="petCtxClose();document.getElementById('petAvatarFileInput').click()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      更换桌宠头像
+    </div>
+    <div class="ctx-item" id="petCtxResetAvt" style="display:none;" onclick="petCtxClose();resetPetAvatar()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+      恢复默认头像
+    </div>
+  </div>
+  <input type="file" id="petAvatarFileInput" accept="image/*" style="display:none" onchange="handlePetAvatarUpload(this)"/>
 
   <!-- §3 Character -->
   <div id="petChar" class="s-idle">
@@ -10482,7 +10505,7 @@ char.addEventListener('click',function(e){
 char.addEventListener('contextmenu',function(e){
   e.preventDefault(); e.stopPropagation();
   colorPicker.style.display = 'none';
-  wake(); petTogglePanel();
+  showPetCtxMenu(e);
 });
 
 /* ═══════════════════════════════════════════════
@@ -10622,6 +10645,68 @@ function _syncPanelPos(){
   panel.style.right  = 'auto';
 }
 
+function showPetCtxMenu(e){
+  var menu = document.getElementById('petCtxMenu');
+  if(!menu) return;
+  var x = e.clientX, y = e.clientY;
+  // 防止超出屏幕
+  if(x + 180 > window.innerWidth) x = window.innerWidth - 185;
+  if(y + 120 > window.innerHeight) y = window.innerHeight - 125;
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+  menu.style.display = 'block';
+  setTimeout(function(){
+    document.addEventListener('click', petCtxClose, {once:true});
+  }, 0);
+}
+
+function petCtxClose(){
+  var menu = document.getElementById('petCtxMenu');
+  if(menu) menu.style.display = 'none';
+}
+
+function handlePetAvatarUpload(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var src = e.target.result;
+    localStorage.setItem('petAvatarImg', src);
+    applyPetAvatar(src);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function applyPetAvatar(src){
+  // 替换面板顶部头像
+  var avatarDiv = document.getElementById('petPanelAvatar');
+  if(avatarDiv){
+    if(src){
+      avatarDiv.innerHTML = '<img src="'+src+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"/>';
+    } else {
+      // 恢复原始SVG头像
+      avatarDiv.innerHTML = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:40px;height:40px;overflow:visible"><defs><radialGradient id="paGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="paCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="paCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#paGrad)"/><g clip-path="url(#paCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#paCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg>';
+    }
+  }
+  // 记录到全局，addMsg/addTyping 里用
+  window._petAvatarSrc = src || null;
+  // 显示/隐藏「恢复默认」菜单项
+  var resetBtn = document.getElementById('petCtxResetAvt');
+  if(resetBtn) resetBtn.style.display = src ? '' : 'none';
+}
+
+function resetPetAvatar(){
+  localStorage.removeItem('petAvatarImg');
+  applyPetAvatar(null);
+}
+
+// 页面加载恢复
+(function(){
+  var saved = localStorage.getItem('petAvatarImg');
+  if(saved) applyPetAvatar(saved);
+})();
+
 function petTogglePanel(){
   panelOpen = !panelOpen;
   if(panelOpen){
@@ -10693,8 +10778,11 @@ function setDis(d){
 function addMsg(role,text){
   var box=document.getElementById('petMsgs');
   var w=document.createElement('div'); w.className='pm'+(role==='user'?' u':'');
+  var botAvtHtml = window._petAvatarSrc
+    ? '<div class="pm-avt"><img src="'+window._petAvatarSrc+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;"/></div>'
+    : '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
   var avt = role==='bot'
-    ? '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>'
+    ? botAvtHtml
     : (window._userAvatarSrc
         ? '<div class="pm-avt u"><img src="'+window._userAvatarSrc+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/></div>'
         : '<div class="pm-avt u">我</div>');
@@ -10707,7 +10795,9 @@ function addMsg(role,text){
 function addTyping(){
   var box=document.getElementById('petMsgs'), id='t'+Date.now();
   var w=document.createElement('div'); w.className='pm'; w.id=id;
-  var tAvt='<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
+  var tAvt = window._petAvatarSrc
+    ? '<div class="pm-avt"><img src="'+window._petAvatarSrc+'" style="width:34px;height:34px;border-radius:50%;object-fit:cover;"/></div>'
+    : '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
   w.innerHTML=tAvt+'<div class="pm-bubble typing"><span></span><span></span><span></span></div>';
   box.appendChild(w); box.scrollTop=box.scrollHeight; return id;
 }
