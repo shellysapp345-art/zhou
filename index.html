@@ -1734,16 +1734,13 @@ canvas{max-width:100%;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     <span class="sb-tip">总览</span>
   </button>
-  <button class="sb-icon-btn sb-nav-item" id="sb-nav-projects" onclick="sbNavTo('projects')">
+  <button class="sb-icon-btn sb-nav-item" id="sb-nav-projects" onclick="sbNavTo('projects')" oncontextmenu="event.preventDefault();event.stopPropagation();showContentCtxMenu(event);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span class="sb-tip">内容库</span>
   </button>
   <div class="sb-sep"></div>
   <!-- 工具区：项目账号 -->
-  <button class="sb-icon-btn" id="sb-btn-folder" onclick="event.stopPropagation();toggleNavDropdown('folderMenu');positionSbDropdown('folderMenu',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    <span class="sb-tip">项目 / 账号</span>
-  </button>
+
   <!-- 设置（含导出/深色模式入口） -->
   <button class="sb-icon-btn" onclick="openSettingsModal()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1760,6 +1757,21 @@ canvas{max-width:100%;}
     <span class="sb-tip">账号</span>
   </button>
 </nav>
+<!-- 内容库右键菜单 -->
+<div id="contentCtxMenu" style="display:none;position:fixed;z-index:99999;background:var(--s1);border:0.5px solid var(--border2,#ddd);border-radius:10px;padding:4px;width:170px;box-shadow:0 4px 20px rgba(0,0,0,.13);">
+  <div style="padding:4px 8px 3px;font-size:10px;color:var(--text3);letter-spacing:.3px;">项目组</div>
+  <div id="contentCtxItems"></div>
+  <div style="height:0.5px;background:var(--border);margin:3px 0;"></div>
+  <div onclick="contentCtxClose();addFolder()" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:11px;color:var(--accent);cursor:pointer;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    新建项目组
+  </div>
+  <div onclick="contentCtxClose();openAccModal()" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    添加账号
+  </div>
+</div>
+
 <div class="main" style="flex:1;min-width:0;">
   <!-- ══ 顶栏（精简：筛选 + 视图） ══ -->
   <div class="topbar" id="mainTopbar" style="padding:8px 16px;gap:8px;flex-wrap:nowrap;border-bottom:1px solid var(--border);align-items:center;min-height:48px;">
@@ -2773,62 +2785,100 @@ document.addEventListener('click', function(e){
 });
 
 function renderNavDropdowns(){
-  // ── 合并菜单：文件夹 + 旗下账号 ──
-  const fi = document.getElementById('folderMenuItems');
-  if(fi){
-    let html = '';
-
-    // 全部项目入口
-    const allOn = !S.curFolder && (S.curAcc==='all'||!S.curAcc);
-    html += `<div class="ndm-item${allOn?' on':''}" onclick="selectNavFolder(null)">🏠 全部项目</div>`;
-    html += `<div class="ndm-item" style="color:var(--accent);padding-left:22px;font-size:12px;" onclick="toggleNavDropdown('folderMenu');openOverview()"><span style="opacity:.6;">└</span> 📊 数据总览</div>`;
-
-    // 未分组账号（无文件夹）
-    const ungrouped = S.accounts.filter(a=>!a.folderId);
-    if(ungrouped.length){
-      html += '<div class="ndm-sep"></div>';
-      html += `<div style="padding:4px 16px 3px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;">未分组</div>`;
-      ungrouped.forEach(a=>{
-        const isOn = S.curAcc===a.id;
-        const cnt = S.videos.filter(v=>v.accId===a.id).length;
-        html += `<div class="ndm-item${isOn?' on':''}" style="padding-left:22px;" onclick="selectNavAcc('${a.id}')">
-          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span>
-          <span style="font-size:11px;color:var(--text3);">${cnt}</span>
-        </div>`;
-      });
-    }
-
-    // 各文件夹及旗下账号
-    (S.folders||[]).forEach(f=>{
-      const folderOn = String(S.curFolder)===String(f.id) && (S.curAcc==='all'||!S.curAcc);
-      const folderAccs = S.accounts.filter(a=>String(a.folderId)===String(f.id));
-      const folderVidCnt = S.videos.filter(v=>folderAccs.map(a=>a.id).includes(v.accId)).length;
-      html += '<div class="ndm-sep"></div>';
-      // 文件夹行：点击选整个文件夹
-      html += `<div class="ndm-item${folderOn?' on':''}" onclick="selectNavFolder('${f.id}')">
-        📁 <span style="flex:1;">${f.name}</span>
-        <span style="font-size:11px;color:var(--text3);">${folderVidCnt}条</span>
-      </div>`;
-      // 文件夹下的账号：缩进显示
-      folderAccs.forEach(a=>{
-        const isOn = S.curAcc===a.id;
-        const cnt = S.videos.filter(v=>v.accId===a.id).length;
-        html += `<div class="ndm-item${isOn?' on':''}" style="padding-left:28px;" onclick="selectNavAcc('${a.id}')">
-          <div style="width:18px;height:18px;border-radius:5px;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${a.name[0]}</div>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${a.name}</span>
-          <span style="font-size:11px;color:var(--text3);">${cnt}</span>
-        </div>`;
-      });
-    });
-
-    // 底部操作
-    html += '<div class="ndm-sep"></div>';
-    html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');addFolder()">＋ 新建文件夹</div>`;
-    html += `<div class="ndm-item" style="color:var(--text2);" onclick="toggleNavDropdown('folderMenu');openAccModal()">＋ 添加账号</div>`;
-    fi.innerHTML = html;
-  }
+  renderContentCtxMenu();
 }
+
+const FOLDER_EMOJIS = ['🍊','🍇','🍋','🫐','🍓','🍑','🍒','🥭','🍍','🍌','🥝','🍈','🍐','🥥','🍉','🍎','🍏','🫒'];
+
+function getFolderEmoji(folder, idx){
+  if(folder.icon) return folder.icon;
+  return FOLDER_EMOJIS[idx % FOLDER_EMOJIS.length];
+}
+
+function renderContentCtxMenu(){
+  const items = document.getElementById('contentCtxItems');
+  if(!items) return;
+
+  const folders = S.folders || [];
+  const accounts = S.accounts || [];
+  const videos = S.videos || [];
+
+  let html = '';
+  folders.forEach(function(f, fi){
+    const emoji = getFolderEmoji(f, fi);
+    const folderAccs = accounts.filter(function(a){ return String(a.folderId)===String(f.id); });
+    const vidCnt = videos.filter(function(v){ return folderAccs.map(function(a){return a.id;}).includes(v.accId); }).length;
+    const isOpen = f._ctxOpen;
+    html += '<div id="ctxgrp-'+f.id+'">';
+    html += '<div onmousedown="event.stopPropagation();ctxToggleFolder(''+f.id+'')" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">'
+      + '<span style="font-size:13px;line-height:1;">'+emoji+'</span>'
+      + '<span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+f.name+'</span>'
+      + '<span style="font-size:10px;color:var(--text3);">'+vidCnt+'</span>'
+      + '<span id="ctxarr-'+f.id+'" style="font-size:9px;color:var(--text3);transition:transform .15s;display:inline-block;'+(isOpen?'transform:rotate(90deg)':'')+'">›</span>'
+      + '</div>';
+    // 子账号
+    html += '<div id="ctxsub-'+f.id+'" style="display:'+(isOpen?'block':'none')+';padding-left:12px;">';
+    folderAccs.forEach(function(a){
+      const cnt = videos.filter(function(v){return v.accId===a.id;}).length;
+      const isOn = S.curAcc===a.id;
+      html += '<div onmousedown="event.stopPropagation();contentCtxClose();selectNavAcc(''+a.id+'')" '
+        + 'style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;color:'+(isOn?'var(--accent)':'var(--text2)')+';" '
+        + 'onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">'
+        + '<span style="font-size:11px;line-height:1;">'+emoji+'</span>'
+        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(a.name||a.id)+'</span>'
+        + '<span style="font-size:10px;color:var(--text3);">'+cnt+'</span>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  // 未分组账号
+  const ungrouped = accounts.filter(function(a){return !a.folderId;});
+  if(ungrouped.length){
+    html += '<div style="height:0.5px;background:var(--border);margin:3px 0;"></div>';
+    ungrouped.forEach(function(a){
+      const cnt = videos.filter(function(v){return v.accId===a.id;}).length;
+      const isOn = S.curAcc===a.id;
+      html += '<div onmousedown="event.stopPropagation();contentCtxClose();selectNavAcc(''+a.id+'')" '
+        + 'style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;color:'+(isOn?'var(--accent)':'var(--text)')+';" '
+        + 'onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">'
+        + '<div style="width:16px;height:16px;border-radius:4px;background:'+(a.color||'var(--accent)')+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">'+(a.name||'?')[0]+'</div>'
+        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;">'+(a.name||a.id)+'</span>'
+        + '<span style="font-size:10px;color:var(--text3);">'+cnt+'</span>'
+        + '</div>';
+    });
+  }
+
+  items.innerHTML = html;
+}
+
+function ctxToggleFolder(fid){
+  var f = (S.folders||[]).find(function(x){return String(x.id)===String(fid);});
+  if(!f) return;
+  f._ctxOpen = !f._ctxOpen;
+  var sub = document.getElementById('ctxsub-'+fid);
+  var arr = document.getElementById('ctxarr-'+fid);
+  if(sub) sub.style.display = f._ctxOpen ? 'block' : 'none';
+  if(arr) arr.style.transform = f._ctxOpen ? 'rotate(90deg)' : '';
+}
+
+function showContentCtxMenu(e){
+  var menu = document.getElementById('contentCtxMenu');
+  if(!menu) return;
+  renderContentCtxMenu();
+  var x = e.clientX, y = e.clientY;
+  if(x + 180 > window.innerWidth) x = window.innerWidth - 185;
+  if(y + 300 > window.innerHeight) y = window.innerHeight - 305;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.style.display = 'block';
+}
+
+function contentCtxClose(){
+  var menu = document.getElementById('contentCtxMenu');
+  if(menu) menu.style.display = 'none';
+}
+
 
 function selectNavFolder(folderId){
   try {
@@ -3392,7 +3442,10 @@ function selAcc(id){
 async function addFolder(){
   const name=prompt('文件夹名称：');
   if(!name||!name.trim())return;
-  const f={id:'f'+Date.now(),name:name.trim(),sort_order:S.folders.length};
+  const EMOJIS=['🍊','🍇','🍋','🫐','🍓','🍑','🍒','🥭','🍍','🍌','🥝','🍈','🍐','🥥','🍉','🍎','🍏','🫒'];
+  const usedIdx = S.folders.length % EMOJIS.length;
+  const icon = EMOJIS[usedIdx];
+  const f={id:'f'+Date.now(),name:name.trim(),icon:icon,sort_order:S.folders.length};
   S.folders.push(f);
   render();
   try{
@@ -8618,12 +8671,7 @@ document.addEventListener('DOMContentLoaded', function(){
         if(page) switchPage(page);
         return;
       }
-      var folderBtn = e.target.closest('#sb-btn-folder');
-      if(folderBtn){
-        e.stopPropagation();
-        if(typeof toggleNavDropdown==='function') toggleNavDropdown('folderMenu');
-        if(typeof positionSbDropdown==='function') positionSbDropdown('folderMenu', folderBtn);
-      }
+
     });
   }
 
@@ -8691,6 +8739,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // 8. 点击空白处关闭侧边栏下拉菜单
   document.addEventListener('click',function(e){
+    if(!e.target.closest('#contentCtxMenu')&&!e.target.closest('#sb-nav-projects')){
+      var m=document.getElementById('contentCtxMenu'); if(m) m.style.display='none';
+    }
     if(!e.target.closest('.nav-dropdown-menu')&&!e.target.closest('#sb-btn-folder')){
       document.querySelectorAll('.nav-dropdown-menu').forEach(function(m){m.classList.remove('open');});
     }
