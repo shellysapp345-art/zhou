@@ -10303,7 +10303,7 @@ function switchManualTab(section, el){
     </radialGradient>
     <!-- 眼睛裁剪区（纯白椭圆，偏左上，立式） -->
     <clipPath id="clipL"><ellipse id="clipLe" cx="30" cy="35" rx="9" ry="13"/></clipPath>
-    <clipPath id="clipR"><ellipse id="clipRe" cx="52" cy="33" rx="8" ry="12"/></clipPath>
+    <clipPath id="clipR"><ellipse id="clipRe" cx="62" cy="33" rx="9" ry="13"/></clipPath>
   </defs>
 
   <!-- 身体：完整圆形 -->
@@ -10315,7 +10315,7 @@ function switchManualTab(section, el){
       <ellipse id="eyeL" cx="30" cy="35" rx="9" ry="13" fill="white"/>
     </g>
     <g clip-path="url(#clipR)">
-      <ellipse id="eyeR" cx="52" cy="33" rx="8" ry="12" fill="white"/>
+      <ellipse id="eyeR" cx="62" cy="33" rx="9" ry="13" fill="white"/>
     </g>
   </g>
 
@@ -10705,12 +10705,12 @@ function _toggleColorPicker(){
 
 char.addEventListener('click',function(e){
   if(isDrag) return;
-  _toggleColorPicker();
   wake(); bounce();
   setState('happy');
   setTimeout(function(){if(state==='happy')setState('idle');},1400);
-  appBack();
+  if(typeof petTogglePanel==='function') petTogglePanel();
 });
+;
 char.addEventListener('contextmenu',function(e){
   e.preventDefault(); e.stopPropagation();
   colorPicker.style.display = 'none';
@@ -10746,7 +10746,7 @@ function petApplyAvatar(src){
 function petResetAvatar(){
   localStorage.removeItem('petAvatar');
   var el=document.getElementById('petPanelAvatar');
-  if(el) el.innerHTML='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:46px;height:46px;overflow:visible"><defs><radialGradient id="paG" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="paCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="paCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#paG)"/><g clip-path="url(#paCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#paCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg>';
+  if(el) el.innerHTML='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:46px;height:46px;overflow:visible"><defs><radialGradient id="paG" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="paCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="paCR"><ellipse cx="62" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#paG)"/><g clip-path="url(#paCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#paCR)"><ellipse cx="62" cy="33" rx="9" ry="13" fill="white"/></g></svg>';
   document.getElementById('petResetItem').style.display='none';
 }
 (function(){ var s=localStorage.getItem('petAvatar'); if(s) petApplyAvatar(s); })();
@@ -10960,7 +10960,7 @@ function addMsg(role,text){
   var box=document.getElementById('petMsgs');
   var w=document.createElement('div'); w.className='pm'+(role==='user'?' u':'');
   var avt = role==='bot'
-    ? '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>'
+    ? '<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGrad" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCL"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCR"><ellipse cx="62" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGrad)"/><g clip-path="url(#pmCL)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCR)"><ellipse cx="62" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>'
     : (window._userAvatarSrc
         ? '<div class="pm-avt u"><img src="'+window._userAvatarSrc+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/></div>'
         : '<div class="pm-avt u">我</div>');
@@ -10973,7 +10973,7 @@ function addMsg(role,text){
 function addTyping(){
   var box=document.getElementById('petMsgs'), id='t'+Date.now();
   var w=document.createElement('div'); w.className='pm'; w.id=id;
-  var tAvt='<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="52" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="52" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
+  var tAvt='<div class="pm-avt"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;overflow:visible"><defs><radialGradient id="pmGradT" cx="32%" cy="28%" r="72%"><stop offset="0%" stop-color="#e8844a"/><stop offset="45%" stop-color="#d9784a"/><stop offset="100%" stop-color="#f0cdb0"/></radialGradient><clipPath id="pmCLT"><ellipse cx="30" cy="35" rx="9" ry="13"/></clipPath><clipPath id="pmCRT"><ellipse cx="62" cy="33" rx="9" ry="13"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#pmGradT)"/><g clip-path="url(#pmCLT)"><ellipse cx="30" cy="35" rx="9" ry="13" fill="white"/></g><g clip-path="url(#pmCRT)"><ellipse cx="62" cy="33" rx="9" ry="13" fill="white"/></g></svg></div>';
   w.innerHTML=tAvt+'<div class="pm-bubble typing"><span></span><span></span><span></span></div>';
   box.appendChild(w); box.scrollTop=box.scrollHeight; return id;
 }
@@ -11031,8 +11031,8 @@ var DATA_TIPS = [
   var petSvg    = document.getElementById('petSvg');
 
   var MAX_OFFSET = 5;
-  var EYE_LX = 30, EYE_LY = 35;
-  var EYE_RX = 52, EYE_RY = 33;
+  var EYE_LX = 28, EYE_LY = 35;
+  var EYE_RX = 62, EYE_RY = 35;
 
   // 只显示某组眼睛
   function showEyes(el) {
