@@ -6727,6 +6727,7 @@ function hideOverviewPane(){
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='flex';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='flex';
   var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='';
+  var pt = document.getElementById('pageTitle'); if(pt) pt.textContent='内容库';
 }
 function openOverview(){ showOverviewPane(); }
 function closeOverview(){ hideOverviewPane(); }
@@ -6756,9 +6757,6 @@ function showProjectPane(){
   var ovPane = document.getElementById('overviewPane');
   var vgrid = document.getElementById('vgrid');
   var kb = document.getElementById('kpiBar');
-  var ct = document.getElementById('contentTopbar');
-  var vt = document.getElementById('viewToggleWrap');
-  var ts = document.getElementById('topbarSearch');
   var pg = document.getElementById('pagination');
 
   if(pane)  pane.style.display  = 'flex';
@@ -6766,10 +6764,7 @@ function showProjectPane(){
   if(vgrid)  vgrid.style.display  = 'none';
   if(kb) kb.style.display = 'none';
   if(pg) pg.innerHTML = '';
-  if(ct) ct.style.display = 'none';
-  if(vt) vt.style.display = 'none';
-  if(ts) ts.style.display = 'none';
-  document.getElementById('pageTitle').textContent = '项目视图';
+  document.getElementById('pageTitle').textContent = '内容库';
   renderProjectPane();
 }
 
