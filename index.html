@@ -1753,7 +1753,7 @@ canvas{max-width:100%;}
   <!-- 底部退出 -->
   <button class="sb-icon-btn" id="sbUserAvatar" onclick="toggleUserMenu(event)" title="账号" style="margin-top:auto;position:relative;">
     <img id="sbUserAvatarImg" style="display:none;width:28px;height:28px;border-radius:50%;object-fit:cover;"/>
-    <svg id="sbUserAvatarIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <svg id="sbUserAvatarIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     <span class="sb-tip">账号</span>
   </button>
 </nav>
@@ -1905,6 +1905,17 @@ canvas{max-width:100%;}
   <div class="grid-wrap">
     <div id="overviewPane" style="display:none;padding:4px 0;"></div>
     <div id="projectPane" style="display:none;padding:0;flex:1;min-height:0;overflow-y:auto;"></div>
+    <!-- 面包屑导航（账号视图时显示） -->
+    <div id="breadcrumbBar" style="display:none;height:30px;border-bottom:1px solid var(--border);background:var(--s2);align-items:center;padding:0 14px;gap:6px;flex-shrink:0;">
+      <span onclick="breadcrumbBack()" style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);cursor:pointer;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        内容库
+      </span>
+      <span style="font-size:10px;color:var(--text3);">›</span>
+      <span id="bcFolder" style="font-size:11px;color:var(--text2);"></span>
+      <span id="bcFolderSep" style="font-size:10px;color:var(--text3);display:none;">›</span>
+      <span id="bcAcc" style="font-size:11px;color:var(--text);font-weight:500;"></span>
+    </div>
     <div id="kpiBar" class="kpi-bar" style="display:none;"></div>
     <div class="vgrid" id="vgrid"></div>
   </div>
@@ -2960,21 +2971,39 @@ function selectNavFolder(folderId){
 function selectNavAcc(accId){
   try {
     document.querySelectorAll('.nav-dropdown-menu').forEach(m=>m.classList.remove('open'));
+    contentCtxClose();
     S.curAcc = accId;
     S.curFolder = null;
-    S.page = 0; S.searchQuery = '';
+    S.page = 0; S.searchQuery = ''; S.filter = 'all';
     var gs = document.getElementById('globalSearch'); if(gs) gs.value='';
-    document.querySelectorAll('.sb-nav-item').forEach(function(b){b.classList.remove('active');});
-    var contentBtn = document.getElementById('sb-nav-content');
-    if(contentBtn) contentBtn.classList.add('active');
-    var grid = document.getElementById('vgrid');
-    if(grid) grid.style.display = '';
-    var ov = document.getElementById('overviewPane');
-    if(ov) ov.style.display = 'none';
-    var tf = document.getElementById('topbarFilters'); if(tf) tf.style.visibility='';
-    var ts = document.getElementById('topbarSearch'); if(ts) ts.style.visibility='';
+    document.querySelectorAll('.fchip').forEach(function(b){b.classList.remove('on');});
+    var fcAll = document.getElementById('fc-all'); if(fcAll) fcAll.classList.add('on');
+    // 隐藏项目卡片，显示视频宫格
+    var pp = document.getElementById('projectPane'); if(pp) pp.style.display='none';
+    var ov = document.getElementById('overviewPane'); if(ov) ov.style.display='none';
+    // 确保工具栏显示
+    hideOverviewPane();
+    // 显示面包屑
+    var acc = S.accounts.find(function(a){return a.id===accId;});
+    var folder = acc && acc.folderId ? S.folders.find(function(f){return String(f.id)===String(acc.folderId);}) : null;
+    var fi = folder ? S.folders.indexOf(folder) : -1;
+    var emoji = folder ? getFolderEmoji(folder, fi) : '';
+    var bc = document.getElementById('breadcrumbBar'); if(bc) bc.style.display='flex';
+    var bcF = document.getElementById('bcFolder'); 
+    var bcFS = document.getElementById('bcFolderSep');
+    var bcA = document.getElementById('bcAcc');
+    if(folder && bcF){ bcF.textContent = emoji+' '+folder.name; if(bcFS) bcFS.style.display=''; }
+    else { if(bcF) bcF.textContent=''; if(bcFS) bcFS.style.display='none'; }
+    if(bcA) bcA.textContent = acc ? acc.name : accId;
     render();
   } catch(e){ console.error('selectNavAcc error:', e); }
+}
+
+function breadcrumbBack(){
+  // 返回项目分组视图
+  var bc = document.getElementById('breadcrumbBar'); if(bc) bc.style.display='none';
+  S.curAcc = 'all'; S.curFolder = null; S.page = 0;
+  if(typeof showProjectPane==='function') showProjectPane();
 }
 
 // ══════════════════════
@@ -6940,7 +6969,9 @@ function showProjectPane(){
   if(vgrid)  vgrid.style.display  = 'none';
   if(kb) kb.style.display = 'none';
   if(pg) pg.innerHTML = '';
-  document.getElementById('pageTitle').textContent = '内容库';
+  // 隐藏面包屑
+  var bc = document.getElementById('breadcrumbBar'); if(bc) bc.style.display='none';
+  var pt = document.getElementById('pageTitle'); if(pt) pt.textContent = '内容库';
   renderProjectPane();
 }
 
