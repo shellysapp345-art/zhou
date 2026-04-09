@@ -7387,9 +7387,21 @@ function pvBatchDelete(){
       toast('已删除 '+ids.length+' 条');
     }catch(e){ toast('删除失败','err'); }
     pvExitSelectMode();
+    // 只刷新面板内容，不跳回主页面
     pvRenderBody(_pvPanelAid || null);
+    // 更新面板标题的视频数量
+    var pvHeader = document.getElementById('pvpCount');
+    if(pvHeader){
+      var curVids = _pvPanelAid
+        ? S.videos.filter(function(v){ return v.accId===_pvPanelAid; })
+        : S.videos.filter(function(v){
+            var accs = (S.accounts||[]).filter(function(a){ return String(a.folderId)===String(_pvPanelFid); });
+            return accs.some(function(a){ return a.id===v.accId; });
+          });
+      pvHeader.textContent = '共 '+curVids.length+' 条';
+    }
+    // 后台静默更新项目卡片数量（不影响当前视图）
     if(typeof renderProjectPane==='function') renderProjectPane();
-    if(typeof render==='function') render();
   });
 }
 
@@ -7938,7 +7950,7 @@ function toggleSelectMode(){
   if(btn)  btn.classList.toggle('accent', _selectMode);
   updateSelectToolbar();
   if(_selectMode) toast('多选模式：点击卡片选择视频');
-  else { document.getElementById('selectToolbar').classList.remove('show'); render(); }
+  else { var _stb=document.getElementById('selectToolbar'); if(_stb) _stb.classList.remove('show'); render(); }
 }
 function exitSelectMode(){
   _selectMode = false;
