@@ -1908,11 +1908,7 @@ canvas{max-width:100%;}
       添加
     </button>
   </div>
-  <div class="grid-wrap">
-    <div id="overviewPane" style="display:none;padding:4px 0;"></div>
-    <div id="projectPane" style="display:none;padding:0;flex:1;min-height:0;overflow-y:auto;"></div>
-    <!-- AI诊断页面 -->
-    <div id="diagnosePane" style="display:none;flex:1;min-height:0;overflow:hidden;flex-direction:row;">
+  <div id="diagnosePane" style="display:none;flex:1;min-height:0;overflow:hidden;flex-direction:row;position:absolute;inset:0;z-index:10;background:var(--s1);">
       <!-- 左侧视频选择 -->
       <div id="dgLeft" style="width:260px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--s1);">
         <div style="padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0;">
@@ -1934,6 +1930,10 @@ canvas{max-width:100%;}
       <!-- 右侧结果 -->
       <div id="dgRight" style="flex:1;overflow-y:auto;padding:14px;background:var(--bg);"></div>
     </div>
+  <div class="grid-wrap">
+    <div id="overviewPane" style="display:none;padding:4px 0;"></div>
+    <div id="projectPane" style="display:none;padding:0;flex:1;min-height:0;overflow-y:auto;"></div>
+
     <!-- 面包屑导航（账号视图时显示） -->
     <div id="breadcrumbBar" style="display:none;height:30px;border-bottom:1px solid var(--border);background:var(--s2);align-items:center;padding:0 14px;gap:6px;flex-shrink:0;">
       <span onclick="breadcrumbBack()" style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);cursor:pointer;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
@@ -5294,11 +5294,13 @@ function showDiagnosePane(){
   var vg   = document.getElementById('vgrid');
   var kb   = document.getElementById('kpiBar');
   var bc   = document.getElementById('breadcrumbBar');
+  var gw   = document.querySelector('.grid-wrap');
   if(op) op.style.display = 'none';
   if(pp) pp.style.display = 'none';
   if(vg) vg.style.display = 'none';
   if(kb) kb.style.display = 'none';
   if(bc) bc.style.display = 'none';
+  if(gw) gw.style.display = 'none';
   // 隐藏顶栏筛选工具栏
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display = 'none';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display = 'none';
@@ -7254,7 +7256,9 @@ function showOverviewPane(){
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='none';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='none';
   var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display='none';
-
+  // 恢复 grid-wrap，隐藏 diagnosePane
+  var gw = document.querySelector('.grid-wrap'); if(gw) gw.style.display='';
+  var dp = document.getElementById('diagnosePane'); if(dp) dp.style.display='none';
   document.getElementById('pageTitle').textContent='数据总览';
   _ovFolderIdx = 0;
   try { renderOverviewPane(); } catch(e){ console.error('renderOverviewPane error:', e); }
@@ -7262,6 +7266,10 @@ function showOverviewPane(){
 function hideOverviewPane(){
   document.getElementById('overviewPane').style.display='none';
   document.getElementById('vgrid').style.display='';
+  // 恢复 grid-wrap（从 AI诊断页跳走时需要）
+  var gw = document.querySelector('.grid-wrap'); if(gw) gw.style.display='';
+  // 隐藏 diagnosePane
+  var dp = document.getElementById('diagnosePane'); if(dp) dp.style.display='none';
   // Restore content-only topbar
   var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display='flex';
   var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display='flex';
