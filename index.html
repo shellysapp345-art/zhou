@@ -7940,7 +7940,17 @@ function toggleSelectMode(){
   if(_selectMode) toast('多选模式：点击卡片选择视频');
   else { document.getElementById('selectToolbar').classList.remove('show'); render(); }
 }
-function exitSelectMode(){ _selectMode=false; _selectedVids.clear(); toggleSelectMode(); }
+function exitSelectMode(){
+  _selectMode = false;
+  _selectedVids.clear();
+  var grid = document.getElementById('vgrid');
+  var btn  = document.getElementById('selectModeBtn');
+  if(grid) grid.classList.remove('select-mode-active');
+  if(btn)  btn.classList.remove('accent');
+  var tb = document.getElementById('selectToolbar');
+  if(tb) tb.classList.remove('show');
+  render();
+}
 function toggleVidSelect(vidId, e){
   e && e.stopPropagation();
   if(_selectedVids.has(vidId)) _selectedVids.delete(vidId);
@@ -7954,9 +7964,24 @@ function toggleVidSelect(vidId, e){
   updateSelectToolbar();
 }
 function selectAll(){
-  const cards = document.querySelectorAll('#vgrid [data-vid]');
-  cards.forEach(c=>_selectedVids.add(c.dataset.vid));
-  cards.forEach(c=>{ c.classList.add('selected'); const cb=c.querySelector('.card-checkbox'); if(cb) cb.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'; });
+  // 确保多选模式已开启
+  if(!_selectMode){
+    _selectMode = true;
+    var grid = document.getElementById('vgrid');
+    var btn  = document.getElementById('selectModeBtn');
+    if(grid) grid.classList.add('select-mode-active');
+    if(btn)  btn.classList.add('accent');
+    toast('多选模式：已全选所有视频');
+  }
+  // 同时查 vgrid 和 projectPane 里的卡片
+  const cards = document.querySelectorAll('#vgrid [data-vid], #projectPane [data-vid]');
+  if(!cards.length){ toast('没有可选的视频','err'); return; }
+  cards.forEach(function(c){
+    _selectedVids.add(c.dataset.vid);
+    c.classList.add('selected');
+    var cb = c.querySelector('.card-checkbox');
+    if(cb) cb.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  });
   updateSelectToolbar();
 }
 function updateSelectToolbar(){
@@ -8011,9 +8036,13 @@ function batchDelete(){
   if(!ids.length){ toast('请先选择视频','err'); return; }
   showConfirm('批量删除', '确认删除 '+ids.length+' 条视频？删除后不可恢复。', async function(){
     S.videos = S.videos.filter(v=>!ids.includes(v.id));
-    await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'DELETE')));
-    render(); closeBatchModal(); exitSelectMode();
-    _refreshPvIfOpen();
+    try{
+      await Promise.all(ids.map(id=>sbFetch('/rest/v1/videos?id=eq.'+id,'DELETE')));
+    }catch(e){ console.error('删除失败',e); }
+    var bm = document.getElementById('batchModal');
+    if(bm) bm.classList.remove('open');
+    exitSelectMode();
+    _refreshPvIfOpen && _refreshPvIfOpen();
     toast('已删除 '+ids.length+' 条');
   });
 }
@@ -9645,6 +9674,7 @@ function switchManualTab(section, el){
   <span id="selectCount" style="font-size:12px;opacity:.7;">已选 0 条</span>
   <button onclick="selectAll()">全选</button>
   <button onclick="openBatchModal()">批量操作</button>
+  <button onclick="batchDelete()" style="color:var(--red,#e04a38);">删除</button>
   <button onclick="exitSelectMode()" style="opacity:.6;">退出</button>
 </div>
 
