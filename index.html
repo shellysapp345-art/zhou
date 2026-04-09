@@ -1910,12 +1910,28 @@ canvas{max-width:100%;}
   </div>
   <div id="diagnosePane" style="display:none;flex:1;min-height:0;overflow:hidden;flex-direction:row;position:absolute;inset:0;z-index:10;background:var(--s1);">
       <!-- 左侧视频选择 -->
-      <div id="dgLeft" style="width:260px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--s1);">
-        <div style="padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0;">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;">选择视频（可多选）</div>
-          <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 8px;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="dgSearch" type="text" placeholder="搜索标题…" oninput="dgRenderList()" style="border:none;background:transparent;font-size:11px;color:var(--text);outline:none;width:100%;font-family:var(--font);"/>
+      <div id="dgLeft" style="width:340px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--s1);">
+        <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">选择视频（可多选）</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <!-- 文件夹筛选按钮 -->
+            <div style="position:relative;flex-shrink:0;" id="dgFolderBtnWrap">
+              <div id="dgFolderBtn" onclick="dgToggleFolderDrop()" style="width:32px;height:32px;border-radius:7px;border:0.5px solid var(--border);background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;gap:2px;flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div id="dgFolderDrop" style="display:none;position:absolute;top:36px;left:0;width:200px;background:var(--s1);border:0.5px solid var(--border);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:100;overflow:hidden;"></div>
+            </div>
+            <!-- 搜索框 -->
+            <div style="flex:1;display:flex;align-items:center;gap:7px;background:var(--s2);border:0.5px solid var(--border);border-radius:7px;padding:5px 9px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="dgSearch" type="text" placeholder="搜索标题…" oninput="dgRenderList()" style="border:none;background:transparent;font-size:12px;color:var(--text);outline:none;width:100%;font-family:var(--font);"/>
+            </div>
+          </div>
+          <!-- 当前筛选标签 -->
+          <div id="dgFilterTag" style="display:none;margin-top:7px;align-items:center;gap:5px;padding:3px 8px;background:rgba(232,116,42,.08);border-radius:5px;border:0.5px solid rgba(232,116,42,.2);width:fit-content;">
+            <span id="dgFilterLabel" style="font-size:11px;color:var(--orange);"></span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round" style="cursor:pointer;flex-shrink:0;" onclick="dgClearFolderFilter()"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
         </div>
         <div id="dgList" style="flex:1;overflow-y:auto;padding:6px;"></div>
@@ -5318,23 +5334,117 @@ function showDiagnosePane(){
   }
 }
 
+var _dgFolderId = null; // null = 全部
+
+function dgToggleFolderDrop(){
+  var drop = document.getElementById('dgFolderDrop');
+  if(!drop) return;
+  if(drop.style.display === 'none'){
+    dgBuildFolderDrop();
+    drop.style.display = 'block';
+    // 点外面关闭
+    setTimeout(function(){
+      document.addEventListener('click', dgCloseFolderDropOutside);
+    }, 0);
+  } else {
+    drop.style.display = 'none';
+    document.removeEventListener('click', dgCloseFolderDropOutside);
+  }
+}
+
+function dgCloseFolderDropOutside(e){
+  var wrap = document.getElementById('dgFolderBtnWrap');
+  if(wrap && !wrap.contains(e.target)){
+    var drop = document.getElementById('dgFolderDrop');
+    if(drop) drop.style.display = 'none';
+    document.removeEventListener('click', dgCloseFolderDropOutside);
+  }
+}
+
+function dgBuildFolderDrop(){
+  var drop = document.getElementById('dgFolderDrop');
+  if(!drop) return;
+  var folders = S.folders || [];
+  var accounts = S.accounts || [];
+  var videos = S.videos || [];
+
+  function vidCount(fid){
+    var accs = accounts.filter(function(a){ return String(a.folderId) === String(fid); });
+    return videos.filter(function(v){ return accs.some(function(a){ return a.id === v.accId; }); }).length;
+  }
+  function allVidCount(){
+    return videos.length;
+  }
+
+  var html = '';
+  // 全部
+  html += '<div onclick="dgSelectFolder(null)" style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;color:'+((!_dgFolderId)?'var(--accent)':'var(--text2)')+';background:'+((!_dgFolderId)?'rgba(232,116,42,.06)':'transparent')+';border-bottom:0.5px solid var(--border);">'
+    + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
+    + '<span>全部视频</span>'
+    + '<span style="font-size:10px;color:var(--text3);margin-left:auto;">'+allVidCount()+'条</span>'
+    + '</div>';
+
+  folders.forEach(function(f){
+    var cnt = vidCount(f.id);
+    var isActive = _dgFolderId === f.id;
+    html += '<div onclick="dgSelectFolder(\''+f.id+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;color:'+(isActive?'var(--accent)':'var(--text)')+';background:'+(isActive?'rgba(232,116,42,.06)':'transparent')+';">'
+      + '<span style="font-size:14px;width:18px;text-align:center;">'+(f.icon||'📁')+'</span>'
+      + '<span>'+escHtml(f.name)+'</span>'
+      + '<span style="font-size:10px;color:var(--text3);margin-left:auto;">'+cnt+'条</span>'
+      + '</div>';
+  });
+
+  drop.innerHTML = html;
+}
+
+function dgSelectFolder(fid){
+  _dgFolderId = fid;
+  var drop = document.getElementById('dgFolderDrop');
+  if(drop) drop.style.display = 'none';
+  document.removeEventListener('click', dgCloseFolderDropOutside);
+
+  // 更新筛选标签
+  var tag = document.getElementById('dgFilterTag');
+  var label = document.getElementById('dgFilterLabel');
+  if(fid){
+    var f = (S.folders||[]).find(function(x){ return x.id === fid; });
+    if(f && tag && label){
+      label.textContent = (f.icon||'📁')+' '+f.name;
+      tag.style.display = 'flex';
+    }
+  } else {
+    if(tag) tag.style.display = 'none';
+  }
+  dgRenderList();
+}
+
+function dgClearFolderFilter(){
+  dgSelectFolder(null);
+}
+
 function dgRenderList(){
   var list = document.getElementById('dgList');
   if(!list) return;
   var q = (document.getElementById('dgSearch')||{}).value || '';
-  var vids = (S.videos||[]).filter(function(v){
-    return !q || (v.title||'').indexOf(q) >= 0;
-  }).slice(0, 60);
+  // 按文件夹过滤
+  var vids = S.videos || [];
+  if(_dgFolderId){
+    var accs = (S.accounts||[]).filter(function(a){ return String(a.folderId) === String(_dgFolderId); });
+    var accIds = accs.map(function(a){ return a.id; });
+    vids = vids.filter(function(v){ return accIds.indexOf(v.accId) >= 0; });
+  }
+  if(q) vids = vids.filter(function(v){ return (v.title||'').indexOf(q) >= 0; });
+  vids = vids.slice(0, 60);
   list.innerHTML = vids.map(function(v){
     var acc = (S.accounts||[]).find(function(a){ return a.id === v.accId; }) || {};
     var sel = _dgSelected.has(v.id);
-    return '<div onclick="dgToggle(\''+v.id+'\')" style="display:flex;align-items:flex-start;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;border:0.5px solid '+(sel?'rgba(232,116,42,.3)':'transparent')+';background:'+(sel?'rgba(232,116,42,.06)':'transparent')+';margin-bottom:2px;" onmouseover="if(!this.dataset.sel)this.style.background=\'var(--s2)\'" onmouseout="if(!this.dataset.sel)this.style.background=\'\'" data-sel="'+(sel?'1':'')+'">'
+    return '<div onclick="dgToggle(\''+v.id+'\')" style="display:flex;align-items:flex-start;gap:7px;padding:9px 10px;border-radius:8px;cursor:pointer;border:0.5px solid '+(sel?'rgba(232,116,42,.3)':'transparent')+';background:'+(sel?'rgba(232,116,42,.06)':'transparent')+';margin-bottom:2px;" onmouseover="if(!this.dataset.sel)this.style.background=\'var(--s2)\'" onmouseout="if(!this.dataset.sel)this.style.background=\'\'" data-sel="'+(sel?'1':'')+'">'
       + '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid '+(sel?'var(--accent)':'var(--border2)')+';background:'+(sel?'var(--accent)':'transparent')+';flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;">'
       + (sel ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
       + '</div>'
       + '<div style="flex:1;min-width:0;">'
-      + '<div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;">'+(v.title||'（无标题）')+'</div>'
-      + '<div style="font-size:10px;color:var(--text3);display:flex;gap:6px;">'+
+      + '<div style="font-size:12px;color:var(--text);line-height:1.4;margin-bottom:3px;word-break:break-all;">'+(v.title||'（无标题）')+'</div>'
+      + '<div style="font-size:11px;color:var(--text3);display:flex;gap:8px;">'+
         '<span>♡'+(v.likes||0)+'</span><span>💬'+(v.comm||0)+'</span><span>'+(acc.name||'')+'</span>'
       + '</div></div></div>';
   }).join('');
