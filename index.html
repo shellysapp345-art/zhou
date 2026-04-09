@@ -10899,6 +10899,16 @@ var API = {
   baseURL  : '',
   model    : 'gpt-4o-mini'
 };
+// 启动时从 localStorage 恢复
+try{
+  var _savedKey = localStorage.getItem('petApiKey');
+  var _savedBase = localStorage.getItem('petBaseURL');
+  var _savedModel = localStorage.getItem('petModel');
+  if(_savedKey)  API.apiKey  = _savedKey;
+  if(_savedBase) API.baseURL = _savedBase;
+  if(_savedModel) API.model  = _savedModel;
+}catch(e){}
+
 
 var QUICK = {
   '今日数据总结'    : function(c){ return '根据数据给出今日运营总结：整体评级（优/良/差）、关键问题、一句建议。\n\n'+c; },
@@ -11456,6 +11466,12 @@ function petTogglePanel(){
   if(panelOpen){
     panel.style.display = 'flex';
     _syncPanelPos();
+    // 如果已有 key，更新 hint 显示
+    if(API.apiKey){
+      var h = document.getElementById('petApiHint');
+      var label = API.baseURL && API.baseURL.trim() ? ('中转: '+API.baseURL.replace('https://','').split('/')[0]) : 'OpenAI 官方';
+      if(h) h.innerHTML='✓ '+label+' <a onclick="petConfigKey()">修改</a>';
+    }
   } else {
     panel.style.display = 'none';
   }
@@ -11501,6 +11517,12 @@ window.petConfigKey = function(){
   var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
   API.apiKey=k; API.baseURL=(b||' ').trim(); API.provider='openai';
+  // 持久化到 localStorage
+  try{
+    localStorage.setItem('petApiKey', API.apiKey);
+    localStorage.setItem('petBaseURL', API.baseURL);
+    localStorage.setItem('petModel', API.model);
+  }catch(e){}
   // 根据 key 前缀自动识别模型
   if(!API.baseURL && k.startsWith('sk-ant')) {
     API.model='claude-sonnet-4-20250514';
