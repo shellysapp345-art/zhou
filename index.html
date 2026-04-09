@@ -1739,6 +1739,12 @@ canvas{max-width:100%;}
     <span class="sb-tip">内容库</span>
   </button>
   <div class="sb-sep"></div>
+  <!-- AI诊断 -->
+  <button class="sb-icon-btn sb-nav-item" id="sb-nav-diagnose" onclick="sbNavTo('diagnose')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span class="sb-tip">AI 诊断</span>
+  </button>
+  <div class="sb-sep"></div>
   <!-- 工具区：项目账号 -->
 
   <!-- 设置（含导出/深色模式入口） -->
@@ -1905,6 +1911,29 @@ canvas{max-width:100%;}
   <div class="grid-wrap">
     <div id="overviewPane" style="display:none;padding:4px 0;"></div>
     <div id="projectPane" style="display:none;padding:0;flex:1;min-height:0;overflow-y:auto;"></div>
+    <!-- AI诊断页面 -->
+    <div id="diagnosePane" style="display:none;flex:1;min-height:0;overflow:hidden;flex-direction:row;">
+      <!-- 左侧视频选择 -->
+      <div id="dgLeft" style="width:260px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--s1);">
+        <div style="padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;">选择视频（可多选）</div>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:4px 8px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="dgSearch" type="text" placeholder="搜索标题…" oninput="dgRenderList()" style="border:none;background:transparent;font-size:11px;color:var(--text);outline:none;width:100%;font-family:var(--font);"/>
+          </div>
+        </div>
+        <div id="dgList" style="flex:1;overflow-y:auto;padding:6px;"></div>
+        <div style="padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0;background:var(--s2);">
+          <div id="dgSelHint" style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:5px;">未选择视频</div>
+          <button onclick="dgRunDiagnose()" style="width:100%;padding:8px;border-radius:8px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="13 2 13 9 20 9"/><path d="M20 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7"/></svg>
+            开始诊断
+          </button>
+        </div>
+      </div>
+      <!-- 右侧结果 -->
+      <div id="dgRight" style="flex:1;overflow-y:auto;padding:14px;background:var(--bg);"></div>
+    </div>
     <!-- 面包屑导航（账号视图时显示） -->
     <div id="breadcrumbBar" style="display:none;height:30px;border-bottom:1px solid var(--border);background:var(--s2);align-items:center;padding:0 14px;gap:6px;flex-shrink:0;">
       <span onclick="breadcrumbBack()" style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);cursor:pointer;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
@@ -5252,6 +5281,271 @@ function batchDeleteAllVisits(){
     if(typeof openStatDetail==='function') openStatDetail('lead');
   });
 }
+
+// ══════════════════════════════════════════
+// AI 诊断
+// ══════════════════════════════════════════
+var _dgSelected = new Set();
+
+function showDiagnosePane(){
+  var pane = document.getElementById('diagnosePane');
+  var op   = document.getElementById('overviewPane');
+  var pp   = document.getElementById('projectPane');
+  var vg   = document.getElementById('vgrid');
+  var kb   = document.getElementById('kpiBar');
+  var bc   = document.getElementById('breadcrumbBar');
+  if(op) op.style.display = 'none';
+  if(pp) pp.style.display = 'none';
+  if(vg) vg.style.display = 'none';
+  if(kb) kb.style.display = 'none';
+  if(bc) bc.style.display = 'none';
+  // 隐藏顶栏筛选工具栏
+  var ct = document.getElementById('contentTopbar'); if(ct) ct.style.display = 'none';
+  var vt = document.getElementById('viewToggleWrap'); if(vt) vt.style.display = 'none';
+  var ts = document.getElementById('topbarSearch'); if(ts) ts.style.display = 'none';
+  var pt = document.getElementById('pageTitle'); if(pt) pt.textContent = 'AI 诊断';
+  if(pane){ pane.style.display = 'flex'; }
+  dgRenderList();
+  var right = document.getElementById('dgRight');
+  if(right && !right.innerHTML){
+    right.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3);">'
+      + '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>'
+      + '<div style="font-size:13px;">从左侧选择视频，点击「开始诊断」</div>'
+      + '<div style="font-size:11px;opacity:.6;">支持单条或多条对比分析</div>'
+      + '</div>';
+  }
+}
+
+function dgRenderList(){
+  var list = document.getElementById('dgList');
+  if(!list) return;
+  var q = (document.getElementById('dgSearch')||{}).value || '';
+  var vids = (S.videos||[]).filter(function(v){
+    return !q || (v.title||'').indexOf(q) >= 0;
+  }).slice(0, 60);
+  list.innerHTML = vids.map(function(v){
+    var acc = (S.accounts||[]).find(function(a){ return a.id === v.accId; }) || {};
+    var sel = _dgSelected.has(v.id);
+    return '<div onclick="dgToggle(\''+v.id+'\')" style="display:flex;align-items:flex-start;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;border:0.5px solid '+(sel?'rgba(232,116,42,.3)':'transparent')+';background:'+(sel?'rgba(232,116,42,.06)':'transparent')+';margin-bottom:2px;" onmouseover="if(!this.dataset.sel)this.style.background=\'var(--s2)\'" onmouseout="if(!this.dataset.sel)this.style.background=\'\'" data-sel="'+(sel?'1':'')+'">'
+      + '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid '+(sel?'var(--accent)':'var(--border2)')+';background:'+(sel?'var(--accent)':'transparent')+';flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;">'
+      + (sel ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
+      + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;">'+(v.title||'（无标题）')+'</div>'
+      + '<div style="font-size:10px;color:var(--text3);display:flex;gap:6px;">'+
+        '<span>♡'+(v.likes||0)+'</span><span>💬'+(v.comm||0)+'</span><span>'+(acc.name||'')+'</span>'
+      + '</div></div></div>';
+  }).join('');
+  dgUpdateHint();
+}
+
+function dgToggle(vid){
+  if(_dgSelected.has(vid)) _dgSelected.delete(vid);
+  else _dgSelected.add(vid);
+  dgRenderList();
+}
+
+function dgUpdateHint(){
+  var el = document.getElementById('dgSelHint');
+  if(el) el.textContent = _dgSelected.size > 0 ? '已选 '+_dgSelected.size+' 条视频' : '未选择视频';
+}
+
+function dgAnalyzeTitle(title){
+  var result = [];
+  var t = title || '';
+  // 地域词
+  var cities = ['北京','上海','广州','深圳','成都','武汉','昆明','兰州','沈阳','贵州','福州','宁波','烟台','合肥','新疆','长沙','郑州','西安','重庆','杭州','南京'];
+  var city = cities.find(function(c){ return t.indexOf(c) >= 0; });
+  if(city) result.push({type:'good', text:'含地域词「'+city+'」，精准区域引流'});
+  else result.push({type:'warn', text:'无地域词，建议加入城市名增强精准度'});
+  // 医生/专家词
+  var docWords = ['医生','主任','专家','教授','院长','博士'];
+  var doc = docWords.find(function(w){ return t.indexOf(w) >= 0; });
+  if(doc) result.push({type:'good', text:'含职称词「'+doc+'」，增强权威背书'});
+  else result.push({type:'warn', text:'无医生/职称词，可加入增强信任感'});
+  // 情绪/钩子词
+  var hookWords = ['终于','感动','没想到','太','真的','竟然','震惊','哭了','神奇'];
+  var hook = hookWords.find(function(w){ return t.indexOf(w) >= 0; });
+  if(hook) result.push({type:'good', text:'含情绪词「'+hook+'」，增强共鸣感'});
+  // 问句
+  if(t.indexOf('？') >= 0 || t.indexOf('?') >= 0 || t.indexOf('吗') >= 0 || t.indexOf('呢') >= 0)
+    result.push({type:'good', text:'含问句，能有效引导评论互动'});
+  else result.push({type:'warn', text:'无问句结尾，加「你也有这个困扰吗？」可提升评论率'});
+  // 引导私信
+  var dmWords = ['私信','联系','预约','挂号','来找','找我','加我'];
+  var dm = dmWords.find(function(w){ return t.indexOf(w) >= 0; });
+  if(dm) result.push({type:'good', text:'含引流话术「'+dm+'」，有助于转化'});
+  else result.push({type:'warn', text:'无私信引导词，可加「有问题私信我」增加转化'});
+  // 文案长度
+  var len = t.length;
+  if(len < 10) result.push({type:'bad', text:'文案偏短（'+len+'字），信息量不足'});
+  else if(len > 50) result.push({type:'warn', text:'文案较长（'+len+'字），核心信息可能被截断'});
+  else result.push({type:'good', text:'文案长度适中（'+len+'字）'});
+  return result;
+}
+
+async function dgRunDiagnose(){
+  if(_dgSelected.size === 0){ toast('请先选择视频','err'); return; }
+  var right = document.getElementById('dgRight');
+  if(!right) return;
+  // 检查 API Key
+  if(typeof API === 'undefined' || !API.apiKey){
+    right.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text2);">'
+      + '<div style="font-size:13px;margin-bottom:8px;">需要先配置 API Key</div>'
+      + '<div style="font-size:11px;color:var(--text3);">点击桌宠 → 右键 → 设置 API Key，与桌宠共用同一个 Key</div>'
+      + '</div>';
+    return;
+  }
+  var ids = Array.from(_dgSelected);
+  var vids = ids.map(function(id){ return (S.videos||[]).find(function(v){ return v.id===id; }); }).filter(Boolean);
+  right.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);">'
+    + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'
+    + '<div style="margin-top:8px;font-size:12px;">AI 分析中…</div></div>';
+
+  // 本地规则分析
+  var localResults = vids.map(function(v){ return { v:v, items: dgAnalyzeTitle(v.title) }; });
+
+  // 构建 AI prompt — 复用 history，实现联动
+  var vidsSummary = vids.map(function(v, i){
+    var acc = (S.accounts||[]).find(function(a){ return a.id===v.accId; })||{};
+    return (i+1)+'、标题：「'+(v.title||'无标题')+'」 账号：'+(acc.name||'')
+      +' 点赞：'+v.likes+' 评论：'+v.comm+' 收藏：'+(v.coll||0)
+      +(v.violation?' [违规]':'')+(v.promo?' [推广]':'');
+  }).join('\n');
+
+  var prompt = '请对以下'+vids.length+'条抖音视频做诊断分析，重点关注：①文案引流效果 ②数据表现 ③多条时的对比差异 ④优化建议。回答控制在200字内，结构清晰。\n\n'+vidsSummary;
+
+  var aiText = '';
+  try{
+    // 共用桌宠的 history，实现对话联动
+    var hist = (typeof history !== 'undefined') ? history : [];
+    aiText = await callAI(prompt, hist);
+    // 把这次诊断对话加进共享 history
+    if(typeof history !== 'undefined'){
+      history.push({role:'user', content:prompt});
+      history.push({role:'assistant', content:aiText});
+    }
+  }catch(e){
+    aiText = '分析请求失败：'+e.message;
+  }
+
+  // 渲染结果
+  var accentC = 'var(--accent)';
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+    + '<span style="font-size:13px;font-weight:700;color:var(--text);">诊断报告</span>'
+    + '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(232,116,42,.12);color:var(--accent);">'+vids.length+' 条视频</span>'
+    + '</div>';
+
+  // 评分卡
+  var totalLen = vids.reduce(function(s,v){ return s+(v.title||'').length; }, 0);
+  var avgLen = Math.round(totalLen / vids.length);
+  var avgLikes = Math.round(vids.reduce(function(s,v){ return s+v.likes; },0)/vids.length);
+  var avgComm = Math.round(vids.reduce(function(s,v){ return s+v.comm; },0)/vids.length);
+  var hasRisk = vids.some(function(v){ return v.violation||v.promo; });
+
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;">';
+  function sc(label, val, color){
+    return '<div style="background:var(--s1);border-radius:8px;padding:8px 10px;text-align:center;border:0.5px solid var(--border);">'
+      +'<div style="font-size:10px;color:var(--text3);margin-bottom:3px;">'+label+'</div>'
+      +'<div style="font-size:17px;font-weight:500;color:'+color+';">'+val+'</div></div>';
+  }
+  html += sc('均字数', avgLen+'字', 'var(--cyan)');
+  html += sc('均点赞', avgLikes, avgLikes>10?'var(--green)':avgLikes>5?'var(--gold)':'var(--red)');
+  html += sc('均评论', avgComm, avgComm>10?'var(--green)':avgComm>5?'var(--gold)':'var(--red)');
+  html += sc('风险', hasRisk?'有':'低', hasRisk?'var(--red)':'var(--green)');
+  html += '</div>';
+
+  // 本地规则分析（每条视频）
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:5px;">'
+    +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+    +'文案规则分析</div>';
+
+  var colors = {good:'#2e8c54', warn:'#c49020', bad:'#e04a38'};
+  var bgs    = {good:'rgba(46,140,84,.08)', warn:'rgba(196,144,32,.08)', bad:'rgba(224,74,56,.08)'};
+  var borders= {good:'rgba(46,140,84,.25)', warn:'rgba(196,144,32,.25)', bad:'rgba(224,74,56,.25)'};
+
+  localResults.forEach(function(r){
+    if(vids.length > 1){
+      html += '<div style="font-size:11px;color:var(--text2);margin:6px 0 3px;font-weight:600;">'+
+        (r.v.title||'无标题').slice(0,20)+(r.v.title&&r.v.title.length>20?'…':'')+'</div>';
+    }
+    r.items.forEach(function(item){
+      html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:7px;margin-bottom:3px;border:0.5px solid '+borders[item.type]+';background:'+bgs[item.type]+';">'
+        +'<div style="width:6px;height:6px;border-radius:50%;background:'+colors[item.type]+';flex-shrink:0;margin-top:4px;"></div>'
+        +'<div style="font-size:11px;color:var(--text);line-height:1.5;">'+item.text+'</div></div>';
+    });
+  });
+
+  // 多视频数据对比
+  if(vids.length > 1){
+    var maxL = Math.max.apply(null, vids.map(function(v){return v.likes;})) || 1;
+    var maxC = Math.max.apply(null, vids.map(function(v){return v.comm;})) || 1;
+    var maxCo= Math.max.apply(null, vids.map(function(v){return v.coll||0;})) || 1;
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);margin:10px 0 6px;display:flex;align-items:center;gap:5px;">'
+      +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+      +'数据对比</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat('+Math.min(vids.length,3)+',1fr);gap:8px;margin-bottom:10px;">';
+    vids.forEach(function(v){
+      html += '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;">'
+        +'<div style="font-size:10px;font-weight:500;color:var(--text2);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(v.title||'').slice(0,18)+'</div>';
+      function bar(label, val, max){
+        var pct = Math.max(3, Math.round(val/max*100));
+        return '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">'
+          +'<span style="font-size:10px;color:var(--text3);width:24px;flex-shrink:0;">'+label+'</span>'
+          +'<div style="flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;">'
+          +'<div style="width:'+pct+'%;height:100%;background:var(--accent);border-radius:3px;"></div></div>'
+          +'<span style="font-size:10px;color:var(--text2);width:26px;text-align:right;flex-shrink:0;">'+val+'</span></div>';
+      }
+      html += bar('赞', v.likes, maxL);
+      html += bar('评', v.comm, maxC);
+      html += bar('藏', v.coll||0, maxCo);
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // AI 综合建议
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:5px;">'
+    +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    +'AI 综合建议 <span style="font-size:10px;font-weight:400;color:var(--text3);">（与桌宠对话联动）</span></div>';
+  html += '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;">'+aiText+'</div>';
+
+  // 继续追问入口
+  html += '<div style="margin-top:10px;display:flex;gap:6px;">'
+    +'<input id="dgFollowInput" type="text" placeholder="继续追问 AI…" style="flex:1;font-size:12px;background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:var(--font);"/>'
+    +'<button onclick="dgAskFollowUp()" style="padding:6px 12px;border-radius:7px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:var(--font);">发送</button>'
+    +'</div>';
+
+  right.innerHTML = html;
+  // 绑定回车
+  var inp = document.getElementById('dgFollowInput');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') dgAskFollowUp(); });
+}
+
+async function dgAskFollowUp(){
+  var inp = document.getElementById('dgFollowInput');
+  if(!inp || !inp.value.trim()) return;
+  var msg = inp.value.trim();
+  inp.value = '';
+  var right = document.getElementById('dgRight');
+  if(!right) return;
+  // 追加到 AI 建议区
+  var aiBox = right.querySelector('div[style*="pre-wrap"]');
+  if(aiBox) aiBox.textContent += '\n\n你：' + msg + '\n\nAI 思考中…';
+  try{
+    var hist = (typeof history !== 'undefined') ? history : [];
+    var r = await callAI(msg, hist);
+    if(typeof history !== 'undefined'){
+      history.push({role:'user', content:msg});
+      history.push({role:'assistant', content:r});
+    }
+    if(aiBox) aiBox.textContent = aiBox.textContent.replace('AI 思考中…', r);
+  }catch(e){
+    if(aiBox) aiBox.textContent = aiBox.textContent.replace('AI 思考中…', '请求失败：'+e.message);
+  }
+}
+
+
 
 // ── 周分析 ──
 function calcWeekAnalysis(){
@@ -8817,6 +9111,9 @@ function switchPage(page){
     // 重定向到内容库
     if(typeof hideOverviewPane==='function') hideOverviewPane();
     if(typeof showProjectPane==='function') showProjectPane();
+  } else if(page==='diagnose'){
+    if(typeof hideOverviewPane==='function') hideOverviewPane();
+    if(typeof showDiagnosePane==='function') showDiagnosePane();
   }
 }
 
