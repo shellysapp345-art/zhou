@@ -2434,6 +2434,47 @@ canvas{max-width:100%;}
 </div>
 
 <!-- USER SEARCH PAGE -->
+<div id="leaderPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:100;overflow-y:auto;">
+  <!-- 顶栏 -->
+  <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;">
+    <div style="font-size:15px;font-weight:700;color:var(--text);">抖音看板</div>
+    <!-- 项目组切换 -->
+    <div style="position:relative;" id="leaderFolderWrap">
+      <div id="leaderFolderBtn" onclick="leaderToggleDrop()" style="display:flex;align-items:center;gap:6px;padding:4px 10px;border:0.5px solid var(--border);border-radius:7px;background:var(--s2);cursor:pointer;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span id="leaderFolderLabel" style="font-size:12px;font-weight:500;color:var(--text);">全部项目组</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="leaderFolderDrop" style="display:none;position:absolute;top:36px;left:0;width:200px;background:var(--s1);border:0.5px solid var(--border);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:200;overflow:hidden;"></div>
+    </div>
+    <span id="leaderScopeHint" style="font-size:11px;color:var(--text3);"></span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <button onclick="leaderRefresh()" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 0-.49 4"/></svg>
+      </button>
+      <div style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--s2);border:0.5px solid var(--border);border-radius:8px;">
+        <div id="leaderAvatarInitial" style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">组</div>
+        <span id="leaderUsername" style="font-size:13px;font-weight:600;color:var(--text);">组长</span>
+      </div>
+      <button onclick="doLogout()" style="padding:5px 12px;border:1px solid rgba(224,74,56,.3);border-radius:8px;background:transparent;color:var(--red);font-size:12px;cursor:pointer;font-family:var(--font);">退出</button>
+    </div>
+  </div>
+  <!-- 快捷 chip 筛选 -->
+  <div id="leaderChips" style="padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:0.5px solid var(--border);background:var(--s1);"></div>
+  <!-- 内容区 -->
+  <div style="padding:16px 20px;max-width:1200px;margin:0 auto;width:100%;">
+    <!-- KPI -->
+    <div id="leaderKpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;"></div>
+    <!-- 账号卡片 -->
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;" id="leaderAccTitle">本组账号</div>
+    <div id="leaderAccGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px;"></div>
+    <!-- 最近视频 -->
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近视频</div>
+    <div id="leaderVidList" style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;"></div>
+  </div>
+</div>
+
+<!-- USER SEARCH PAGE -->
 <div id="userSearchPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:100;overflow-y:auto;">
   <div style="background:var(--bg);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -2548,8 +2589,9 @@ canvas{max-width:100%;}
         </div>
         <div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">角色</div>
-          <select id="sa-nu-role" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+          <select id="sa-nu-role" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;" onchange="saOnRoleChange()">
             <option value="user">员工 (user)</option>
+            <option value="leader">项目组长 (leader)</option>
             <option value="admin">管理员 (admin)</option>
             <option value="superadmin">超管 (superadmin)</option>
           </select>
@@ -2560,6 +2602,11 @@ canvas{max-width:100%;}
       <div id="sa-folder-bind-wrap" style="margin-top:12px;display:none;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">绑定文件夹（员工必填）</div>
         <div id="sa-nu-folder-list" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
+      </div>
+      <!-- 组长才显示的多文件夹绑定 -->
+      <div id="sa-leader-folder-wrap" style="margin-top:12px;display:none;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">负责的项目组（可多选）</div>
+        <div id="sa-leader-folder-list" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
       </div>
     </div>
 
@@ -6143,6 +6190,10 @@ async function doLogin(){
     } else if(row.role === 'admin'){
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       showAdminApp();
+    } else if(row.role === 'leader'){
+      currentUser.folder_ids = row.folder_ids || '[]';
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+      showLeaderApp();
     } else {
       currentUser.folder_id = row.folder_id;
       currentUser.folder_ids = row.folder_ids || '[]';
@@ -6185,17 +6236,207 @@ function showAdminApp(){
   load();
 }
 
-function showUserApp(){
+// ══════════════════════════════════════════
+// 组长版
+// ══════════════════════════════════════════
+var _leaderFolderId = null; // null = 全部负责的项目组
+
+function showLeaderApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('mainApp').style.display='none';
-  const page = document.getElementById('userSearchPage');
+  var page = document.getElementById('leaderPage');
   page.style.display='flex';
   if(typeof petShow==='function') petShow();
-  document.getElementById('userWelcome').textContent = currentUser.username;
-  var initEl = document.getElementById('userAvatarInitial');
-  if(initEl) initEl.textContent = (currentUser.username||'员')[0];
-  loadUserData();
+  // 设置人名
+  var uname = currentUser.username || '组长';
+  var unameEl = document.getElementById('leaderUsername');
+  var initEl = document.getElementById('leaderAvatarInitial');
+  if(unameEl) unameEl.textContent = uname;
+  if(initEl) initEl.textContent = uname[0] || '组';
+  leaderLoadData();
 }
+
+async function leaderLoadData(){
+  try{
+    var res = await sbFetch('/rest/v1/accounts?select=*');
+    var vres = await sbFetch('/rest/v1/videos?select=*&order=created_at.desc&limit=200');
+    var fres = await sbFetch('/rest/v1/folders?select=*&order=sort_order');
+    S.accounts = (res||[]).map(function(a){return {id:a.id,name:a.name,color:a.color||'#e8742a',folderId:a.folder_id||null,note:a.note||''};});
+    S.videos = (vres||[]).map(function(v){return {id:v.id,title:v.title||'',accId:v.acc_id,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,play:v.play||0,violation:v.violation||false,promo:v.promo||false};});
+    S.folders = (fres||[]).map(function(f){return {id:f.id,name:f.name,icon:f.icon||'📁'};});
+    leaderRender();
+    leaderBuildChips();
+    leaderBuildDrop();
+  }catch(e){ toast('数据加载失败','err'); }
+}
+
+function leaderGetFolderIds(){
+  try{ return JSON.parse(currentUser.folder_ids||'[]'); }catch(e){ return []; }
+}
+
+function leaderGetVisibleAccs(){
+  var fids = leaderGetFolderIds();
+  var accs = S.accounts||[];
+  if(_leaderFolderId) return accs.filter(function(a){ return String(a.folderId)===String(_leaderFolderId); });
+  if(fids.length) return accs.filter(function(a){ return fids.indexOf(String(a.folderId))>=0; });
+  return accs;
+}
+
+function leaderGetVisibleVids(){
+  var accs = leaderGetVisibleAccs();
+  var accIds = accs.map(function(a){ return a.id; });
+  return (S.videos||[]).filter(function(v){ return accIds.indexOf(v.accId)>=0; });
+}
+
+function leaderRender(){
+  var accs = leaderGetVisibleAccs();
+  var vids = leaderGetVisibleVids();
+
+  // KPI
+  var kpiEl = document.getElementById('leaderKpi');
+  if(kpiEl){
+    var totalLikes = vids.reduce(function(s,v){return s+v.likes;},0);
+    var totalComm = vids.reduce(function(s,v){return s+v.comm;},0);
+    var vioCount = vids.filter(function(v){return v.violation;}).length;
+    function kpiCard(label, val, color){
+      return '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;padding:12px 14px;">'
+        +'<div style="font-size:11px;color:var(--text3);margin-bottom:4px;">'+label+'</div>'
+        +'<div style="font-size:20px;font-weight:500;color:'+color+';">'+val+'</div></div>';
+    }
+    kpiEl.innerHTML = kpiCard('本组视频',vids.length,'var(--accent)')
+      + kpiCard('总点赞',totalLikes.toLocaleString(),'var(--text)')
+      + kpiCard('总评论',totalComm.toLocaleString(),'var(--cyan)')
+      + kpiCard('违规',vioCount,vioCount?'var(--red)':'var(--green)');
+  }
+
+  // 账号卡片
+  var titleEl = document.getElementById('leaderAccTitle');
+  if(titleEl) titleEl.textContent = (_leaderFolderId ? (S.folders||[]).find(function(f){return f.id===_leaderFolderId;})||{name:'本组'} : {name:'本组'}).name + '账号';
+
+  var accEl = document.getElementById('leaderAccGrid');
+  if(accEl){
+    accEl.innerHTML = accs.map(function(a){
+      var av = vids.filter(function(v){return v.accId===a.id;});
+      var al = av.reduce(function(s,v){return s+v.likes;},0);
+      var maxL = Math.max.apply(null, accs.map(function(x){
+        return (S.videos||[]).filter(function(v){return v.accId===x.id;}).reduce(function(s,v){return s+v.likes;},0);
+      }))||1;
+      var pct = Math.max(4, Math.round(al/maxL*100));
+      var folder = (S.folders||[]).find(function(f){return String(f.id)===String(a.folderId);})||{};
+      return '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;padding:12px;">'
+        +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">'
+        +'<div style="width:8px;height:8px;border-radius:50%;background:'+a.color+';flex-shrink:0;"></div>'
+        +'<div><div style="font-size:13px;font-weight:500;color:var(--text);">'+escHtml(a.name)+'</div>'
+        +'<div style="font-size:10px;color:var(--text3);">'+(folder.icon||'📁')+' '+(folder.name||'')+'</div></div></div>'
+        +'<div style="display:flex;gap:8px;font-size:11px;color:var(--text3);">'
+        +'<span>视频 <b style="color:var(--text);">'+av.length+'</b></span>'
+        +'<span>赞 <b style="color:var(--text);">'+al.toLocaleString()+'</b></span></div>'
+        +'<div style="height:3px;background:var(--s2);border-radius:2px;margin-top:8px;overflow:hidden;">'
+        +'<div style="width:'+pct+'%;height:100%;background:'+a.color+';border-radius:2px;"></div></div>'
+        +'</div>';
+    }).join('') || '<div style="font-size:12px;color:var(--text3);padding:10px;">暂无账号</div>';
+  }
+
+  // 视频列表
+  var vidEl = document.getElementById('leaderVidList');
+  if(vidEl){
+    var recent = vids.slice(0,20);
+    var header = '<div style="padding:9px 14px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text2);">'
+      +'<span>共 '+vids.length+' 条</span><span style="font-size:11px;color:var(--text3);">最近 20 条</span></div>';
+    var rows = recent.map(function(v){
+      var acc = (S.accounts||[]).find(function(a){return a.id===v.accId;})||{};
+      var tag = v.violation ? '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#fcebeb;color:#791f1f;">违规</span>'
+               : v.promo ? '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#faeeda;color:#633806;">推广</span>'
+               : '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#eaf3de;color:#27500a;">正常</span>';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid var(--border);">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;">'+escHtml(v.title||'（无标题）')+'</div>'
+        +'<div style="font-size:11px;color:var(--text3);">♡'+v.likes+' 💬'+v.comm+' · '+escHtml(acc.name||'')+'</div></div>'
+        +tag+'</div>';
+    }).join('') || '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);">暂无视频</div>';
+    vidEl.innerHTML = header + rows;
+  }
+}
+
+function leaderBuildChips(){
+  var chipsEl = document.getElementById('leaderChips');
+  if(!chipsEl) return;
+  var fids = leaderGetFolderIds();
+  var myFolders = (S.folders||[]).filter(function(f){ return fids.indexOf(String(f.id))>=0; });
+
+  var allStyle = 'display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid;';
+  var chips = '<div onclick="leaderSelectFolder(null)" style="'+allStyle+'background:'+((!_leaderFolderId)?'var(--accent)':'var(--s2)')+';color:'+((!_leaderFolderId)?'#fff':'var(--text2)')+';border-color:'+((!_leaderFolderId)?'var(--accent)':'var(--border)')+';">全部</div>';
+  myFolders.forEach(function(f){
+    var on = _leaderFolderId===f.id;
+    chips += '<div onclick="leaderSelectFolder(\''+f.id+'\')" style="'+allStyle+'background:'+(on?'var(--accent)':'var(--s2)')+';color:'+(on?'#fff':'var(--text2)')+';border-color:'+(on?'var(--accent)':'var(--border)')+';">'+(f.icon||'📁')+' '+escHtml(f.name)+'</div>';
+  });
+  chipsEl.innerHTML = chips;
+}
+
+function leaderBuildDrop(){
+  var drop = document.getElementById('leaderFolderDrop');
+  if(!drop) return;
+  var fids = leaderGetFolderIds();
+  var myFolders = (S.folders||[]).filter(function(f){ return fids.indexOf(String(f.id))>=0; });
+  var vids = S.videos||[];
+  var accs = S.accounts||[];
+
+  function vidCount(fid){
+    var fa = accs.filter(function(a){return String(a.folderId)===String(fid);});
+    return vids.filter(function(v){return fa.some(function(a){return a.id===v.accId;});}).length;
+  }
+
+  var html = '<div onclick="leaderSelectFolder(null);leaderCloseDrop();" style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;color:'+((!_leaderFolderId)?'var(--accent)':'var(--text2)')+';background:'+((!_leaderFolderId)?'rgba(232,116,42,.06)':'transparent')+';border-bottom:0.5px solid var(--border);">'
+    +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
+    +'<span>全部项目组</span></div>';
+  myFolders.forEach(function(f){
+    var on = _leaderFolderId===f.id;
+    html += '<div onclick="leaderSelectFolder(\''+f.id+'\');leaderCloseDrop();" style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;color:'+(on?'var(--accent)':'var(--text)')+';background:'+(on?'rgba(232,116,42,.06)':'transparent')+';">'
+      +'<span style="font-size:14px;width:18px;text-align:center;">'+(f.icon||'📁')+'</span>'
+      +'<span>'+escHtml(f.name)+'</span>'
+      +'<span style="font-size:10px;color:var(--text3);margin-left:auto;">'+vidCount(f.id)+'条</span></div>';
+  });
+  drop.innerHTML = html;
+}
+
+function leaderToggleDrop(){
+  var drop = document.getElementById('leaderFolderDrop');
+  if(!drop) return;
+  if(drop.style.display==='none'){
+    leaderBuildDrop();
+    drop.style.display='block';
+    setTimeout(function(){ document.addEventListener('click', leaderDropOutside); }, 0);
+  } else {
+    leaderCloseDrop();
+  }
+}
+function leaderCloseDrop(){
+  var drop = document.getElementById('leaderFolderDrop');
+  if(drop) drop.style.display='none';
+  document.removeEventListener('click', leaderDropOutside);
+}
+function leaderDropOutside(e){
+  var wrap = document.getElementById('leaderFolderWrap');
+  if(wrap && !wrap.contains(e.target)) leaderCloseDrop();
+}
+
+function leaderSelectFolder(fid){
+  _leaderFolderId = fid;
+  var f = fid ? (S.folders||[]).find(function(x){return x.id===fid;})||{} : null;
+  var label = document.getElementById('leaderFolderLabel');
+  var hint = document.getElementById('leaderScopeHint');
+  if(label) label.textContent = f ? (f.icon||'📁')+' '+f.name : '全部项目组';
+  var vids = leaderGetVisibleVids();
+  var accs = leaderGetVisibleAccs();
+  if(hint) hint.textContent = accs.length+'个账号 · '+vids.length+'条视频';
+  leaderRender();
+  leaderBuildChips();
+}
+
+function leaderRefresh(){
+  toast('刷新中…'); leaderLoadData();
+}
+
 
 function doUserRefresh(){
   const btn = document.getElementById('userRefreshBtn');
@@ -6292,7 +6533,7 @@ function doLogout(){
   window._multiTabRender = null;
   window._multiTabActiveIdx = 0;
   // 隐藏所有页面
-  ['mainApp','userSearchPage','superAdminPage'].forEach(function(id){
+  ['mainApp','userSearchPage','superAdminPage','leaderPage'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display='none';
   });
   var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='flex';
@@ -6981,6 +7222,7 @@ function checkLogin(){
       currentUser = JSON.parse(saved);
       if(currentUser.role==='superadmin') showSuperAdminApp();
       else if(currentUser.role==='admin') showAdminApp();
+      else if(currentUser.role==='leader') showLeaderApp();
       else showUserApp();
     }catch{ sessionStorage.removeItem('currentUser'); }
   }
@@ -9475,15 +9717,29 @@ async function saLoadFolders(){
           }).join('')
         : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
     }
+    // 同步渲染组长文件夹列表
+    var lfl=document.getElementById('sa-leader-folder-list');
+    if(lfl){
+      lfl.innerHTML=_saFolders.length
+        ? _saFolders.map(function(f){
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;">'
+              +'<input type="checkbox" class="leader-folder-cb" value="'+f.id+'"/> '+(f.icon||'📁')+' '+f.name+'</label>';
+          }).join('')
+        : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
+    }
   }catch(e){}
 }
 
-// 新建用户时根据角色显示/隐藏文件夹绑定区
+// 新建用户时根据角色显示/隐藏绑定区
+function saOnRoleChange(){
+  var role=(document.getElementById('sa-nu-role')||{}).value||'user';
+  var wrap=document.getElementById('sa-folder-bind-wrap');
+  var lwrap=document.getElementById('sa-leader-folder-wrap');
+  if(wrap) wrap.style.display=role==='user'?'block':'none';
+  if(lwrap) lwrap.style.display=role==='leader'?'block':'none';
+}
 document.addEventListener('change', function(e){
-  if(e.target&&e.target.id==='sa-nu-role'){
-    var wrap=document.getElementById('sa-folder-bind-wrap');
-    if(wrap) wrap.style.display=e.target.value==='user'?'block':'none';
-  }
+  if(e.target&&e.target.id==='sa-nu-role') saOnRoleChange();
 });
 
 async function saCreateUser(){
@@ -9496,6 +9752,9 @@ async function saCreateUser(){
   if(role==='user'){
     folderIds=[...document.querySelectorAll('#sa-nu-folder-list input[type=checkbox]:checked')].map(function(cb){return cb.value;});
     if(!folderIds.length){ toast('员工账号请至少绑定一个文件夹','err'); return; }
+  } else if(role==='leader'){
+    folderIds=[...document.querySelectorAll('.leader-folder-cb:checked')].map(function(cb){return cb.value;});
+    if(!folderIds.length){ toast('组长账号请至少选择一个项目组','err'); return; }
   }
   try{
     var hashed=await sha256hex(pass);
@@ -9512,6 +9771,7 @@ async function saCreateUser(){
     var nn=document.getElementById('sa-nu-name'); if(nn) nn.value='';
     var np=document.getElementById('sa-nu-pass'); if(np) np.value='';
     document.querySelectorAll('#sa-nu-folder-list input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+    document.querySelectorAll('.leader-folder-cb').forEach(function(cb){cb.checked=false;});
     saLoadUsers();
   }catch(e){ toast('创建失败：'+e.message,'err'); }
 }
