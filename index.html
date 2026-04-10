@@ -11518,10 +11518,25 @@ window.petConfigKey = function(){
   k=k.trim(); if(!k) return;
   var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
-  var m=prompt('③ 模型名（必填，填中转平台支持的模型）\n常用：gpt-4o / gpt-4o-mini / gpt-3.5-turbo\ndevdove建议填：gpt-4o',API.model||'gpt-4o-mini');
-  if(m===null) return;
+  // 模型选择弹窗
+  var modelList = [
+    'deepseek-chat','deepseek-reasoner',
+    'gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-3.5-turbo',
+    'claude-sonnet-4-20250514','claude-3-5-haiku-20241022',
+    'gemini-2.0-flash','gemini-1.5-pro'
+  ];
+  var modelPrompt = '③ 选择模型（输入序号或直接填模型名）\n\n';
+  modelList.forEach(function(m,i){ modelPrompt += (i+1)+'. '+m+'\n'; });
+  modelPrompt += '\n当前：'+(API.model||'gpt-4o-mini');
+  var mInput = prompt(modelPrompt, API.model||'gpt-4o-mini');
+  if(mInput===null) return;
+  mInput = mInput.trim();
+  // 如果输入的是数字，转成对应模型名
+  var mNum = parseInt(mInput);
+  if(mNum >= 1 && mNum <= modelList.length) mInput = modelList[mNum-1];
+  var m = mInput || API.model || 'gpt-4o-mini';
   API.apiKey=k; API.baseURL=(b||' ').trim().replace(/\/v1\/?$/, '').replace(/\/$/, ''); API.provider='openai';
-  if(m && m.trim()) API.model=m.trim();
+  API.model = m;
   // 持久化到 localStorage
   try{
     localStorage.setItem('petApiKey', API.apiKey);
