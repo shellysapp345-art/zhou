@@ -10941,7 +10941,7 @@ async function callAI(msg,hist){
   var msgs=hist.slice(-8).map(function(h){return{role:h.role,content:h.content};});
   msgs.push({role:'user',content:prompt});
   // OpenAI 兼容格式（官方 / 中转均走此分支）
-  var base = (API.baseURL||' ').trim().replace(/\/+$/, '');
+  var base = (API.baseURL||' ').trim().replace(/\/v1\/?$/, '').replace(/\/$/, '');
   var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
   var r=await fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
@@ -11516,7 +11516,7 @@ window.petConfigKey = function(){
   k=k.trim(); if(!k) return;
   var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
-  API.apiKey=k; API.baseURL=(b||' ').trim(); API.provider='openai';
+  API.apiKey=k; API.baseURL=(b||' ').trim().replace(/\/v1\/?$/, '').replace(/\/$/, ''); API.provider='openai';
   // 持久化到 localStorage
   try{
     localStorage.setItem('petApiKey', API.apiKey);
