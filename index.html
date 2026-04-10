@@ -2434,7 +2434,7 @@ canvas{max-width:100%;}
 </div>
 
 <!-- USER SEARCH PAGE -->
-<div id="leaderPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:100;overflow-y:auto;">
+<div id="leaderPage" style="display:none;min-height:100vh;background:var(--bg);flex-direction:column;position:fixed;inset:0;z-index:10000;overflow-y:auto;">
   <!-- 顶栏 -->
   <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;">
     <div style="font-size:15px;font-weight:700;color:var(--text);">抖音看板</div>
@@ -6242,10 +6242,14 @@ function showAdminApp(){
 var _leaderFolderId = null; // null = 全部负责的项目组
 
 function showLeaderApp(){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('mainApp').style.display='none';
+  // 隐藏所有其他页面
+  ['loginScreen','mainApp','userSearchPage','superAdminPage'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.style.display='none'; el.style.visibility='hidden'; }
+  });
   var page = document.getElementById('leaderPage');
   page.style.display='flex';
+  page.style.visibility='visible';
   if(typeof petShow==='function') petShow();
   // 设置人名
   var uname = currentUser.username || '组长';
@@ -6534,9 +6538,10 @@ function doLogout(){
   window._multiTabActiveIdx = 0;
   // 隐藏所有页面
   ['mainApp','userSearchPage','superAdminPage','leaderPage'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.style.display='none';
+    var el=document.getElementById(id); if(el){ el.style.display='none'; el.style.visibility='hidden'; }
   });
-  var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='flex';
+  var ls=document.getElementById('loginScreen');
+  if(ls){ ls.style.display='flex'; ls.style.visibility='visible'; }
   var lu=document.getElementById('loginUser'); if(lu) lu.value='';
   var lp=document.getElementById('loginPass'); if(lp) lp.value='';
   if(typeof petHide==='function') petHide();
