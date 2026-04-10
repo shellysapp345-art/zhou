@@ -9299,6 +9299,7 @@ function updateSbUserAvatar(){
 function toggleUserMenu(e){
   e.stopPropagation();
   var menu = document.getElementById('userAvatarMenu');
+  if(!menu){ doLogout(); return; }
   if(menu.style.display==='none'||!menu.style.display){
     var btn = document.getElementById('sbUserAvatar');
     var r = btn.getBoundingClientRect();
