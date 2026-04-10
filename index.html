@@ -10945,11 +10945,6 @@ async function callAI(msg,hist){
   // OpenAI 兼容格式（官方 / 中转均走此分支）
   var base = (API.baseURL||' ').trim().replace(/\/v1\/?$/, '').replace(/\/$/, '');
   var url = base ? base+'/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-  // 调试：把实际请求信息显示出来
-  console.log('[callAI] URL:', url);
-  console.log('[callAI] Key前8位:', API.apiKey ? API.apiKey.slice(0,8)+'...' : '空');
-  console.log('[callAI] BaseURL原始值:', JSON.stringify(API.baseURL));
-  addMsg('bot', '🔍 调试：\nURL: '+url+'\nKey: '+(API.apiKey?API.apiKey.slice(0,8)+'...':'空')+'\nBaseURL: '+JSON.stringify(API.baseURL));
   var r=await fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+API.apiKey},
     body:JSON.stringify({model:API.model,max_tokens:400,
@@ -11523,7 +11518,10 @@ window.petConfigKey = function(){
   k=k.trim(); if(!k) return;
   var b=prompt('② 中转 BaseURL（选填，官方直连留空）\n例：https://api.302.ai',API.baseURL||'');
   if(b===null) return;
+  var m=prompt('③ 模型名（必填，填中转平台支持的模型）\n常用：gpt-4o / gpt-4o-mini / gpt-3.5-turbo\ndevdove建议填：gpt-4o',API.model||'gpt-4o-mini');
+  if(m===null) return;
   API.apiKey=k; API.baseURL=(b||' ').trim().replace(/\/v1\/?$/, '').replace(/\/$/, ''); API.provider='openai';
+  if(m && m.trim()) API.model=m.trim();
   // 持久化到 localStorage
   try{
     localStorage.setItem('petApiKey', API.apiKey);
