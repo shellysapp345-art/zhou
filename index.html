@@ -10904,9 +10904,11 @@ try{
   var _savedKey = localStorage.getItem('petApiKey');
   var _savedBase = localStorage.getItem('petBaseURL');
   var _savedModel = localStorage.getItem('petModel');
-  if(_savedKey)  API.apiKey  = _savedKey;
-  if(_savedBase) API.baseURL = _savedBase;
+  if(_savedKey)  API.apiKey  = _savedKey.trim();
+  if(_savedBase) API.baseURL = _savedBase.trim().replace(/\/v1\/?$/, '').replace(/\/$/, '');
   if(_savedModel) API.model  = _savedModel;
+  // 回写清洗后的值
+  if(_savedBase && _savedBase !== API.baseURL) localStorage.setItem('petBaseURL', API.baseURL);
 }catch(e){}
 
 
