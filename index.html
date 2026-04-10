@@ -6208,14 +6208,11 @@ async function doLogin(){
 }
 
 function showAdminApp(){
-  const $ = id => document.getElementById(id);
-  const loginScreen = $('loginScreen');
-  const userSearchPage = $('userSearchPage');
-  const mainApp = $('mainApp');
-  if(loginScreen) loginScreen.style.display='none';
-  if(userSearchPage) userSearchPage.style.display='none';
-  if(mainApp) mainApp.style.display='flex';
-  if(typeof petShow==='function') petShow();
+  // 隐藏登录页和员工页
+  var ls=document.getElementById('loginScreen'); if(ls){ ls.style.display='none'; ls.style.visibility='hidden'; }
+  var us=document.getElementById('userSearchPage'); if(us){ us.style.display='none'; us.style.visibility='hidden'; }
+  var lp=document.getElementById('leaderPage'); if(lp){ lp.style.display='none'; lp.style.visibility='hidden'; }
+  var ma=document.getElementById('mainApp'); if(ma){ ma.style.display='flex'; ma.style.visibility='visible'; }
   const _bu=$('btnUserMgmt'); if(_bu)_bu.style.display='block';
   const _su=$('settingsUserMgmt'); if(_su)_su.style.display='flex';
   // 更新侧边栏头像
@@ -6441,6 +6438,20 @@ function leaderRefresh(){
   toast('刷新中…'); leaderLoadData();
 }
 
+
+function showUserApp(){
+  ['loginScreen','mainApp','superAdminPage','leaderPage'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.style.display='none'; el.style.visibility='hidden'; }
+  });
+  var page=document.getElementById('userSearchPage');
+  if(page){ page.style.display='flex'; page.style.visibility='visible'; }
+  if(typeof petShow==='function') petShow();
+  var uname = currentUser ? (currentUser.username||'员工') : '员工';
+  var wel=document.getElementById('userWelcome'); if(wel) wel.textContent=uname;
+  var init=document.getElementById('userAvatarInitial'); if(init) init.textContent=uname[0]||'员';
+  loadUserData();
+}
 
 function doUserRefresh(){
   const btn = document.getElementById('userRefreshBtn');
