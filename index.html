@@ -6208,11 +6208,12 @@ async function doLogin(){
 }
 
 function showAdminApp(){
+  const $ = id => document.getElementById(id);
   // 隐藏登录页和员工页
-  var ls=document.getElementById('loginScreen'); if(ls){ ls.style.display='none'; ls.style.visibility='hidden'; }
-  var us=document.getElementById('userSearchPage'); if(us){ us.style.display='none'; us.style.visibility='hidden'; }
-  var lp=document.getElementById('leaderPage'); if(lp){ lp.style.display='none'; lp.style.visibility='hidden'; }
-  var ma=document.getElementById('mainApp'); if(ma){ ma.style.display='flex'; ma.style.visibility='visible'; }
+  var ls=$('loginScreen'); if(ls){ ls.style.display='none'; ls.style.visibility='hidden'; }
+  var us=$('userSearchPage'); if(us){ us.style.display='none'; us.style.visibility='hidden'; }
+  var lp=$('leaderPage'); if(lp){ lp.style.display='none'; lp.style.visibility='hidden'; }
+  var ma=$('mainApp'); if(ma){ ma.style.display='flex'; ma.style.visibility='visible'; }
   const _bu=$('btnUserMgmt'); if(_bu)_bu.style.display='block';
   const _su=$('settingsUserMgmt'); if(_su)_su.style.display='flex';
   // 更新侧边栏头像
