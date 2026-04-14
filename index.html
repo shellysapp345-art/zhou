@@ -986,6 +986,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
 .modal-bg.open{display:flex;}
+.modal-bg.closing{display:flex;pointer-events:none;}
 .modal-split{
   display:flex;background:var(--s1);
   border:1px solid var(--border);border-radius:14px;
@@ -993,7 +994,8 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
   overflow:hidden;animation:mIn .18s ease;
   box-shadow:0 8px 40px rgba(0,0,0,.1);
 }
-@keyframes mIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+@keyframes mIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+@keyframes mOut{from{opacity:1;transform:scale(1);}to{opacity:0;transform:scale(.95);}}
 
 /* ── 统计详情内联编辑侧抽屉 ── */
 #statEditDrawer{
@@ -2039,7 +2041,7 @@ canvas{max-width:100%;}
   </div>
 </div>
 <!-- ══ 异常监控弹窗 ══ -->
-<div id="alertModal" onclick="if(event.target===this)closeAlertModal()" style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);align-items:flex-start;justify-content:flex-end;padding:56px 16px 0;">
+<div id="alertModal" class="modal-bg" onclick="if(event.target===this)closeAlertModal()" style="z-index:9400;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:flex-end;padding:56px 16px 0;">
 <div id="alertBox" style="background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(96vw,480px);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:mIn .18s ease;overflow:hidden;">
   <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--s2);flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -2082,7 +2084,7 @@ canvas{max-width:100%;}
   </div>
 </div>
 
-<div id="statDetailModal" onclick="if(event.target===this&&!document.getElementById('statEditDrawer').classList.contains('open'))closeStatDetail()" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
+<div id="statDetailModal" class="modal-bg" onclick="if(event.target===this&&!document.getElementById('statEditDrawer').classList.contains('open'))closeStatDetail()" style="padding:20px;z-index:9500;background:rgba(0,0,0,.45);">
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(96vw,680px);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mIn .18s ease;overflow:hidden;">
     <div id="statDetailHead" style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s2);">
       <div>
@@ -4580,17 +4582,35 @@ function exportCSV(){
 function openModal(id){
   var el = document.getElementById(id);
   if(!el) return;
-  // 重置内层 box 的 mIn 动画，确保每次打开都有入场动画
+  // 取消正在进行的关闭动画
+  el.classList.remove('closing');
+  // 重置内层 box 动画，确保每次打开都有入场效果
   var innerBox = el.querySelector('.modal-split, .modal-sm, [id$="Box"], [id$="box"]');
   if(!innerBox) innerBox = el.querySelector('div');
   if(innerBox){
     innerBox.style.animation = 'none';
-    void innerBox.offsetWidth; // force reflow
+    void innerBox.offsetWidth;
     innerBox.style.animation = '';
   }
   el.classList.add('open');
 }
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModal(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  var innerBox = el.querySelector('.modal-split, .modal-sm, [id$="Box"], [id$="box"]');
+  if(!innerBox) innerBox = el.querySelector('div');
+  if(innerBox){
+    innerBox.style.animation = 'mOut .16s ease forwards';
+    el.classList.add('closing');
+    setTimeout(function(){
+      el.classList.remove('open');
+      el.classList.remove('closing');
+      innerBox.style.animation = '';
+    }, 160);
+  } else {
+    el.classList.remove('open');
+  }
+}
 
 /* 修改位置8a: 已合并至底部统一 DOMContentLoaded */
 function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),2600);}
@@ -6626,21 +6646,7 @@ let _alertData = [];
 function closeStatDetail(){
   closeStatEditDrawer();
   closeVisitQuickEdit();
-  var modal = document.getElementById('statDetailModal');
-  var innerBox = modal ? modal.querySelector('div') : null;
-  if(innerBox){
-    innerBox.style.transition = 'opacity .15s ease, transform .15s ease';
-    innerBox.style.opacity = '0';
-    innerBox.style.transform = 'scale(0.96)';
-    setTimeout(function(){
-      modal.style.display = 'none';
-      innerBox.style.transition = '';
-      innerBox.style.opacity = '';
-      innerBox.style.transform = '';
-    }, 160);
-  } else if(modal){
-    modal.style.display = 'none';
-  }
+  closeModal('statDetailModal');
 }
 
 // ── 统计详情侧边编辑抽屉 ──────────────────────────────
@@ -7169,23 +7175,15 @@ function openStatDetail(type){
     void innerBox.offsetHeight; // force reflow
     innerBox.style.animation = '';
   }
-  modal.style.display = 'flex';
+  openModal('statDetailModal');
 }
 
 function openAlertModal(){
-  const modal = document.getElementById('alertModal');
-  if(!modal) return;
-  // 重置 mIn 动画
-  const innerBox = modal.querySelector('div');
-  if(innerBox){ innerBox.style.animation='none'; void innerBox.offsetWidth; innerBox.style.animation=''; }
-  modal.style.display = 'flex';
   renderAlertModalContent();
+  openModal('alertModal');
 }
 
-function closeAlertModal(){
-  const modal = document.getElementById('alertModal');
-  if(modal) modal.style.display = 'none';
-}
+function closeAlertModal(){ closeModal('alertModal'); }
 
 function setAlertBadge(count){
   const badge = document.getElementById('alertTopBadge');
@@ -7286,7 +7284,7 @@ function computeAlerts(){
 }
 
 function openSettingsModal(){ document.getElementById('settingsModal').classList.add('open'); }
-function closeSettingsModal(){ document.getElementById('settingsModal').classList.remove('open'); }
+function closeSettingsModal(){ closeModal('settingsModal'); }
 
 function checkLogin(){
   const saved = sessionStorage.getItem('currentUser');
@@ -8262,7 +8260,7 @@ function pvBatchMoveOpen(){
 }
 
 function pvMoveClose(){
-  document.getElementById('pvMoveModal').classList.remove('open');
+  closeModal('pvMoveModal');
 }
 
 async function pvBatchMoveConfirm(){
@@ -8545,7 +8543,7 @@ function openThemeModal(){
   renderAccentPicker();
   document.getElementById('themeModal').classList.add('open');
 }
-function closeThemeModal(){ document.getElementById('themeModal').classList.remove('open'); }
+function closeThemeModal(){ closeModal('themeModal'); }
 
 function renderThemePresets(){
   const el = document.getElementById('themePresetList');
@@ -8674,7 +8672,7 @@ function openAccDetail(accId){
   }, 80);
 }
 function closeAccDetail(){
-  document.getElementById('accDetailModal').classList.remove('open');
+  closeModal('accDetailModal');
   if(_accDetailChart){ _accDetailChart.destroy(); _accDetailChart=null; }
 }
 function switchAccDetailTab(tab){
@@ -8750,7 +8748,7 @@ function openQuickEdit(vidId){
   document.getElementById('quickEditModal').classList.add('open');
 }
 function closeQuickEdit(){
-  document.getElementById('quickEditModal').classList.remove('open');
+  closeModal('quickEditModal');
   _qeVidId = null;
 }
 function openFullEdit(){
@@ -8860,7 +8858,7 @@ function openBatchModal(){
   }
   document.getElementById('batchModal').classList.add('open');
 }
-function closeBatchModal(){ document.getElementById('batchModal').classList.remove('open'); }
+function closeBatchModal(){ closeModal('batchModal'); }
 async function batchSetStatus(status){
   const ids = [..._selectedVids];
   if(!ids.length){ toast('请先选择视频','err'); return; }
@@ -8959,12 +8957,11 @@ function openLikesRankModal(){
   _lrMetric = 'likes';
   const modal = document.getElementById('likesRankModal');
   if(!modal) return;
-  modal.style.display = 'flex';
+  openModal('likesRankModal');
   renderLikesRank('likes');
 }
 function closeLikesRankModal(){
-  const m = document.getElementById('likesRankModal');
-  if(m) m.style.display = 'none';
+  closeModal('likesRankModal');
 }
 
 function renderLikesRank(metric){
@@ -9086,12 +9083,9 @@ function openAbnModal(){
         }).join('')}
       </div>`).join('');
   }
-  modal.style.display = 'flex';
+  openModal('abnModal');
 }
-function closeAbnModal(){
-  const m = document.getElementById('abnModal');
-  if(m) m.style.display = 'none';
-}
+function closeAbnModal(){ closeModal('abnModal'); }
 
 // ══════════════════════════════════════════
 // 线索录入弹窗（浮动·可拖动·单天/区间/按月）
@@ -10289,7 +10283,7 @@ function toggleDark(){
 
 // ── MANUAL ──
 function openManual(){ document.getElementById('manualModal').classList.add('open'); }
-function closeManual(){ document.getElementById('manualModal').classList.remove('open'); }
+function closeManual(){ closeModal('manualModal'); }
 function switchManualTab(section, el){
   document.querySelectorAll('.manual-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.manual-tab').forEach(t=>t.classList.remove('active'));
@@ -10559,7 +10553,7 @@ function switchManualTab(section, el){
 </div>
 
 <!-- ══ 异常预警弹窗 ══ -->
-<div id="abnModal" onclick="if(event.target===this)closeAbnModal()" style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.3);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+<div id="abnModal" class="modal-bg" onclick="if(event.target===this)closeAbnModal()" style="z-index:9400;background:rgba(0,0,0,.3);">
 <div onclick="event.stopPropagation()" style="background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;">
   <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div>
@@ -10745,8 +10739,7 @@ function switchManualTab(section, el){
 </div>
 
 <!-- ══ 点赞排名弹窗 ══ -->
-<div id="likesRankModal" onclick="if(event.target===this)closeLikesRankModal()"
-  style="display:none;position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.3);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+<div id="likesRankModal" class="modal-bg" onclick="if(event.target===this)closeLikesRankModal()" style="z-index:9400;background:rgba(0,0,0,.3);">
   <div onclick="event.stopPropagation()"
     style="background:var(--s1);border:1px solid var(--border);border-radius:16px;
            width:min(94vw,520px);max-height:82vh;overflow:hidden;display:flex;flex-direction:column;
