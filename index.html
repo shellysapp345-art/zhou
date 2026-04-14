@@ -2415,18 +2415,43 @@ canvas{max-width:100%;}
     </div>
     <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:12px;">
       <div style="background:var(--s2);border-radius:12px;padding:14px;">
-        <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;">➕ 新建用户</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;">➕ 新建账号</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div class="fg"><label>用户名</label><input id="nu-name" type="text" placeholder="登录账号" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
           <div class="fg"><label>密码</label><input id="nu-pass" type="text" placeholder="登录密码" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;"/></div>
-          <div class="fg"><label>绑定文件夹 <span style="color:var(--text3);font-weight:400;">（可多选）</span></label>
+          <div class="fg">
+            <label>角色</label>
+            <div style="display:flex;gap:8px;">
+              <label id="nu-role-user-label" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:var(--s1);border:2px solid var(--accent);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);">
+                <input type="radio" name="nu-role" id="nu-role-user" value="user" checked style="accent-color:var(--accent);" onchange="nuRoleChange()"/>
+                &#128100; 员工
+              </label>
+              <label id="nu-role-leader-label" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:var(--s1);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);">
+                <input type="radio" name="nu-role" id="nu-role-leader" value="leader" style="accent-color:var(--accent);" onchange="nuRoleChange()"/>
+                &#128081; 组长
+              </label>
+            </div>
+          </div>
+          <div id="nu-user-folder-wrap">
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:5px;">绑定文件夹 <span style="font-weight:400;">（可多选）</span></div>
             <div id="nu-folder-list" style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;"></div>
           </div>
-          <button onclick="createUser()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">创建用户</button>
+          <div id="nu-leader-folder-wrap" style="display:none;">
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:5px;">负责的项目组 <span style="font-weight:400;">（可多选）</span></div>
+            <div id="nu-leader-folder-list" style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;"></div>
+          </div>
+          <button onclick="createUser()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">创建账号</button>
         </div>
       </div>
       <div style="background:var(--s2);border-radius:12px;padding:14px;">
-        <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;">现有普通用户</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--text3);font-weight:600;">现有账号</div>
+          <div style="display:flex;gap:4px;">
+            <button onclick="loadUserList('all')" id="ul-tab-all" style="font-size:10px;padding:3px 9px;border-radius:5px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-weight:600;">全部</button>
+            <button onclick="loadUserList('leader')" id="ul-tab-leader" style="font-size:10px;padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;">组长</button>
+            <button onclick="loadUserList('user')" id="ul-tab-user" style="font-size:10px;padding:3px 9px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;">员工</button>
+          </div>
+        </div>
         <div id="userList" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -2621,6 +2646,7 @@ canvas{max-width:100%;}
         <button class="fchip on" id="sa-tab-all"       onclick="saFilterUsers('all')"       >全部</button>
         <button class="fchip"    id="sa-tab-superadmin" onclick="saFilterUsers('superadmin')">超管</button>
         <button class="fchip"    id="sa-tab-admin"      onclick="saFilterUsers('admin')"     >管理员</button>
+        <button class="fchip"    id="sa-tab-leader"     onclick="saFilterUsers('leader')"    >组长</button>
         <button class="fchip"    id="sa-tab-user"       onclick="saFilterUsers('user')"      >员工</button>
       </div>
       <div id="sa-user-list" style="display:flex;flex-direction:column;gap:6px;"></div>
@@ -6191,7 +6217,9 @@ async function doLogin(){
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       showAdminApp();
     } else if(row.role === 'leader'){
-      currentUser.folder_ids = row.folder_ids || '[]';
+      var rawFids = row.folder_ids;
+      if(Array.isArray(rawFids)) currentUser.folder_ids = JSON.stringify(rawFids.map(String));
+      else currentUser.folder_ids = rawFids || '[]';
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
       showLeaderApp();
     } else {
@@ -6273,7 +6301,10 @@ async function leaderLoadData(){
 }
 
 function leaderGetFolderIds(){
-  try{ return JSON.parse(currentUser.folder_ids||'[]'); }catch(e){ return []; }
+  var raw = currentUser.folder_ids;
+  if(!raw) return [];
+  if(Array.isArray(raw)) return raw.map(String);
+  try{ var arr=JSON.parse(raw); return Array.isArray(arr)?arr.map(String):[]; }catch(e){ return []; }
 }
 
 function leaderGetVisibleAccs(){
@@ -7459,44 +7490,86 @@ function renderUserSearchResults(folderId){
 
 // ── USER MANAGEMENT (admin) ──
 async function openUserMgmt(){
-  // 每次打开都重新拉最新文件夹，确保新添加的也能显示
   const freshFolders = await sbFetch('/rest/v1/folders?select=*&order=sort_order');
   if(freshFolders && Array.isArray(freshFolders)){
-    S.folders = freshFolders.map(f=>({id:f.id, name:f.name, sort_order:f.sort_order||0}));
+    S.folders = freshFolders.map(f=>({id:f.id, name:f.name, icon:f.icon||'📁', sort_order:f.sort_order||0}));
   }
+  const folderHTML = S.folders.length
+    ? S.folders.map(f=>`
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;">
+        <input type="checkbox" value="${f.id}" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
+        <span style="font-size:12px;color:var(--text);">${f.icon||'📁'} ${f.name}</span>
+      </label>`).join('')
+    : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
   const list = document.getElementById('nu-folder-list');
-  if(list){
-    list.innerHTML = S.folders.length
-      ? S.folders.map(f=>`
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;">
-          <input type="checkbox" value="${f.id}" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
-          <span style="font-size:12px;color:var(--text);">${f.name}</span>
-        </label>`).join('')
-      : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
-  }
-  loadUserList();
+  if(list) list.innerHTML = folderHTML;
+  // 组长用同一份文件夹列表（独立渲染，checkbox name 不同）
+  const leaderList = document.getElementById('nu-leader-folder-list');
+  if(leaderList) leaderList.innerHTML = S.folders.length
+    ? S.folders.map(f=>`
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;">
+        <input type="checkbox" class="nu-leader-cb" value="${f.id}" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;"/>
+        <span style="font-size:12px;color:var(--text);">${f.icon||'📁'} ${f.name}</span>
+      </label>`).join('')
+    : '<div style="font-size:11px;color:var(--text3);">暂无文件夹</div>';
+  // 重置角色选择到员工
+  const rUser = document.getElementById('nu-role-user');
+  if(rUser){ rUser.checked = true; nuRoleChange(); }
+  loadUserList('all');
   openModal('userMgmtModal');
 }
 
-async function loadUserList(){
-  const res = await sbFetch('/rest/v1/users?role=eq.user&select=*&order=username');
+// 切换角色时显示/隐藏对应绑定区
+function nuRoleChange(){
+  const isLeader = (document.getElementById('nu-role-leader')||{}).checked;
+  const userWrap = document.getElementById('nu-user-folder-wrap');
+  const leaderWrap = document.getElementById('nu-leader-folder-wrap');
+  const userLabel = document.getElementById('nu-role-user-label');
+  const leaderLabel = document.getElementById('nu-role-leader-label');
+  if(userWrap) userWrap.style.display = isLeader ? 'none' : 'block';
+  if(leaderWrap) leaderWrap.style.display = isLeader ? 'block' : 'none';
+  if(userLabel){ userLabel.style.borderColor = isLeader ? 'var(--border)' : 'var(--accent)'; userLabel.style.color = isLeader ? 'var(--text2)' : 'var(--accent)'; }
+  if(leaderLabel){ leaderLabel.style.borderColor = isLeader ? 'var(--accent)' : 'var(--border)'; leaderLabel.style.color = isLeader ? 'var(--accent)' : 'var(--text2)'; }
+}
+
+var _ulFilter = 'all';
+async function loadUserList(filter){
+  if(filter) _ulFilter = filter;
+  // 更新 tab 样式
+  ['all','leader','user'].forEach(function(r){
+    var btn = document.getElementById('ul-tab-'+r);
+    if(!btn) return;
+    var on = r === _ulFilter;
+    btn.style.background = on ? 'var(--accent)' : 'transparent';
+    btn.style.color = on ? '#fff' : 'var(--text2)';
+    btn.style.borderColor = on ? 'var(--accent)' : 'var(--border)';
+    btn.style.fontWeight = on ? '600' : '400';
+  });
+  var url = '/rest/v1/users?select=*&order=username';
+  if(_ulFilter === 'leader') url += '&role=eq.leader';
+  else if(_ulFilter === 'user') url += '&role=eq.user';
+  else url += '&role=in.(user,leader)';
+  const res = await sbFetch(url);
   const list = document.getElementById('userList');
   if(!res||!res.length){
-    list.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px;">暂无普通用户</div>';
+    list.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px;">暂无账号</div>';
     return;
   }
+  const roleTag = {user:'员工', leader:'组长'};
+  const roleColor = {user:'var(--green)', leader:'var(--purple)'};
   list.innerHTML = res.map(u=>{
     let folderIds = [];
     try { folderIds = JSON.parse(u.folder_ids||'[]'); } catch(e){}
     if(!folderIds.length && u.folder_id) folderIds = [u.folder_id];
-    const folderNames = folderIds.map(id=>{ const f=S.folders.find(f=>f.id===id); return f?f.name:null; }).filter(Boolean);
-    const folderLabel = folderNames.length ? folderNames.join('、') : '未绑定文件夹';
+    const folderNames = folderIds.map(id=>{ const f=S.folders.find(f=>String(f.id)===String(id)); return f?f.name:null; }).filter(Boolean);
+    const folderLabel = folderNames.length ? folderNames.join('、') : (u.role==='leader'?'未绑定项目组':'未绑定文件夹');
     const folderIdsJson = JSON.stringify(folderIds).replace(/"/g,'&quot;');
+    const tag = `<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:${roleColor[u.role]||'#888'};color:#fff;font-weight:700;">${roleTag[u.role]||u.role}</span>`;
     return `<div style="border-radius:8px;overflow:hidden;background:var(--s1);">
       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:600;">${u.username}</div>
-          <div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${folderLabel} · 密码: ${u.password}</div>
+          <div style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;">${u.username} ${tag}</div>
+          <div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${folderLabel}</div>
         </div>
         <button onclick="editUserFolders('${u.id}','${folderIdsJson}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--accent);cursor:pointer;font-family:inherit;flex-shrink:0;">编辑</button>
         <button onclick="togglePluginPwd('${u.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--cyan);cursor:pointer;font-family:inherit;flex-shrink:0;">改密</button>
@@ -7548,7 +7621,7 @@ async function savePluginPwd(uid){
   toast('✓ 密码已更新');
   document.getElementById('pwd-panel-'+uid).style.display='none';
   if(inp) inp.value='';
-  loadUserList();
+  loadUserList(_ulFilter);
 }
 
 function editUserFolders(uid, folderIdsJson){
@@ -7573,26 +7646,32 @@ async function saveUserFolders(uid){
     folder_ids: JSON.stringify(checked)
   });
   toast('✓ 文件夹已更新');
-  loadUserList();
+  loadUserList(_ulFilter);
 }
 
 async function createUser(){
   const name = document.getElementById('nu-name').value.trim();
   const pass = document.getElementById('nu-pass').value.trim();
-  // 收集勾选的文件夹
-  const checked = [...document.querySelectorAll('#nu-folder-list input[type=checkbox]:checked')].map(cb=>cb.value);
+  const isLeader = (document.getElementById('nu-role-leader')||{}).checked;
+  const role = isLeader ? 'leader' : 'user';
   if(!name||!pass){ toast('请填写用户名和密码','err'); return; }
-  if(!checked.length){ toast('请至少选择一个文件夹','err'); return; }
+  let checked = [];
+  if(isLeader){
+    checked = [...document.querySelectorAll('.nu-leader-cb:checked')].map(cb=>cb.value);
+    if(!checked.length){ toast('组长账号请至少选择一个项目组','err'); return; }
+  } else {
+    checked = [...document.querySelectorAll('#nu-folder-list input[type=checkbox]:checked')].map(cb=>cb.value);
+    if(!checked.length){ toast('员工账号请至少选择一个文件夹','err'); return; }
+  }
   const id = 'u'+Date.now();
-  // folder_id 存第一个（兼容旧逻辑），folder_ids 存全部
   const hashedPwd = await sha256hex(pass);
-  const res = await sbFetch('/rest/v1/users','POST',[{id, username:name, password:hashedPwd, folder_id:checked[0], folder_ids:JSON.stringify(checked), role:'user'}]);
-  toast('✓ 用户已创建');
+  await sbFetch('/rest/v1/users','POST',[{id, username:name, password:hashedPwd, folder_id:checked[0], folder_ids:JSON.stringify(checked), role}]);
+  toast('✓ '+(isLeader?'组长':'员工')+'账号已创建');
   document.getElementById('nu-name').value='';
   document.getElementById('nu-pass').value='';
-  // 取消所有勾选
   document.querySelectorAll('#nu-folder-list input[type=checkbox]').forEach(cb=>cb.checked=false);
-  loadUserList();
+  document.querySelectorAll('.nu-leader-cb').forEach(cb=>cb.checked=false);
+  loadUserList('all');
 }
 
 async function deleteUser(id){
@@ -7612,7 +7691,7 @@ async function deleteUser(id){
   }
 
   toast('✓ 已删除');
-  loadUserList();
+  loadUserList(_ulFilter);
 }
 
 function openUserManual(){ document.getElementById('userManualModal').style.display='flex'; }
@@ -9614,7 +9693,8 @@ function showSuperAdminApp(){
   if(typeof petShow==='function') petShow();
   saLoadUsers();
   saLoadFolders();
-}
+  // 确保新建账号表单的文件夹区初始状态正确
+  setTimeout(saOnRoleChange, 0);
 
 // 超管切换到管理页（保留 currentUser，直接 showAdminApp）
 function switchToAdminFromSuper(){
@@ -9649,7 +9729,7 @@ async function saLoadUsers(){
 
 function saFilterUsers(role){
   _saRoleFilter=role;
-  ['all','superadmin','admin','user'].forEach(function(r){
+  ['all','superadmin','admin','leader','user'].forEach(function(r){
     var btn=document.getElementById('sa-tab-'+r);
     if(btn){ btn.classList.toggle('on', r===role); }
   });
