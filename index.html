@@ -10870,6 +10870,7 @@ function switchManualTab(section, el){
 /* Face-left: mirror the image */
 /* #petImg replaced by inline SVG #petSvg */
 #petSvg{ display:block; }
+#petBody{ transform-origin:50px 52px; }
 
 /* Idle float */
 @keyframes pcFloat{
@@ -11213,58 +11214,54 @@ function switchManualTab(section, el){
   <!-- §3 Character -->
   <div id="petChar" class="s-idle">
     <div id="petDot"></div>
-    <svg id="petSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 18px rgba(0,0,0,.15))">
+    <svg id="petSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;overflow:visible;filter:drop-shadow(0 5px 14px rgba(180,60,10,.18))">
   <defs>
-    <!-- 普通状态：左上深橙 → 右下浅肤色，完全匹配设计图 -->
     <radialGradient id="bodyGrad" cx="32%" cy="28%" r="72%">
-      <stop offset="0%"   stop-color="#e8844a"/>
-      <stop offset="45%"  stop-color="#d9784a"/>
-      <stop offset="100%" stop-color="#f0cdb0"/>
+      <stop offset="0%"   stop-color="#f5a060"/>
+      <stop offset="50%"  stop-color="#f08040"/>
+      <stop offset="100%" stop-color="#d05818"/>
     </radialGradient>
-    <!-- 开心状态：稍深一点 -->
     <radialGradient id="bodyGradHappy" cx="32%" cy="28%" r="72%">
-      <stop offset="0%"   stop-color="#d96830"/>
-      <stop offset="45%"  stop-color="#c85e28"/>
-      <stop offset="100%" stop-color="#dba888"/>
+      <stop offset="0%"   stop-color="#e88030"/>
+      <stop offset="50%"  stop-color="#d06020"/>
+      <stop offset="100%" stop-color="#b04010"/>
     </radialGradient>
-    <!-- 眼睛裁剪区（纯白椭圆，偏左上，立式） -->
-    <clipPath id="clipL"><ellipse id="clipLe" cx="30" cy="35" rx="9" ry="13"/></clipPath>
-    <clipPath id="clipR"><ellipse id="clipRe" cx="62" cy="33" rx="9" ry="13"/></clipPath>
+    <clipPath id="clipL"><ellipse id="clipLe" cx="34" cy="48" rx="0.1" ry="0.1"/></clipPath>
+    <clipPath id="clipR"><ellipse id="clipRe" cx="66" cy="48" rx="0.1" ry="0.1"/></clipPath>
   </defs>
 
-  <!-- 身体：完整圆形 -->
-  <circle id="petBody" cx="50" cy="50" r="46" fill="url(#bodyGrad)"/>
+  <ellipse cx="51" cy="91" rx="19" ry="3" fill="#a03010" opacity=".13"/>
 
-  <!-- 普通眼（白色椭圆，偏左上，可跟踪鼠标） -->
-  <g id="eyesNormal">
-    <g clip-path="url(#clipL)">
-      <ellipse id="eyeL" cx="30" cy="35" rx="9" ry="13" fill="white"/>
-    </g>
-    <g clip-path="url(#clipR)">
-      <ellipse id="eyeR" cx="62" cy="33" rx="9" ry="13" fill="white"/>
-    </g>
+  <path id="petBody"
+    d="M50 19 C69 17 83 29 85 48 C88 65 76 81 59 84 C46 87 28 81 22 68 C14 55 18 37 32 27 C39 22 44 20 50 19Z"
+    fill="url(#bodyGrad)" style="transition:fill 0.45s ease"/>
+
+  <path d="M50 24 C64 22 75 32 76 48 C78 61 70 73 58 76"
+    fill="none" stroke="#f6c898" stroke-width="1.3" opacity=".3" stroke-linecap="round"/>
+
+  <g id="eyesNormal" style="opacity:1">
+    <rect x="27" y="43" width="15" height="5.5" rx="2.8" fill="white"/>
+    <rect x="58" y="43" width="15" height="5.5" rx="2.8" fill="white"/>
+    <ellipse id="eyeL" cx="34" cy="45" rx="0.1" ry="0.1" fill="none"/>
+    <ellipse id="eyeR" cx="65" cy="45" rx="0.1" ry="0.1" fill="none"/>
   </g>
 
-  <!-- 睡眠眼（弧线，与眼睛位置对齐） -->
-  <g id="eyesSleep" style="display:none">
-    <path d="M26 38 Q34 48 42 38" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M43 36 Q50 46 57 36" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <g id="eyesSleep" style="display:none;opacity:0">
+    <path d="M27 45 Q34.5 53 42 45" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M58 45 Q65.5 53 73 45" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
   </g>
 
-  <!-- 开心眼（弧线上扬） -->
-  <g id="eyesHappy" style="display:none">
-    <path d="M26 40 Q34 30 42 40" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M43 38 Q50 28 57 38" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <text x="62" y="20" font-size="11" fill="#f5c842" font-family="sans-serif">✦</text>
-    <text x="74" y="13" font-size="8"  fill="#f5c842" font-family="sans-serif">✦</text>
-    <text x="82" y="22" font-size="6"  fill="#f5c842" font-family="sans-serif">✦</text>
+  <g id="eyesHappy" style="display:none;opacity:0">
+    <path d="M27 48 Q34.5 40 42 48" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M58 48 Q65.5 40 73 48" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="21" cy="57" rx="7" ry="4.5" fill="#f88070" opacity=".42"/>
+    <ellipse cx="79" cy="57" rx="7" ry="4.5" fill="#f88070" opacity=".42"/>
   </g>
 
-  <!-- zzZ 浮字 -->
   <g id="petZzzSvg" style="display:none">
-    <text x="62" y="24" font-size="9"  fill="#d88060" font-weight="bold" font-family="sans-serif">z</text>
-    <text x="71" y="16" font-size="12" fill="#d88060" font-weight="bold" font-family="sans-serif">Z</text>
-    <text x="82" y="8"  font-size="15" fill="#d88060" font-weight="bold" font-family="sans-serif">Z</text>
+    <text x="70" y="30" font-size="9"  fill="#e87030" font-weight="bold" font-family="sans-serif">z</text>
+    <text x="78" y="21" font-size="12" fill="#e87030" font-weight="bold" font-family="sans-serif">Z</text>
+    <text x="88" y="11" font-size="15" fill="#e87030" font-weight="bold" font-family="sans-serif">Z</text>
   </g>
 </svg>
   </div>
@@ -12045,10 +12042,32 @@ var DATA_TIPS = [
   var EYE_LX = 28, EYE_LY = 35;
   var EYE_RX = 62, EYE_RY = 35;
 
-  // 只显示某组眼睛
+  // 只显示某组眼睛 — 带淡入淡出过渡
+  var _eyeFading = false;
   function showEyes(el) {
-    [eyesN, eyesS, eyesH].forEach(function(e){ e.style.display = 'none'; });
-    el.style.display = '';
+    var all = [eyesN, eyesS, eyesH];
+    var current = null;
+    all.forEach(function(e){ if(e !== el && e.style.display !== 'none') current = e; });
+
+    if (!current) {
+      el.style.display = ''; el.style.opacity = '1'; return;
+    }
+    if (_eyeFading) {
+      all.forEach(function(e){ e.style.transition=''; e.style.opacity=''; e.style.display='none'; });
+      el.style.display=''; el.style.opacity='1'; _eyeFading=false; return;
+    }
+    _eyeFading = true;
+    current.style.transition = 'opacity 0.28s ease';
+    current.style.opacity = '0';
+    setTimeout(function(){
+      all.forEach(function(e){ e.style.display='none'; e.style.transition=''; e.style.opacity=''; });
+      el.style.display = '';
+      el.style.opacity = '0';
+      void el.getBoundingClientRect();
+      el.style.transition = 'opacity 0.28s ease';
+      el.style.opacity = '1';
+      setTimeout(function(){ el.style.transition=''; _eyeFading=false; }, 300);
+    }, 300);
   }
 
   // 重置眼睛位置到中心
@@ -12086,10 +12105,20 @@ var DATA_TIPS = [
   // ── 状态切换 ──────────────────────────────────────────────────
   var happyTimer = null;
 
+  function squishBody() {
+    petBody.style.transition = 'transform 0.18s cubic-bezier(.34,1.56,.64,1)';
+    petBody.style.transform = 'scaleX(1.06) scaleY(0.94)';
+    setTimeout(function(){
+      petBody.style.transform = 'scaleX(1) scaleY(1)';
+      setTimeout(function(){ petBody.style.transition=''; petBody.style.transform=''; }, 200);
+    }, 180);
+  }
+
   window._petSetVisualState = function(s) {
     if (happyTimer) { clearTimeout(happyTimer); happyTimer = null; }
-    petBody.setAttribute('fill', s === 'happy' ? 'url(#bodyGradHappy)' : 'url(#bodyGrad)');
+    petBody.style.fill = s === 'happy' ? 'url(#bodyGradHappy)' : 'url(#bodyGrad)';
     zzzSvg.style.display = 'none';
+    squishBody();
 
     if (s === 'sleepy') {
       showEyes(eyesS);
