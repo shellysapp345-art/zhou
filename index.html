@@ -468,7 +468,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
 
 /* 移动账号选择弹窗 */
 #pvMoveModal{
-  position:fixed;inset:0;z-index:9600;display:none;
+  position:fixed;inset:0;z-index:10700;display:none;
   align-items:center;justify-content:center;
   background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
 }
@@ -478,7 +478,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
   width:min(94vw,400px);box-shadow:0 16px 48px rgba(0,0,0,.16);
   animation:mIn .18s ease;overflow:hidden;
 }
-#quickEditModal{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);margin:0;padding:0;}
+#quickEditModal{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10800;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);margin:0;padding:0;}
 #quickEditModal.open{display:flex;}
 #quickEditBox{background:var(--s1);border:1px solid var(--border);border-radius:16px;width:min(94vw,480px);max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.14);animation:mIn .18s ease;margin:auto;position:relative;}
 
@@ -486,7 +486,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
    总览卡片右键菜单
    ══════════════════════════════════════════ */
 #ovCardCtxMenu{
-  position:fixed;z-index:9999;
+  position:fixed;z-index:10900;
   background:var(--s1);border:1px solid var(--border2);
   border-radius:10px;padding:4px;
   box-shadow:0 4px 20px rgba(0,0,0,.12);
@@ -825,7 +825,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
 .detail-drawer-bg{
   position:fixed;inset:0;
   background:rgba(0,0,0,.38);
-  z-index:9000;
+  z-index:10500;
   display:none;
   backdrop-filter:blur(5px);
   -webkit-backdrop-filter:blur(5px);
@@ -839,7 +839,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
   background:var(--s1);
   border-radius:16px;
   box-shadow:0 24px 64px rgba(0,0,0,.18),0 4px 16px rgba(0,0,0,.10);
-  z-index:9001;
+  z-index:10501;
   display:flex;flex-direction:column;overflow:hidden;
   position:fixed;
   top:50%;left:50%;
@@ -984,7 +984,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
 .dd-info-row{display:flex;align-items:center;gap:10px;padding:8px 0;}
 .dd-info-row+.dd-info-row{border-top:1px solid var(--s3);}
 
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:10600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
 .modal-bg.open{display:flex;}
 .modal-bg.closing{display:flex;pointer-events:none;}
 .modal-split{
@@ -1036,7 +1036,7 @@ body{background:var(--bg);color:var(--text);font-family:'Source Han Sans SC','So
 /* 小屏：录入弹窗退回居中（由JS处理，CSS媒体查询备用） */
 #statEditDrawerBg{
   position:fixed;inset:0;
-  z-index:9599;
+  z-index:10699;
   display:none;
 }
 #statEditDrawerBg.open{display:block;}
@@ -2041,7 +2041,7 @@ canvas{max-width:100%;}
   </div>
 </div>
 <!-- ══ 异常监控弹窗 ══ -->
-<div id="alertModal" class="modal-bg" onclick="if(event.target===this)closeAlertModal()" style="z-index:9400;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:flex-end;padding:56px 16px 0;">
+<div id="alertModal" class="modal-bg" onclick="if(event.target===this)closeAlertModal()" style="z-index:10600;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:flex-end;padding:56px 16px 0;">
 <div id="alertBox" style="background:var(--s1);border:1px solid var(--border);border-radius:18px;width:min(96vw,480px);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:mIn .18s ease;overflow:hidden;">
   <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--s2);flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -2084,7 +2084,7 @@ canvas{max-width:100%;}
   </div>
 </div>
 
-<div id="statDetailModal" class="modal-bg" onclick="if(event.target===this&&!document.getElementById('statEditDrawer').classList.contains('open'))closeStatDetail()" style="padding:20px;z-index:9500;background:rgba(0,0,0,.45);">
+<div id="statDetailModal" class="modal-bg" onclick="if(event.target===this&&!document.getElementById('statEditDrawer').classList.contains('open'))closeStatDetail()" style="padding:20px;z-index:10600;background:rgba(0,0,0,.45);">
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:20px;width:min(96vw,680px);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mIn .18s ease;overflow:hidden;">
     <div id="statDetailHead" style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s2);">
       <div>
