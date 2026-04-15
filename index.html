@@ -2527,7 +2527,7 @@ canvas{max-width:100%;}
     <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;" id="leaderAccTitle">本组账号</div>
     <div id="leaderAccGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px;"></div>
     <!-- 最近视频 -->
-    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近视频</div>
+    <div id="leaderVidSecTitle" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;"></div>
     <div id="leaderVidList" style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;"></div>
   </div>
 </div>
@@ -6413,6 +6413,8 @@ function showAdminApp(){
 // 组长版
 // ══════════════════════════════════════════
 var _leaderFolderId = null; // null = 全部负责的项目组
+var _leaderAccId    = null; // null = 全部账号
+var _leaderVidFilter = 'all'; // all|normal|violation|promo
 
 function showLeaderApp(){
   // 隐藏所有其他页面
@@ -6439,7 +6441,7 @@ async function leaderLoadData(){
     var vres = await sbFetch('/rest/v1/videos?select=*&order=created_at.desc&limit=200');
     var fres = await sbFetch('/rest/v1/folders?select=*&order=sort_order');
     S.accounts = (res||[]).map(function(a){return {id:a.id,name:a.name,color:a.color||'#e8742a',folderId:a.folder_id||null,note:a.note||''};});
-    S.videos = (vres||[]).map(function(v){return {id:v.id,title:v.title||'',accId:v.acc_id,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,play:v.play||0,violation:v.violation||false,promo:v.promo||false};});
+    S.videos = (vres||[]).map(function(v){return {id:v.id,title:v.title||'',accId:v.acc_id,likes:v.likes||0,comm:v.comm||0,coll:v.coll||0,share:v.share||0,play:v.play||0,violation:v.violation||false,promo:v.promo||false,url:v.url||'',thumb:v.thumb||'',date:v.date||'',uploadedBy:v.uploaded_by||'',author:v.author||''};});
     S.folders = (fres||[]).map(function(f){return {id:f.id,name:f.name,icon:f.icon||'📁'};});
     leaderRender();
     leaderBuildChips();
@@ -6468,76 +6470,189 @@ function leaderGetVisibleVids(){
   return (S.videos||[]).filter(function(v){ return accIds.indexOf(v.accId)>=0; });
 }
 
+function leaderGetFilteredVids(){
+  var accs = leaderGetVisibleAccs();
+  var accIds = accs.map(function(a){return a.id;});
+  var vids = (S.videos||[]).filter(function(v){return accIds.indexOf(v.accId)>=0;});
+  if(_leaderAccId) vids = vids.filter(function(v){return v.accId===_leaderAccId;});
+  if(_leaderVidFilter==='normal')    vids = vids.filter(function(v){return !v.violation&&!v.promo;});
+  if(_leaderVidFilter==='violation') vids = vids.filter(function(v){return v.violation;});
+  if(_leaderVidFilter==='promo')     vids = vids.filter(function(v){return v.promo;});
+  return vids;
+}
+
+function leaderSetAccFilter(accId){
+  _leaderAccId = (_leaderAccId===accId) ? null : accId;
+  leaderRender();
+}
+
+function leaderSetVidFilter(type, btn){
+  _leaderVidFilter = type;
+  document.querySelectorAll('.lvf').forEach(function(b){b.classList.remove('on');});
+  if(btn) btn.classList.add('on');
+  leaderRender();
+}
+
 function leaderRender(){
   var accs = leaderGetVisibleAccs();
   var vids = leaderGetVisibleVids();
+  var filteredVids = leaderGetFilteredVids();
 
-  // KPI
+  // ── KPI ──
   var kpiEl = document.getElementById('leaderKpi');
   if(kpiEl){
     var totalLikes = vids.reduce(function(s,v){return s+v.likes;},0);
-    var totalComm = vids.reduce(function(s,v){return s+v.comm;},0);
-    var vioCount = vids.filter(function(v){return v.violation;}).length;
-    function kpiCard(label, val, color){
+    var totalComm  = vids.reduce(function(s,v){return s+v.comm;},0);
+    var vioCount   = vids.filter(function(v){return v.violation;}).length;
+    var promoCount = vids.filter(function(v){return v.promo;}).length;
+    function kpiCard(label,val,color){
       return '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;padding:12px 14px;">'
         +'<div style="font-size:11px;color:var(--text3);margin-bottom:4px;">'+label+'</div>'
-        +'<div style="font-size:20px;font-weight:500;color:'+color+';">'+val+'</div></div>';
+        +'<div style="font-size:22px;font-weight:600;color:'+color+';">'+val+'</div></div>';
     }
-    kpiEl.innerHTML = kpiCard('本组视频',vids.length,'var(--accent)')
-      + kpiCard('总点赞',totalLikes.toLocaleString(),'var(--text)')
-      + kpiCard('总评论',totalComm.toLocaleString(),'var(--cyan)')
-      + kpiCard('违规',vioCount,vioCount?'var(--red)':'var(--green)');
+    kpiEl.innerHTML =
+      kpiCard('本组视频',  vids.length,              'var(--text)')
+     +kpiCard('总点赞',   totalLikes.toLocaleString(),'var(--accent)')
+     +kpiCard('总评论',   totalComm.toLocaleString(), 'var(--cyan)')
+     +kpiCard('违规',     vioCount,                  vioCount?'var(--red)':'var(--green)');
   }
 
-  // 账号卡片
+  // ── 账号标题 ──
   var titleEl = document.getElementById('leaderAccTitle');
-  if(titleEl) titleEl.textContent = (_leaderFolderId ? (S.folders||[]).find(function(f){return f.id===_leaderFolderId;})||{name:'本组'} : {name:'本组'}).name + '账号';
+  if(titleEl){
+    var folderName = _leaderFolderId
+      ? ((S.folders||[]).find(function(f){return f.id===_leaderFolderId;})||{name:'本组'}).name
+      : '本组';
+    titleEl.innerHTML = folderName+'账号'
+      +' <span style="font-size:10px;color:var(--text3);font-weight:400;">点击账号筛选视频</span>';
+  }
 
+  // ── 账号卡片 ──
   var accEl = document.getElementById('leaderAccGrid');
   if(accEl){
+    var maxL = Math.max.apply(null, accs.map(function(x){
+      return (S.videos||[]).filter(function(v){return v.accId===x.id;}).reduce(function(s,v){return s+v.likes;},0);
+    }).concat([1]));
+
     accEl.innerHTML = accs.map(function(a){
-      var av = vids.filter(function(v){return v.accId===a.id;});
-      var al = av.reduce(function(s,v){return s+v.likes;},0);
-      var maxL = Math.max.apply(null, accs.map(function(x){
-        return (S.videos||[]).filter(function(v){return v.accId===x.id;}).reduce(function(s,v){return s+v.likes;},0);
-      }))||1;
-      var pct = Math.max(4, Math.round(al/maxL*100));
-      var folder = (S.folders||[]).find(function(f){return String(f.id)===String(a.folderId);})||{};
-      return '<div style="background:var(--s1);border:0.5px solid var(--border);border-radius:10px;padding:12px;">'
-        +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">'
+      var av   = (S.videos||[]).filter(function(v){return v.accId===a.id;});
+      var al   = av.reduce(function(s,v){return s+v.likes;},0);
+      var ac   = av.reduce(function(s,v){return s+v.comm;},0);
+      var aviol= av.filter(function(v){return v.violation;}).length;
+      var aprom= av.filter(function(v){return v.promo;}).length;
+      var pct  = Math.max(4, Math.round(al/maxL*100));
+      var folder=(S.folders||[]).find(function(f){return String(f.id)===String(a.folderId);})||{};
+      var isActive = _leaderAccId===a.id;
+      var badgeHtml = aviol
+        ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:#fcebeb;color:#791f1f;">⚠ '+aviol+'违规</span>'
+        : aprom
+        ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:#e6f1fb;color:#0c447c;">★ '+aprom+'推广</span>'
+        : '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:#eaf3de;color:#27500a;">✓ 正常</span>';
+
+      return '<div data-accid="'+a.id+'" style="background:var(--s1);border:'+(isActive?'1.5px solid var(--accent)':'0.5px solid var(--border)')+';border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;'+(isActive?'background:rgba(232,116,42,.04);':'')+'position:relative;">'
+        +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">'
         +'<div style="width:8px;height:8px;border-radius:50%;background:'+a.color+';flex-shrink:0;"></div>'
-        +'<div><div style="font-size:13px;font-weight:500;color:var(--text);">'+escHtml(a.name)+'</div>'
-        +'<div style="font-size:10px;color:var(--text3);">'+(folder.icon||'📁')+' '+(folder.name||'')+'</div></div></div>'
-        +'<div style="display:flex;gap:8px;font-size:11px;color:var(--text3);">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(a.name)+'</div>'
+        +'<div style="font-size:10px;color:var(--text3);">'+(folder.icon||'📁')+' '+(folder.name||'')+'</div>'
+        +'</div>'
+        +'<div style="flex-shrink:0;">'+badgeHtml+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:6px;">'
         +'<span>视频 <b style="color:var(--text);">'+av.length+'</b></span>'
-        +'<span>赞 <b style="color:var(--text);">'+al.toLocaleString()+'</b></span></div>'
-        +'<div style="height:3px;background:var(--s2);border-radius:2px;margin-top:8px;overflow:hidden;">'
-        +'<div style="width:'+pct+'%;height:100%;background:'+a.color+';border-radius:2px;"></div></div>'
+        +'<span>赞 <b style="color:var(--text);">'+al.toLocaleString()+'</b></span>'
+        +'<span>评 <b style="color:var(--text);">'+ac.toLocaleString()+'</b></span>'
+        +'</div>'
+        +'<div style="height:3px;background:var(--s2);border-radius:2px;overflow:hidden;">'
+        +'<div style="width:'+pct+'%;height:100%;background:'+a.color+';border-radius:2px;transition:width .3s;"></div>'
+        +'</div>'
+        +(isActive?'<div style="position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--accent);"></div>':'')
         +'</div>';
     }).join('') || '<div style="font-size:12px;color:var(--text3);padding:10px;">暂无账号</div>';
+
+    // 绑定账号卡点击事件
+    accEl.querySelectorAll('[data-accid]').forEach(function(el){
+      var aid = el.getAttribute('data-accid');
+      el.addEventListener('click', function(){ leaderSetAccFilter(aid); });
+    });
   }
 
-  // 视频列表
+  // ── 视频标题栏 + 筛选 ──
+  var vidSecTitle = document.getElementById('leaderVidSecTitle');
+  if(vidSecTitle){
+    var filterBtns = [
+      {k:'all',lbl:'全部'},
+      {k:'normal',lbl:'正常'},
+      {k:'violation',lbl:'违规'},
+      {k:'promo',lbl:'推广'},
+    ].map(function(f){
+      var on = _leaderVidFilter===f.k;
+      return '<button class="lvf'+(on?' on':'')+'" data-vf="'+f.k+'" style="padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;border:none;background:'+(on?'var(--s1)':'transparent')+';color:'+(on?'var(--text)':'var(--text3)')+';font-weight:'+(on?'500':'400')+';font-family:var(--font);">'+f.lbl+'</button>';
+    }).join('');
+    vidSecTitle.innerHTML =
+      '<span style="font-size:13px;font-weight:600;color:var(--text);">'
+      +(_leaderAccId ? ((S.accounts||[]).find(function(a){return a.id===_leaderAccId;})||{name:'账号'}).name+'的视频' : '最近视频')
+      +'</span>'
+      +'<div style="display:flex;align-items:center;gap:6px;">'
+      +(_leaderAccId?'<button data-clearacc="1" style="font-size:10px;color:var(--accent);border:none;background:transparent;cursor:pointer;font-family:var(--font);">清除筛选 ×</button>':'')
+      +'<div style="display:flex;gap:1px;background:var(--s2);border-radius:6px;padding:2px;">'+filterBtns+'</div>'
+      +'</div>';
+    // 绑定筛选按钮
+    vidSecTitle.querySelectorAll('[data-vf]').forEach(function(btn){
+      var vf = btn.getAttribute('data-vf');
+      btn.addEventListener('click', function(){ leaderSetVidFilter(vf, btn); });
+    });
+    var clearBtn = vidSecTitle.querySelector('[data-clearacc]');
+    if(clearBtn) clearBtn.addEventListener('click', function(){ leaderSetAccFilter(null); });
+  }
+
+  // ── 视频列表 ──
   var vidEl = document.getElementById('leaderVidList');
   if(vidEl){
-    var recent = vids.slice(0,20);
-    var header = '<div style="padding:9px 14px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text2);">'
-      +'<span>共 '+vids.length+' 条</span><span style="font-size:11px;color:var(--text3);">最近 20 条</span></div>';
-    var rows = recent.map(function(v){
-      var acc = (S.accounts||[]).find(function(a){return a.id===v.accId;})||{};
-      var tag = v.violation ? '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#fcebeb;color:#791f1f;">违规</span>'
-               : v.promo ? '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#faeeda;color:#633806;">推广</span>'
-               : '<span style="font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#eaf3de;color:#27500a;">正常</span>';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid var(--border);">'
+    var header = '<div style="padding:8px 14px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--text3);">'
+      +'<span>共 '+filteredVids.length+' 条'+(filteredVids.length<vids.length?' (已筛选)':'')+'</span>'
+      +'<span style="font-size:10px;color:var(--text3);opacity:.6;">点击行查看详情</span></div>';
+
+    var rows = filteredVids.slice(0,30).map(function(v){
+      var acc = (S.accounts||[]).find(function(a){return a.id===v.accId;})||{name:'未知',color:'#888'};
+      var thumbHtml = v.thumb && (v.thumb.startsWith('http')||v.thumb.startsWith('data:'))
+        ? '<img src="'+v.thumb+'" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">'
+        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--border2)" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+
+      var tag = v.violation
+        ? '<span style="font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;background:#fcebeb;color:#791f1f;flex-shrink:0;">⚠ 违规</span>'
+        : v.promo
+        ? '<span style="font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;background:#e6f1fb;color:#0c447c;flex-shrink:0;">★ 推广</span>'
+        : '<span style="font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;background:#eaf3de;color:#27500a;flex-shrink:0;">✓ 正常</span>';
+
+      var avatarL = acc.name ? acc.name[0].toUpperCase() : '?';
+
+      return '<div data-lvid="'+v.id+'" style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s;">'
+        +'<div style="width:52px;height:37px;background:var(--s2);border-radius:5px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">'+thumbHtml+'</div>'
         +'<div style="flex:1;min-width:0;">'
-        +'<div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;">'+escHtml(v.title||'（无标题）')+'</div>'
-        +'<div style="font-size:11px;color:var(--text3);">♡'+v.likes+' 💬'+v.comm+' · '+escHtml(acc.name||'')+'</div></div>'
-        +tag+'</div>';
-    }).join('') || '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);">暂无视频</div>';
+        +'<div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;">'+escHtml(v.title||'（无标题）')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text3);">'
+        +'<span style="display:flex;align-items:center;gap:3px;"><span style="width:13px;height:13px;border-radius:50%;background:'+acc.color+';display:inline-flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;">'+avatarL+'</span>'+escHtml(acc.name)+'</span>'
+        +(v.date?'<span>'+v.date+'</span>':'')
+        +'<span>♡ '+fmt(v.likes||0)+'</span>'
+        +'<span>💬 '+fmt(v.comm||0)+'</span>'
+        +'</div>'
+        +'</div>'
+        +tag
+        +'</div>';
+    }).join('') || '<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3);">暂无视频</div>';
+
     vidEl.innerHTML = header + rows;
+
+    // 绑定点击 + 悬停 → openDetailDrawer
+    vidEl.querySelectorAll('[data-lvid]').forEach(function(el){
+      var vid = el.getAttribute('data-lvid');
+      el.addEventListener('mouseover', function(){ el.style.background='var(--s2)'; });
+      el.addEventListener('mouseout',  function(){ el.style.background=''; });
+      el.addEventListener('click',     function(){ openDetailDrawer(vid); });
+    });
   }
 }
-
 function leaderBuildChips(){
   var chipsEl = document.getElementById('leaderChips');
   if(!chipsEl) return;
@@ -6602,6 +6717,8 @@ function leaderDropOutside(e){
 
 function leaderSelectFolder(fid){
   _leaderFolderId = fid;
+  _leaderAccId = null;
+  _leaderVidFilter = 'all';
   var f = fid ? (S.folders||[]).find(function(x){return x.id===fid;})||{} : null;
   var label = document.getElementById('leaderFolderLabel');
   var hint = document.getElementById('leaderScopeHint');
